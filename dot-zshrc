@@ -64,6 +64,8 @@ bindkey -M viins '^U' kill-whole-line
 
 bindkey -s ^f "exec tmux-sessionizer\n"
 
+ssh-add --apple-use-keychain -q
+
 if type lsd > /dev/null; then
   alias ls='lsd'
   alias l='ls -l'
