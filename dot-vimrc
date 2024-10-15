@@ -1,0 +1,16 @@
+inoremap jj <ESC>
+let mapleader = ","
+
+set number
+set relativenumber
+
+noremap <Up> <NOP>
+noremap <Down> <NOP>
+noremap <Left> <NOP>
+noremap <Right> <NOP>
+
+set shiftwidth=2
+
+nnoremap <silent> <C-l> :nohl<CR><C-l>
+set rtp+=/opt/homebrew/opt/fzf
+

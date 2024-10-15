@@ -1,0 +1,22 @@
+[credential]
+	helper = osxkeychain
+[push]
+	default = current
+[pager]
+	branch = false
+[core]
+	autocrlf = false
+	eol = lf
+	excludesfile = ~/.config/git/ignore
+	fileMode = false
+	hooksPath = ~/.config/git/hooks
+
+[pull]
+	ff = only
+[init]
+	defaultBranch = main
+[sequence]
+	editor = code --wait
+
+[includeIf "hasconfig:remote.*.url:git@ssh.dev.azure.com\:v3/**"]
+	path = ~/Documents/.gitconfig.inc

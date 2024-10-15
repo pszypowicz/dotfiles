@@ -1,0 +1,94 @@
+export LANG=en_US.UTF-8
+
+[ -d $HOME/bin ] && export PATH=$HOME/bin:$PATH
+
+[ -d $HOME/.docker/bin ] && export PATH=$PATH:$HOME/.docker/bin
+
+export FUNCTIONS_CORE_TOOLS_TELEMETRY_OPTOUT="true"
+
+# Path to your oh-my-zsh installation.
+export ZSH="$HOME/.oh-my-zsh"
+
+function start_tmux {
+  local tmux_unattached_sessions
+  tmux_unattached_sessions=`tmux ls -F '#{session_name}' -f '#{==:#{session_attached},0}'`
+  if [ -n "$tmux_unattached_sessions" ]; then
+    exec tmux attach -t `echo "$tmux_unattached_sessions" | head -n 1`
+  else
+    exec tmux
+  fi
+}
+
+# Uncomment the following line to enable command auto-correction.
+ENABLE_CORRECTION="true"
+
+# if the value is `.*' then
+# dot  file  names  will never be offered as spelling corrections.
+# This is useful with the CORRECT_ALL option.
+CORRECT_IGNORE_FILE='.*'
+
+HISTSIZE=10000000
+SAVEHIST=10000000
+HISTFILE="$HOME/Documents/.zsh_history"
+setopt BANG_HIST                 # Treat the '!' character specially during expansion.
+setopt EXTENDED_HISTORY          # Write the history file in the ":start:elapsed;command" format.
+setopt INC_APPEND_HISTORY        # Write to the history file immediately, not when the shell exits.
+setopt SHARE_HISTORY             # Share history between all sessions.
+setopt HIST_EXPIRE_DUPS_FIRST    # Expire duplicate entries first when trimming history.
+setopt HIST_IGNORE_SPACE         # Don't record an entry starting with a space.
+setopt HIST_REDUCE_BLANKS        # Remove superfluous blanks before recording entry.
+setopt HIST_VERIFY               # Don't execute immediately upon history expansion.
+setopt ignore_eof                # Option names are case-insensitive and underscores are optional.
+
+ZSH_DISABLE_COMPFIX=true
+
+ZSH_THEME="alien-minimal/alien-minimal"
+
+if type brew > /dev/null; then
+  FPATH="$(brew --prefix)/share/zsh/site-functions:${FPATH}"
+fi
+
+source $ZSH/oh-my-zsh.sh
+
+export EDITOR='vim'
+
+# Enable Vim mode in ZSH
+bindkey -v
+bindkey '^[.' insert-last-word
+
+autoload -U edit-command-line
+zle -N edit-command-line
+
+bindkey -M viins '^Y' yank
+bindkey -M viins '^U' kill-whole-line
+
+bindkey -s ^f "exec tmux-sessionizer\n"
+
+if type lsd > /dev/null; then
+  alias ls='lsd'
+  alias l='ls -l'
+  alias la='ls -a'
+  alias lla='ls -la'
+  alias lt='ls --tree'
+fi
+
+if type go > /dev/null; then
+  export PATH=$PATH:$(go env GOPATH)/bin
+  export GOPATH=$(go env GOPATH)
+fi
+
+if type direnv > /dev/null; then
+  eval "$(direnv hook zsh)"
+fi
+
+[ -f "/opt/homebrew/etc/bash_completion.d/tmux" ] && source "/opt/homebrew/etc/bash_completion.d/tmux"
+[ -f "/opt/homebrew/etc/bash_completion.d/az" ] && source "/opt/homebrew/etc/bash_completion.d/az"
+
+export FZF_DEFAULT_COMMAND="find . -type f -not -path '*/\.git/*' -not -path '*/.DS_Store'"
+[ -f "/opt/homebrew/opt/fzf/shell/completion.zsh" ] && source "/opt/homebrew/opt/fzf/shell/completion.zsh" 2> /dev/null
+[ -f "/opt/homebrew/opt/fzf/shell/key-bindings.zsh" ] && source "/opt/homebrew/opt/fzf/shell/key-bindings.zsh"
+
+# Run only tmux when script is available, and shell is running in Apple_Terminal
+if [[ "$TERM_PROGRAM" == "Apple_Terminal"  ]]; then
+  type tmux > /dev/null && ! [[ -v TMUX ]] && start_tmux
+fi

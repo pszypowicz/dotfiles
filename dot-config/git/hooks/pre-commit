@@ -1,0 +1,20 @@
+#!/usr/bin/env zsh
+
+# Find all .tf files tracked by git
+files=($(git ls-files | grep '\.tf$'))
+
+# # find parent directories of all .tf files
+dirs=($(echo $files | xargs -n1 dirname | sort -u))
+
+# run `terraform-docs .`` in each directory only if the firectory contains .terraform-docs.yml or .terraform-docs.yaml
+for dir in $dirs; do
+  if [ -f "$dir/.terraform-docs.yml" ]; then
+    pushd -q $dir
+    terraform-docs . --output-check > /dev/null
+    if [ $? -ne 0 ]; then
+      echo "terraform-docs failed in $dir"
+      exit 1
+    fi
+    popd -q
+  fi
+done
