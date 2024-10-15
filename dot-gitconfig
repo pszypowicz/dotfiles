@@ -18,5 +18,12 @@
 [sequence]
 	editor = code --wait
 
+[gpg]
+	format = ssh
+[user]
+	signingkey = /Users/pszypowicz/.ssh/id_rsa.pub
+[commit]
+	gpgsign = true
+
 [includeIf "hasconfig:remote.*.url:git@ssh.dev.azure.com\:v3/**"]
 	path = ~/Documents/.gitconfig.inc
