@@ -17,3 +17,10 @@
 	defaultBranch = main
 [sequence]
 	editor = code --wait
+
+[user]
+	name = Przemek Szypowicz
+	email = p.code@szypowi.cz
+
+[includeIf "gitdir:~/Documents/Code/work/"]
+	path = ~/Documents/Code/work/.gitconfig

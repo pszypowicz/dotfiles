@@ -1,6 +1,7 @@
 export LANG=en_US.UTF-8
 
 [ -d $HOME/bin ] && export PATH=$HOME/bin:$PATH
+[ -d $HOME/scripts ] && export PATH=$HOME/scripts:$PATH
 
 [ -d $HOME/.docker/bin ] && export PATH=$PATH:$HOME/.docker/bin
 
