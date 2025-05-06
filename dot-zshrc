@@ -7,18 +7,22 @@ export LANG=en_US.UTF-8
 
 export FUNCTIONS_CORE_TOOLS_TELEMETRY_OPTOUT="true"
 
+plugins=(
+  git
+  fzf
+  tmux
+  vi-mode
+  brew
+  terraform
+)
+
+ZSH_TMUX_AUTOSTART=true
+ZSH_TMUX_AUTONAME_SESSION=true
+
+autoload -U +X bashcompinit && bashcompinit
+
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
-
-function start_tmux {
-  local tmux_unattached_sessions
-  tmux_unattached_sessions=`tmux ls -F '#{session_name}' -f '#{==:#{session_attached},0}'`
-  if [ -n "$tmux_unattached_sessions" ]; then
-    exec tmux attach -t `echo "$tmux_unattached_sessions" | head -n 1`
-  else
-    exec tmux
-  fi
-}
 
 # Uncomment the following line to enable command auto-correction.
 ENABLE_CORRECTION="true"
@@ -41,29 +45,11 @@ setopt HIST_REDUCE_BLANKS        # Remove superfluous blanks before recording en
 setopt HIST_VERIFY               # Don't execute immediately upon history expansion.
 setopt ignore_eof                # Option names are case-insensitive and underscores are optional.
 
-ZSH_DISABLE_COMPFIX=true
-
-ZSH_THEME="alien-minimal/alien-minimal"
-
-if type brew > /dev/null; then
-  FPATH="$(brew --prefix)/share/zsh/site-functions:${FPATH}"
-fi
+# ZSH_THEME="alien-minimal/alien-minimal"
 
 source $ZSH/oh-my-zsh.sh
 
 export EDITOR='vim'
-
-# Enable Vim mode in ZSH
-bindkey -v
-bindkey '^[.' insert-last-word
-
-autoload -U edit-command-line
-zle -N edit-command-line
-
-bindkey -M viins '^Y' yank
-bindkey -M viins '^U' kill-whole-line
-
-bindkey -s ^f "exec tmux-sessionizer\n"
 
 ssh-add --apple-use-keychain -q
 
@@ -80,18 +66,4 @@ if type go > /dev/null; then
   export GOPATH=$(go env GOPATH)
 fi
 
-if type direnv > /dev/null; then
-  eval "$(direnv hook zsh)"
-fi
-
-[ -f "/opt/homebrew/etc/bash_completion.d/tmux" ] && source "/opt/homebrew/etc/bash_completion.d/tmux"
-[ -f "/opt/homebrew/etc/bash_completion.d/az" ] && source "/opt/homebrew/etc/bash_completion.d/az"
-
-export FZF_DEFAULT_COMMAND="find . -type f -not -path '*/\.git/*' -not -path '*/.DS_Store'"
-[ -f "/opt/homebrew/opt/fzf/shell/completion.zsh" ] && source "/opt/homebrew/opt/fzf/shell/completion.zsh" 2> /dev/null
-[ -f "/opt/homebrew/opt/fzf/shell/key-bindings.zsh" ] && source "/opt/homebrew/opt/fzf/shell/key-bindings.zsh"
-
-# Run only tmux when script is available, and shell is running in Apple_Terminal
-if [[ "$TERM_PROGRAM" == "Apple_Terminal"  ]]; then
-  type tmux > /dev/null && ! [[ -v TMUX ]] && start_tmux
-fi
+complete -o nospace -C /Users/pszypowicz/bin/terraform terraform
