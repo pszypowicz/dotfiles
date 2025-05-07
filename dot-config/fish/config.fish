@@ -11,7 +11,6 @@ if status is-interactive
   starship init fish | source
   fzf --fish | source
 
-  source ~/.config/fish/alias.fish
   ssh-add --apple-use-keychain -q
 
   set -g fish_key_bindings fish_vi_key_bindings
