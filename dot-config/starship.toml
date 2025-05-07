@@ -1,0 +1,17 @@
+# Get editor completions based on the config schema
+"$schema" = 'https://starship.rs/config-schema.json'
+
+[azure]
+format = 'on [$symbol(\[$subscription - $username\])]($style) '
+disabled = false
+
+[battery]
+disabled = false
+
+[terraform]
+format = 'via [$symbol$version]($style) '
+disabled = false
+
+[time]
+disabled = false
+
