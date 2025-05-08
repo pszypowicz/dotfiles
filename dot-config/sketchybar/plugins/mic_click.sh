@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+source "$CONFIG_DIR/colors.sh"
+
+# Attempt to get the current input device name
+MIC_NAME=$(SwitchAudioSource -t input -c)
+# I just want the first word, in case it's too long
+MIC_NAME=$(echo $MIC_NAME | awk '{print $1}')
+
+# When no microphone is connected, SwitchAudioSource gives me back random
+# characters and sketchybar shows "Warning: Malformed UTF-8 string"
+# Validate MIC_NAME as UTF-8, replace invalid sequences with a '?', then compare with original
+VALIDATED_MIC_NAME=$(echo "$MIC_NAME" | iconv -f UTF-8 -t UTF-8//IGNORE)
+
+# Get the current microphone volume
+MIC_VOLUME=$(osascript -e 'input volume of (get volume settings)')
+
+# Check if MIC_NAME is not meaningful
+if ! [[ "$MIC_NAME" != "$VALIDATED_MIC_NAME" || -z "$MIC_NAME" ]]; then
+  # Update SketchyBar with the microphone's name and volume
+  if [[ $MIC_VOLUME -lt 100 ]]; then
+    osascript -e 'set volume input volume 100'
+  elif [[ $MIC_VOLUME -gt 0 ]]; then
+    osascript -e 'set volume input volume 0'
+  fi
+fi
+
+sketchybar --trigger mic_clicked
