@@ -6,4 +6,6 @@
 \.gitignore
 \.gitmodules
 
+dot-config/op
+
 ^/README.md
