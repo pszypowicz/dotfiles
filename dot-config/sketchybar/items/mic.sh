@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 mic=(
   updates=on
   update_freq=10

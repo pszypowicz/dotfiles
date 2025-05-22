@@ -52,6 +52,7 @@ source "$ITEMS_DIR/chevron.sh"
 
 source "$ITEMS_DIR/mic.sh"
 source "$ITEMS_DIR/clock.sh"
+source "$ITEMS_DIR/input_source.sh"
 
 sketchybar --hotload on
 
