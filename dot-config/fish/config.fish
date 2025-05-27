@@ -12,11 +12,6 @@ if status is-interactive
 
     # Check if tmux is already running by checking the TMUX environment variable
     if not set -q TMUX
-        # Only run start_tmux session in the Apple Terminal
-        if test "$TERM_PROGRAM" = Apple_Terminal
-            start_tmux
-        else if test "$TERM_PROGRAM" = vscode
-            start_tmux_vscode
-        end
+        start-tmux
     end
 end
