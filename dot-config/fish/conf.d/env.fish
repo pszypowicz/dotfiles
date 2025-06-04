@@ -2,7 +2,7 @@
 set -gx EDITOR vim
 
 set -gx FZF_DEFAULT_COMMAND 'fd --type f'
-set -gx FZF_DEFAULT_OPTS '--tmux bottom,80%,40%'
+set -gx FZF_DEFAULT_OPTS '--tmux bottom,80%,70%,border-native'
 
 set -gx XDG_CONFIG_HOME ~/.config
 
