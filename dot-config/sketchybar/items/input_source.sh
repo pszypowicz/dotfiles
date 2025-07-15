@@ -5,6 +5,7 @@ set -e
 input_source=(
   label.drawing=on
   script="$PLUGIN_DIR/input_source.sh"
+  click_script="$PLUGIN_DIR/input_source_click.sh"
 )
 
 keyboard_event="AppleSelectedInputSourcesChangedNotification"
