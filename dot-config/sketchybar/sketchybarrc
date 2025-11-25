@@ -5,7 +5,9 @@ ITEMS_DIR="$CONFIG_DIR/items"
 COLORS="$CONFIG_DIR/colors.sh"
 ICONS="$CONFIG_DIR/icons.sh"
 
+# shellcheck source=$COLORS
 source "$COLORS"
+# shellcheck source=$ICONS
 source "$ICONS"
 
 ##### Bar Appearance
@@ -14,7 +16,7 @@ bar=(
   position=top
   height=40
   blur_radius=30
-  color=$TRANSPARENT_BLACK
+  color="$TRANSPARENT_BLACK"
 )
 
 sketchybar --bar "${bar[@]}"
@@ -26,16 +28,16 @@ default=(
   padding_right=5
   icon.font="CaskaydiaCove Nerd Font:Bold:17.0"
   label.font="CaskaydiaCove Nerd Font:Bold:17.0"
-  icon.color=$WHITE
-  label.color=$WHITE
+  icon.color="$WHITE"
+  label.color="$WHITE"
   icon.padding_left=4
   icon.padding_right=4
   label.padding_left=4
   label.padding_right=4
   popup.background.border_width=2
   popup.background.corner_radius=9
-  popup.background.border_color=$WHITE
-  popup.background.color=$TRANSPARENT_BLACK
+  popup.background.border_color="$WHITE"
+  popup.background.color="$TRANSPARENT_BLACK"
   popup.blur_radius=20
   popup.background.shadow.drawing=on
 )
