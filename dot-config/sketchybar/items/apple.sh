@@ -8,6 +8,7 @@ POPUP_CLICK_SCRIPT='sketchybar --set $NAME popup.drawing=toggle'
 apple_logo=(
   icon=$APPLE
   click_script="$POPUP_CLICK_SCRIPT"
+  script="$POPUP_OFF"
 )
 
 apple_prefs=(
@@ -30,6 +31,7 @@ apple_lock=(
 
 sketchybar --add item apple.logo left \
   --set apple.logo "${apple_logo[@]}" \
+  --subscribe apple.logo mouse.exited.global \
   \
   --add item apple.prefs popup.apple.logo \
   --set apple.prefs "${apple_prefs[@]}" \
