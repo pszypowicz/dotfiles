@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 
-set -e
+PLUGIN_DIR="$CONFIG_DIR/plugins"
+source "$CONFIG_DIR/colors.sh"
 
-# sketchybar --add event aerospace_focus_changed
-# sketchybar --add event aerospace_workspace_change
+# Register custom events
+sketchybar --add event aerospace_workspace_change
+sketchybar --add event display_added NSSecondaryDisplayVisChanged
 
-sketchybar --add alias "Control Center,bobko.aerospace" left \
-  --set "Control Center,bobko.aerospace" \
-  icon.drawing=off \
-  label.drawing=off \
-  padding_left=0 \
-  padding_right=0
-# --subscribe "Control Center,bobko.aerospace" aerospace_workspace_change \
-# --subscribe "Control Center,bobko.aerospace" aerospace_focus_changed
+# Create hidden dummy item to listen for display changes
+sketchybar --add item aerospace.observer left \
+  --set aerospace.observer \
+  drawing=off \
+  script="$PLUGIN_DIR/aerospace.sh" \
+  --subscribe aerospace.observer display_added \
+  --subscribe aerospace.observer aerospace_workspace_change
