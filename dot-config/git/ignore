@@ -3,3 +3,5 @@
 .direnv
 .venv
 .terraform
+
+**/.claude/settings.local.json

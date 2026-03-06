@@ -1,4 +1,4 @@
-function start-tmux
+function ,start-tmux
 
     # test if variable VSCODE_WORKSPACE_FOLDER_BASENAME is set
     if set -q VSCODE_WORKSPACE_FOLDER_BASENAME
