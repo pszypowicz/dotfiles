@@ -1,7 +1,6 @@
 set fish_greeting
 
 eval "$(/opt/homebrew/bin/brew shellenv)"
-# fish_add_path ~/bin
 
 if status is-interactive
     # Check if tmux is already running by checking the TMUX environment variable
