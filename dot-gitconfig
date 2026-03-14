@@ -19,8 +19,8 @@
 	editor = code --wait
 
 [user]
-	name = Przemek Szypowicz
-	email = p.code@szypowi.cz
+	name = Przemysław Szypowicz
+	email = pszypowicz@gmail.com
 
 [includeIf "gitdir:~/Documents/Code/work/"]
 	path = ~/Documents/Code/work/.gitconfig
