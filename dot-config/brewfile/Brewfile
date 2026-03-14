@@ -63,7 +63,7 @@ cask "vlc"
 cask "zoom"
 
 # Work-specific packages — update hostname to match your work machine
-if `hostname`.strip == "WORK_HOSTNAME_PLACEHOLDER"
+if `hostname`.strip == "HOSTNAME"
   tap "azure/kubelogin"
   tap "warrensbox/tap"
   brew "azure-cli"
