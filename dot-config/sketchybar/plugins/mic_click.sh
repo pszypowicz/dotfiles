@@ -1,8 +1,14 @@
 #!/usr/bin/env bash
 
+export PATH="/opt/homebrew/bin:$PATH"
 source "$CONFIG_DIR/colors.sh"
 
 PREF_FILE="$HOME/.config/mic-guard/preferred-mic"
+
+# Guard: do nothing if MicGuard.app is not running
+if ! pgrep -f 'MicGuard.app/Contents/MacOS/MicGuard' >/dev/null 2>&1; then
+  exit 0
+fi
 
 if [[ "$BUTTON" == "right" ]]; then
   # Right-click: build popup with all input devices
