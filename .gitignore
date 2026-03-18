@@ -5,6 +5,9 @@ dot-config/cagent
 dot-config/NuGet
 dot-config/k9s
 
+# Fish auto-managed
+dot-config/fish/fish_variables
+
 # Claude Code local settings
 .claude/settings.local.json
 
