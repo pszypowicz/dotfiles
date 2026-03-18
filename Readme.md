@@ -23,6 +23,12 @@ stow . --target ~ --dotfiles --restow
 
 All three inherit `FZF_DEFAULT_OPTS` (tmux popup).
 
+## fdignore
+
+`dot-fdignore` stows to `~/.fdignore`, which `fd` reads to exclude paths from search results. This directly affects fzf because `env.fish` sets `FZF_DEFAULT_COMMAND` to `fd --type f` and `FZF_ALT_C_COMMAND` to `fd --type d` — so the fdignore patterns filter what appears in `Ctrl+T` and `Alt+C`.
+
+Current config excludes macOS system directories: `/Library`, `/Applications`, `/Movies`, `/Music`, `/Pictures`, `/Public`.
+
 ## Mic Guard
 
 Prevents Bluetooth audio devices from hijacking the default microphone.
