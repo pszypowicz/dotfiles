@@ -2,27 +2,57 @@
 
 source "$CONFIG_DIR/colors.sh"
 
-# Attempt to get the current input device name
-MIC_NAME=$(SwitchAudioSource -t input -c)
-# I just want the first word, in case it's too long
-MIC_NAME=$(echo $MIC_NAME | awk '{print $1}')
+PREF_FILE="$HOME/.config/mic-guard/preferred-mic"
 
-# When no microphone is connected, SwitchAudioSource gives me back random
-# characters and sketchybar shows "Warning: Malformed UTF-8 string"
-# Validate MIC_NAME as UTF-8, replace invalid sequences with a '?', then compare with original
-VALIDATED_MIC_NAME=$(echo "$MIC_NAME" | iconv -f UTF-8 -t UTF-8//IGNORE)
+if [[ "$BUTTON" == "right" ]]; then
+  # Right-click: build popup with all input devices
+  DEVICES=$(mic-guard list)
+  CURRENT=$(mic-guard current)
 
-# Get the current microphone volume
-MIC_VOLUME=$(osascript -e 'input volume of (get volume settings)')
+  # Remove existing popup items
+  sketchybar --remove '/mic.device\..*/' 2>/dev/null
 
-# Check if MIC_NAME is not meaningful
-if ! [[ "$MIC_NAME" != "$VALIDATED_MIC_NAME" || -z "$MIC_NAME" ]]; then
-  # Update SketchyBar with the microphone's name and volume
-  if [[ $MIC_VOLUME -lt 100 ]]; then
-    osascript -e 'set volume input volume 100'
-  elif [[ $MIC_VOLUME -gt 0 ]]; then
-    osascript -e 'set volume input volume 0'
+  INDEX=0
+  while IFS= read -r device; do
+    [[ -z "$device" ]] && continue
+    ITEM_NAME="mic.device.$INDEX"
+
+    if [[ "$device" == "$CURRENT" ]]; then
+      ICON="󰄬"
+      COLOR="$WHITE"
+    else
+      ICON=""
+      COLOR="$ORANGE"
+    fi
+
+    sketchybar --add item "$ITEM_NAME" popup.mic \
+      --set "$ITEM_NAME" \
+        label="$device" \
+        icon="$ICON" \
+        icon.color="$COLOR" \
+        label.color="$COLOR" \
+        click_script="mic-guard set '$device'; echo '$device' > '$PREF_FILE'; sketchybar --set mic popup.drawing=off; sketchybar --trigger mic_clicked"
+
+    INDEX=$((INDEX + 1))
+  done <<< "$DEVICES"
+
+  sketchybar --set mic popup.drawing=toggle
+else
+  # Left-click: mute/unmute toggle
+  MIC_NAME=$(mic-guard current)
+  MIC_NAME=$(echo "$MIC_NAME" | awk '{print $1}')
+
+  VALIDATED_MIC_NAME=$(echo "$MIC_NAME" | iconv -f UTF-8 -t UTF-8//IGNORE)
+
+  MIC_VOLUME=$(osascript -e 'input volume of (get volume settings)')
+
+  if ! [[ "$MIC_NAME" != "$VALIDATED_MIC_NAME" || -z "$MIC_NAME" ]]; then
+    if [[ $MIC_VOLUME -lt 100 ]]; then
+      osascript -e 'set volume input volume 100'
+    elif [[ $MIC_VOLUME -gt 0 ]]; then
+      osascript -e 'set volume input volume 0'
+    fi
   fi
-fi
 
-sketchybar --trigger mic_clicked
+  sketchybar --trigger mic_clicked
+fi

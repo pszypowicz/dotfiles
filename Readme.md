@@ -22,3 +22,20 @@ stow . --target ~ --dotfiles --restow
 | `Alt+C`    | Find directories under current dir, `cd` into selection     | `FZF_ALT_C_COMMAND`, `FZF_ALT_C_OPTS`   |
 
 All three inherit `FZF_DEFAULT_OPTS` (tmux popup).
+
+## Mic Guard
+
+Prevents Bluetooth audio devices from hijacking the default microphone.
+
+### Install
+
+```bash
+cd ~/Documents/Code/MicGuard
+make install
+```
+
+On first launch MicGuard registers itself as a Login Item via `SMAppService`.
+
+### Change preferred mic
+
+Right-click the microphone icon in SketchyBar, or edit `~/.config/mic-guard/preferred-mic`.
