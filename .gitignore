@@ -1,3 +1,22 @@
 dot-config/op
 dot-config/htop
 dot-config/swiftpm
+dot-config/cagent
+dot-config/NuGet
+dot-config/k9s
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# Sensitive file types
+*.pem
+*.key
+*.p12
+*.pfx
+*.env
+.env*
+.netrc
+*credentials*
+*token.json
+*.secret
+*.secrets
