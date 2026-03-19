@@ -21,3 +21,6 @@ sketchybar --add event mic_app_terminated "com.micguard.appTerminated"
 sketchybar --add item mic right \
   --set mic "${mic[@]}" \
   --subscribe mic mic_clicked mic_device_changed mic_app_terminated mouse.exited mouse.exited.global
+
+# Request current status from MicGuard
+mic-guard ping 2>/dev/null &
