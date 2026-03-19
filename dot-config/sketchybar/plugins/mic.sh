@@ -29,6 +29,13 @@ fi
 # I just want the first word, in case it's too long
 MIC_NAME=$(echo $MIC_NAME | awk '{print $1}')
 
+# Check if monitoring is disabled
+ENABLED=$(cat ~/.config/mic-guard/enabled 2>/dev/null)
+if [[ "$ENABLED" == "0" ]]; then
+  sketchybar -m --set mic label="$MIC_NAME" icon=󰍬 icon.color=$YELLOW label.color=$YELLOW
+  exit 0
+fi
+
 # When no microphone is connected, mic-guard may return empty
 # Validate MIC_NAME as UTF-8, replace invalid sequences with a '?', then compare with original
 VALIDATED_MIC_NAME=$(echo "$MIC_NAME" | iconv -f UTF-8 -t UTF-8//IGNORE)

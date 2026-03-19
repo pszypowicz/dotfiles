@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+# Exit early if AeroSpace isn't running yet (e.g. during boot)
+if ! pgrep -xq AeroSpace; then
+  exit 0
+fi
+
 source "$CONFIG_DIR/icons.sh"
 
 # Update all monitor items with current visible workspaces
