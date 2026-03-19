@@ -34,11 +34,10 @@ default=(
   icon.padding_right=4
   label.padding_left=4
   label.padding_right=4
-  popup.background.border_width=2
-  popup.background.corner_radius=9
-  popup.background.border_color="$WHITE"
-  popup.background.color="$TRANSPARENT_BLACK"
-  popup.blur_radius=20
+  popup.background.border_width=1
+  popup.background.corner_radius=8
+  popup.background.border_color=0x44ffffff
+  popup.background.color=0xee1a1a2e
   popup.background.shadow.drawing=on
 )
 
