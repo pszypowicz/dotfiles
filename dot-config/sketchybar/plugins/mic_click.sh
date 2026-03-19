@@ -6,7 +6,7 @@ source "$CONFIG_DIR/colors.sh"
 PREF_FILE="$HOME/.config/mic-guard/preferred-mic"
 
 # Guard: do nothing if MicGuard.app is not running
-if ! pgrep -f 'MicGuard.app/Contents/MacOS/MicGuard' >/dev/null 2>&1; then
+if ! pgrep -xq MicGuard; then
   exit 0
 fi
 
@@ -15,8 +15,9 @@ if [[ "$BUTTON" == "right" ]]; then
   DEVICES=$(mic-guard list)
   CURRENT=$(mic-guard current)
 
-  # Remove existing popup items
+  # Remove existing popup items from both mic and mic.shield
   sketchybar --remove '/mic\.(device|sep|monitoring)\..*/' 2>/dev/null
+  sketchybar --remove '/mic\.shield\.(device|sep|monitoring)\..*/' 2>/dev/null
 
   INDEX=0
   while IFS= read -r device; do
@@ -46,15 +47,15 @@ if [[ "$BUTTON" == "right" ]]; then
     INDEX=$((INDEX + 1))
   done <<< "$DEVICES"
 
-  # Determine monitoring toggle state
+  # Determine MicGuard toggle — label shows what clicking will do
   ENABLED=$(cat ~/.config/mic-guard/enabled 2>/dev/null)
   if [[ "$ENABLED" == "0" ]]; then
-    MONITOR_LABEL="Enable Monitoring"
-    MONITOR_ICON="󰍬"
+    MONITOR_LABEL="Enable MicGuard"
+    MONITOR_ICON="󰕥"   # nf-md-shield_check
     MONITOR_CMD="mic-guard enable"
   else
-    MONITOR_LABEL="Disable Monitoring"
-    MONITOR_ICON="󰍭"
+    MONITOR_LABEL="Disable MicGuard"
+    MONITOR_ICON="󰦞"   # nf-md-shield_off
     MONITOR_CMD="mic-guard disable"
   fi
 
@@ -88,21 +89,7 @@ if [[ "$BUTTON" == "right" ]]; then
 
   sketchybar --set mic popup.drawing=toggle
 else
-  # Left-click: mute/unmute toggle
-  MIC_NAME=$(mic-guard current)
-  MIC_NAME=$(echo "$MIC_NAME" | awk '{print $1}')
-
-  VALIDATED_MIC_NAME=$(echo "$MIC_NAME" | iconv -f UTF-8 -t UTF-8//IGNORE)
-
-  MIC_VOLUME=$(osascript -e 'input volume of (get volume settings)')
-
-  if ! [[ "$MIC_NAME" != "$VALIDATED_MIC_NAME" || -z "$MIC_NAME" ]]; then
-    if [[ $MIC_VOLUME -lt 100 ]]; then
-      osascript -e 'set volume input volume 100'
-    elif [[ $MIC_VOLUME -gt 0 ]]; then
-      osascript -e 'set volume input volume 0'
-    fi
-  fi
-
+  # Left-click: mute/unmute toggle via native CoreAudio
+  mic-guard mute
   sketchybar --trigger mic_clicked
 fi
