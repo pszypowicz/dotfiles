@@ -7,5 +7,7 @@
 \.gitmodules
 
 dot-config/op
+mic-guard
+\.claude
 
 ^/README.md

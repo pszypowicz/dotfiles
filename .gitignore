@@ -4,6 +4,7 @@ dot-config/swiftpm
 dot-config/cagent
 dot-config/NuGet
 dot-config/k9s
+dot-config/mic-guard
 
 # Fish auto-managed
 dot-config/fish/fish_variables
