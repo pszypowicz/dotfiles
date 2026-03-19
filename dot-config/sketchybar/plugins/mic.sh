@@ -9,50 +9,50 @@ if [[ "$SENDER" == "mouse.exited" || "$SENDER" == "mouse.exited.global" ]]; then
   exit 0
 fi
 
-# MicGuard app just terminated — show off state immediately
+# Nerd Font glyphs
+SHIELD_CHECK=󰕥  # nf-md-shield_check (U+F0565)
+SHIELD_OFF=󰦞   # nf-md-shield_off (U+F099E)
+MIC_ON=󰍬       # nf-md-microphone (U+F036C)
+MIC_OFF=󰍭      # nf-md-microphone_off (U+F036D)
+
+# Helper: update both items in a single sketchybar call
+update_bar() {
+  local shield_icon=$1 shield_color=$2 mic_icon=$3 mic_color=$4 mic_label=$5 label_color=$6
+  sketchybar -m \
+    --set mic.shield icon="$shield_icon" icon.color=$shield_color label.drawing=off drawing=on \
+    --set mic icon="$mic_icon" icon.color=$mic_color label="$mic_label" label.color=$label_color drawing=on
+}
+
+show_off() {
+  sketchybar -m \
+    --set mic.shield icon="$SHIELD_OFF" icon.color=$RED label="Off" label.color=$RED label.drawing=on drawing=on \
+    --set mic drawing=off
+}
+
+# MicGuard app just terminated — hide both items
 if [[ "$SENDER" == "mic_app_terminated" ]]; then
-  sketchybar -m --set mic label="Off" icon=󰍬 icon.color=$YELLOW label.color=$YELLOW
+  show_off
   exit 0
 fi
 
-# Check if MicGuard.app is running (monitoring active)
-if ! pgrep -f 'MicGuard.app/Contents/MacOS/MicGuard' >/dev/null 2>&1; then
-  sketchybar -m --set mic label="Off" icon=󰍬 icon.color=$YELLOW label.color=$YELLOW
-  exit 0
-fi
+# Fast path: notification from MicGuard with full state in $INFO
+if [[ "$SENDER" == "mic_status_changed" && -n "$INFO" ]]; then
+  ENABLED=$(echo "$INFO" | sed -n 's/.*"enabled"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
+  MIC_NAME=$(echo "$INFO" | sed -n 's/.*"device"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
+  MIC_VOLUME=$(echo "$INFO" | sed -n 's/.*"volume"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
+  MIC_NAME=$(echo "$MIC_NAME" | awk '{print $1}')
 
-# Attempt to get the current input device name
-if ! MIC_NAME=$(mic-guard current 2>/dev/null); then
-  sketchybar -m --set mic label="" icon=󰍬 icon.color=$YELLOW label.color=$YELLOW
-  exit 0
-fi
-# I just want the first word, in case it's too long
-MIC_NAME=$(echo $MIC_NAME | awk '{print $1}')
-
-# Check if monitoring is disabled
-ENABLED=$(cat ~/.config/mic-guard/enabled 2>/dev/null)
-if [[ "$ENABLED" == "0" ]]; then
-  sketchybar -m --set mic label="$MIC_NAME" icon=󰍬 icon.color=$YELLOW label.color=$YELLOW
-  exit 0
-fi
-
-# When no microphone is connected, mic-guard may return empty
-# Validate MIC_NAME as UTF-8, replace invalid sequences with a '?', then compare with original
-VALIDATED_MIC_NAME=$(echo "$MIC_NAME" | iconv -f UTF-8 -t UTF-8//IGNORE)
-
-# Get the current microphone volume
-if ! MIC_VOLUME=$(osascript -e 'input volume of (get volume settings)' 2>/dev/null); then
-  sketchybar -m --set mic label="" icon=󰍬 icon.color=$YELLOW label.color=$YELLOW
-  exit 0
-fi
-
-# Check if MIC_NAME is not meaningful
-if [[ "$MIC_NAME" != "$VALIDATED_MIC_NAME" || -z "$MIC_NAME" ]]; then
-  sketchybar -m --set mic label="" icon=󰍬 icon.color=$YELLOW label.color=$YELLOW
-else
-  if [[ $MIC_VOLUME -eq 0 ]]; then
-    sketchybar -m --set mic label="$MIC_NAME" icon=󰍭 icon.color=$RED label.color=$RED
+  if [[ "$ENABLED" == "0" ]]; then
+    update_bar "$SHIELD_OFF" $YELLOW "$MIC_ON" $YELLOW "$MIC_NAME" $YELLOW
+  elif [[ "${MIC_VOLUME:-0}" -eq 0 ]]; then
+    update_bar "$SHIELD_CHECK" $WHITE "$MIC_OFF" $RED "$MIC_NAME" $RED
   else
-    sketchybar -m --set mic label="$MIC_NAME" icon=󰍬 icon.color=$WHITE label.color=$WHITE
+    update_bar "$SHIELD_CHECK" $WHITE "$MIC_ON" $WHITE "$MIC_NAME" $WHITE
   fi
+  exit 0
+fi
+
+# Health check: periodic 60s update / mic_clicked — only detects a dead app
+if ! pgrep -xq MicGuard; then
+  show_off
 fi
