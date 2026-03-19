@@ -40,11 +40,14 @@ if [[ "$SENDER" == "mic_status_changed" && -n "$INFO" ]]; then
   ENABLED=$(echo "$INFO" | sed -n 's/.*"enabled"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
   MIC_NAME=$(echo "$INFO" | sed -n 's/.*"device"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
   MIC_VOLUME=$(echo "$INFO" | sed -n 's/.*"volume"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
-  MIC_NAME=$(echo "$MIC_NAME" | awk '{print $1}')
+  MIC_MUTED=$(echo "$INFO" | sed -n 's/.*"muted"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
+  if [[ ${#MIC_NAME} -gt 12 ]]; then
+    MIC_NAME="${MIC_NAME:0:11}…"
+  fi
 
   if [[ "$ENABLED" == "0" ]]; then
     update_bar "$SHIELD_OFF" $YELLOW "$MIC_ON" $YELLOW "$MIC_NAME" $YELLOW
-  elif [[ "${MIC_VOLUME:-0}" -eq 0 ]]; then
+  elif [[ "$MIC_MUTED" == "1" ]]; then
     update_bar "$SHIELD_CHECK" $WHITE "$MIC_OFF" $RED "$MIC_NAME" $RED
   else
     update_bar "$SHIELD_CHECK" $WHITE "$MIC_ON" $WHITE "$MIC_NAME" $WHITE
