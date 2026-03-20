@@ -39,7 +39,20 @@ Current config excludes macOS system directories: `/Library`, `/Applications`, `
 
 ```bash
 brew services stop sketchybar
-launchctl load ~/Library/LaunchAgents/com.felixkratz.sketchybar.plist
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.felixkratz.sketchybar.plist
+```
+
+**Managing the service:**
+
+```bash
+# Stop
+launchctl bootout gui/$(id -u)/com.felixkratz.sketchybar
+
+# Start
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.felixkratz.sketchybar.plist
+
+# Restart (quick) — KeepAlive auto-relaunches after kill
+killall sketchybar
 ```
 
 **Upstream issue:** [FelixKratz/homebrew-formulae#17](https://github.com/FelixKratz/homebrew-formulae/issues/17) — once resolved, `brew services` can be used directly and this custom plist can be removed.
