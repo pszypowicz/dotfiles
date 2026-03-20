@@ -10,7 +10,7 @@ fi
 
 if [[ "$BUTTON" == "right" ]]; then
   # Right-click: toggle popup visibility
-  # Popup items are pre-built by mic_devices_changed handler
+  # Popup items are pre-built by mic_status_changed handler
   sketchybar --set mic popup.drawing=toggle
 else
   # Left-click: mute/unmute toggle via native CoreAudio
