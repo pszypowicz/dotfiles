@@ -55,7 +55,7 @@ source "$ITEMS_DIR/mic.sh"
 source "$ITEMS_DIR/clock.sh"
 source "$ITEMS_DIR/input_source.sh"
 
-sketchybar --hotload on
+sketchybar --hotload off
 
 ##### Force all scripts to run the first time (never do this in a script)
 

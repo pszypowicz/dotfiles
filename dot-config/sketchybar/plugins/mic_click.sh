@@ -1,19 +1,22 @@
 #!/usr/bin/env bash
 
 export PATH="$PATH:/opt/homebrew/bin"
-source "$CONFIG_DIR/colors.sh"
 
 # Guard: do nothing if MicGuard.app is not running
 if ! pgrep -xq MicGuard; then
   exit 0
 fi
 
-if [[ "$BUTTON" == "right" ]]; then
-  # Right-click: toggle popup visibility
-  # Popup items are pre-built by mic_status_changed handler
+if [[ "$NAME" == "mic.shield" ]]; then
+  # Shield left-click: toggle MicGuard enabled/disabled
+  ICON=$(sketchybar --query mic.shield 2>/dev/null | jq -r '.icon.value')
+  if [[ "$ICON" == "󰕥" ]]; then
+    mic-guard -q disable
+  else
+    mic-guard -q enable
+  fi
+elif [[ "$BUTTON" == "right" ]]; then
   sketchybar --set mic popup.drawing=toggle
 else
-  # Left-click: mute/unmute toggle via native CoreAudio
   mic-guard mute
-  sketchybar --trigger mic_clicked
 fi
