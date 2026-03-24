@@ -12,6 +12,9 @@ dot-config/fish/fish_variables
 # Claude Code local settings
 .claude/settings.local.json
 
+# Xcode artifacts
+*.profraw
+
 # Sensitive file types
 *.pem
 *.key
