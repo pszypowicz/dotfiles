@@ -39,4 +39,4 @@ sketchybar --add item mic.shield right \
   --subscribe mic.shield mouse.exited mouse.exited.global
 
 # Request current status so bar populates immediately on (re)start
-mic-guard ping 2>/dev/null &
+mic-guard -q ping 2>/dev/null &

@@ -59,7 +59,7 @@ killall sketchybar
 
 ## MicGuard Debugging
 
-The sketchybar mic plugin uses `mic-guard` CLI commands (`toggle -q`, `list --output json`) that may not yet be in the Homebrew release. To use the Xcode debug build:
+The sketchybar mic plugin uses `mic-guard` CLI commands (`-q toggle`, `list --output json`) that may not yet be in the Homebrew release. To use the Xcode debug build:
 
 ```bash
 ln -sf ~/Library/Developer/Xcode/DerivedData/MicGuard-*/Build/Products/Debug/mic-guard /opt/homebrew/bin/mic-guard

@@ -144,7 +144,7 @@ if [[ "$SENDER" == "mic_status_changed" && -n "$INFO" ]]; then
     ITEM="mic.device.${SORTED_SLUGS[$i]}"
     ESCAPED=$(printf '%s' "$name" | sed "s/'/'\\\\''/g")
 
-    CLICK="mic-guard set '$ESCAPED'; printf '%s' '$ESCAPED' > '$PREF_FILE'; sketchybar --set mic popup.drawing=off"
+    CLICK="mic-guard -q set '$ESCAPED'; printf '%s' '$ESCAPED' > '$PREF_FILE'; sketchybar --set mic popup.drawing=off"
     if [[ -n "${UNAVAILABLE[$name]+x}" ]]; then
       ICON="$CHECK"; COLOR="0x55ffffff"; DISPLAY="$name (offline)"; CLICK=""
     elif [[ "$name" == "$PREFERRED" ]]; then
