@@ -40,8 +40,13 @@ show_off() {
   sketchybar -m "${args[@]}"
 }
 
+shopt -s extglob
 slugify() {
-  echo "$1" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/_/g; s/__*/_/g; s/^_//; s/_$//'
+  local s="${1,,}"
+  s="${s//[^a-z0-9]/_}"
+  s="${s//+(_)/_}"
+  s="${s#_}"; s="${s%_}"
+  echo "$s"
 }
 
 # ── Mouse exit → close popup ───────────────────────────────────────
@@ -65,18 +70,20 @@ if [[ "$SENDER" == "mic_status_changed" && -n "$INFO" ]]; then
   PAYLOAD=$(echo "$INFO" | jq -r '.info // empty')
   [[ -z "$PAYLOAD" ]] && exit 0
 
-  # Extract all fields in two jq calls
-  CUR=$(echo "$PAYLOAD" | jq -r '(.devices // [] | map(select(.current)) | .[0]) // {}')
-  IFS=$'\t' read -r ENABLED CURRENT_NAME CURRENT_MUTED CURRENT_VOLUME PREFERRED <<< "$(
-    echo "$PAYLOAD" | jq -r --argjson cur "$CUR" '
-      [.enabled,
-       ($cur.name // ""),
-       ($cur.muted // false),
-       ($cur.volume // 0),
-       ((.devices // [] | map(select(.preferred)) | .[0].name) // "")]
-      | @tsv'
-  )"
-  DEVICES_JSON=$(echo "$PAYLOAD" | jq -c '.devices // []')
+  # Extract all fields in a single jq call
+  eval "$(echo "$PAYLOAD" | jq -r '
+    (.devices // []) as $devs |
+    ($devs | map(select(.current)) | .[0] // {}) as $cur |
+    (($devs | map(select(.preferred)) | .[0].name) // "") as $pref |
+    ($devs | map(select(.available == false) | .name)) as $unavail |
+    @sh "ENABLED=\(.enabled // false)",
+    @sh "CURRENT_NAME=\($cur.name // "")",
+    @sh "CURRENT_MUTED=\($cur.muted // false)",
+    @sh "CURRENT_VOLUME=\($cur.volume // 0)",
+    @sh "PREFERRED=\($pref)",
+    @sh "DEVICES_JSON=\($devs | tojson)",
+    "UNAVAILABLE_NAMES=(\($unavail | map(@sh) | join(" ")))"
+  ')"
 
   # Truncate label
   MIC_NAME="$CURRENT_NAME"
@@ -119,11 +126,11 @@ if [[ "$SENDER" == "mic_status_changed" && -n "$INFO" ]]; then
   done
   NEW_SLUGS="${NEW_SLUGS%$'\n'}"
 
-  # Unavailable devices
+  # Unavailable devices (from UNAVAILABLE_NAMES set by jq above)
   declare -A UNAVAILABLE=()
-  while IFS= read -r line; do
-    [[ -n "$line" ]] && UNAVAILABLE["$line"]=1
-  done < <(echo "$DEVICES_JSON" | jq -r '.[] | select(.available == false) | .name')
+  for _uname in "${UNAVAILABLE_NAMES[@]}"; do
+    UNAVAILABLE["$_uname"]=1
+  done
 
   ARGS=()
 

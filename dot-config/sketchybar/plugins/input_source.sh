@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-set -e
-
 # defaults read ~/Library/Preferences/com.apple.HIToolbox.plist AppleSelectedInputSources | egrep -w 'KeyboardLayout Name'
 # This returns:
 #       "KeyboardLayout Name" = "Polish Pro";
