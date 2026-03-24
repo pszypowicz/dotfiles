@@ -8,5 +8,5 @@ fi
 if [[ "$BUTTON" == "right" ]]; then
   sketchybar --set mic popup.drawing=toggle
 else
-  mic-guard mute
+  mic-guard -q mute
 fi
