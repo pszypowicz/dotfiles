@@ -56,3 +56,19 @@ killall sketchybar
 ```
 
 **Upstream issue:** [FelixKratz/homebrew-formulae#17](https://github.com/FelixKratz/homebrew-formulae/issues/17) — once resolved, `brew services` can be used directly and this custom plist can be removed.
+
+## MicGuard Debugging
+
+The sketchybar mic plugin uses `mic-guard` CLI commands (`toggle -q`, `list --output json`) that may not yet be in the Homebrew release. To use the Xcode debug build:
+
+```bash
+ln -sf ~/Library/Developer/Xcode/DerivedData/MicGuard-*/Build/Products/Debug/mic-guard /opt/homebrew/bin/mic-guard
+```
+
+The symlink auto-updates on Xcode rebuilds.
+
+**Revert to Homebrew release:**
+
+```bash
+brew reinstall mic-guard
+```

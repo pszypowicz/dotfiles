@@ -22,18 +22,16 @@ mic_shield=(
   label.drawing=off
   padding_right=0
   padding_left=5
-  click_script="$PLUGIN_DIR/mic_click.sh"
 )
 
 # Events
-sketchybar --add event mic_clicked
 sketchybar --add event mic_status_changed "com.pszypowicz.MicGuard.statusChanged"
 sketchybar --add event mic_app_terminated "com.pszypowicz.MicGuard.appTerminated"
 
 # mic item (rightmost — mic icon + device name label)
 sketchybar --add item mic right \
   --set mic "${mic[@]}" \
-  --subscribe mic mic_clicked mic_status_changed mic_app_terminated mouse.exited mouse.exited.global
+  --subscribe mic mic_status_changed mic_app_terminated mouse.exited mouse.exited.global
 
 # mic.shield item (left of mic — shield icon only)
 sketchybar --add item mic.shield right \

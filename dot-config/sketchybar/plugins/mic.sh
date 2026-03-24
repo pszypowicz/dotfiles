@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-export PATH="/opt/homebrew/bin:$PATH"
 source "$CONFIG_DIR/colors.sh"
 
 # ── Nerd Font glyphs ────────────────────────────────────────────────
@@ -11,22 +10,34 @@ MIC_OFF=󰍭      # nf-md-microphone_off (U+F036D)
 CHECK=󰄬        # nf-md-check          (U+F012C)
 
 PREF_FILE="$HOME/.config/mic-guard/preferred-mic"
+SHIELD_CLICK="mic-guard -q toggle"
 
 # ── Helpers ─────────────────────────────────────────────────────────
 
 update_bar() {
-  local shield_icon=$1 shield_color=$2 mic_icon=$3 mic_color=$4 mic_label=$5 label_color=$6
+  local shield_icon="$1" shield_color="$2" mic_icon="$3" mic_color="$4" mic_label="$5" label_color="$6"
   sketchybar -m \
-    --set mic.shield icon="$shield_icon" icon.color="$shield_color" label.drawing=off drawing=on \
+    --set mic.shield icon="$shield_icon" icon.color="$shield_color" label.drawing=off drawing=on click_script="$SHIELD_CLICK" \
     --set mic       icon="$mic_icon"     icon.color="$mic_color" \
                     label="$mic_label"   label.color="$label_color" drawing=on
 }
 
 show_off() {
-  sketchybar -m \
-    --set mic.shield icon="$SHIELD_OFF" icon.color="$RED" \
-                     label="Off" label.color="$RED" label.drawing=on drawing=on \
-    --set mic drawing=off
+  # Remove stale popup items
+  local items
+  items=$(sketchybar --query mic 2>/dev/null | jq -r '.popup.items // [] | .[]')
+  local args=()
+  while IFS= read -r item; do
+    [[ -n "$item" ]] && args+=(--remove "$item")
+  done <<< "$items"
+
+  args+=(
+    --set mic.shield icon="$SHIELD_OFF" icon.color="$RED"
+                     label="Off" label.color="$RED" label.drawing=on drawing=on
+                     click_script="$SHIELD_CLICK"
+    --set mic drawing=off popup.drawing=off
+  )
+  sketchybar -m "${args[@]}"
 }
 
 slugify() {
@@ -54,13 +65,18 @@ if [[ "$SENDER" == "mic_status_changed" && -n "$INFO" ]]; then
   PAYLOAD=$(echo "$INFO" | jq -r '.info // empty')
   [[ -z "$PAYLOAD" ]] && exit 0
 
-  ENABLED=$(echo "$PAYLOAD" | jq -r '.enabled')
+  # Extract all fields in two jq calls
+  CUR=$(echo "$PAYLOAD" | jq -r '(.devices // [] | map(select(.current)) | .[0]) // {}')
+  IFS=$'\t' read -r ENABLED CURRENT_NAME CURRENT_MUTED CURRENT_VOLUME PREFERRED <<< "$(
+    echo "$PAYLOAD" | jq -r --argjson cur "$CUR" '
+      [.enabled,
+       ($cur.name // ""),
+       ($cur.muted // false),
+       ($cur.volume // 0),
+       ((.devices // [] | map(select(.preferred)) | .[0].name) // "")]
+      | @tsv'
+  )"
   DEVICES_JSON=$(echo "$PAYLOAD" | jq -c '.devices // []')
-
-  # Current device info
-  CURRENT_NAME=$(echo "$DEVICES_JSON"   | jq -r '[.[] | select(.current)] | first | .name // empty')
-  CURRENT_MUTED=$(echo "$DEVICES_JSON"  | jq -r '[.[] | select(.current)] | first | .muted // false')
-  CURRENT_VOLUME=$(echo "$DEVICES_JSON" | jq -r '[.[] | select(.current)] | first | .volume // 0')
 
   # Truncate label
   MIC_NAME="$CURRENT_NAME"
@@ -85,23 +101,25 @@ if [[ "$SENDER" == "mic_status_changed" && -n "$INFO" ]]; then
 
   # ── Popup: devices only ───────────────────────────────────────
 
-  # Existing popup items (sorted set of slugs)
   OLD_SLUGS=$(sketchybar --query mic 2>/dev/null | jq -r '.popup.items // [] | .[]' | sort)
 
-  # Desired device slugs (sorted)
+  # Sorted names + precomputed slugs
   SORTED_NAMES=()
+  SORTED_SLUGS=()
   while IFS= read -r line; do
-    [[ -n "$line" ]] && SORTED_NAMES+=("$line")
+    if [[ -n "$line" ]]; then
+      SORTED_NAMES+=("$line")
+      SORTED_SLUGS+=("$(slugify "$line")")
+    fi
   done < <(echo "$DEVICES_JSON" | jq -r '.[].name' | sort)
 
   NEW_SLUGS=""
-  for name in "${SORTED_NAMES[@]}"; do
-    NEW_SLUGS+="mic.device.$(slugify "$name")"$'\n'
+  for slug in "${SORTED_SLUGS[@]}"; do
+    NEW_SLUGS+="mic.device.$slug"$'\n'
   done
-  NEW_SLUGS=$(echo -n "$NEW_SLUGS" | sort)
+  NEW_SLUGS="${NEW_SLUGS%$'\n'}"
 
-  PREFERRED=$(echo "$DEVICES_JSON" | jq -r '[.[] | select(.preferred)] | first | .name // empty')
-
+  # Unavailable devices
   declare -A UNAVAILABLE=()
   while IFS= read -r line; do
     [[ -n "$line" ]] && UNAVAILABLE["$line"]=1
@@ -115,29 +133,24 @@ if [[ "$SENDER" == "mic_status_changed" && -n "$INFO" ]]; then
       [[ -n "$item" ]] && ARGS+=(--remove "$item")
     done <<< "$OLD_SLUGS"
 
-    for name in "${SORTED_NAMES[@]}"; do
-      ARGS+=(--add item "mic.device.$(slugify "$name")" popup.mic)
+    for slug in "${SORTED_SLUGS[@]}"; do
+      ARGS+=(--add item "mic.device.$slug" popup.mic)
     done
   fi
 
-  # Update all device properties (both rebuild and in-place update paths)
-  for name in "${SORTED_NAMES[@]}"; do
-    slug=$(slugify "$name")
-    ITEM="mic.device.$slug"
+  # Update all device properties
+  for i in "${!SORTED_NAMES[@]}"; do
+    name="${SORTED_NAMES[$i]}"
+    ITEM="mic.device.${SORTED_SLUGS[$i]}"
     ESCAPED=$(printf '%s' "$name" | sed "s/'/'\\\\''/g")
 
+    CLICK="mic-guard set '$ESCAPED'; printf '%s' '$ESCAPED' > '$PREF_FILE'; sketchybar --set mic popup.drawing=off"
     if [[ -n "${UNAVAILABLE[$name]+x}" ]]; then
-      ICON="$CHECK"; COLOR="0x55ffffff"
-      DISPLAY="$name (offline)"
-      CLICK=""
+      ICON="$CHECK"; COLOR="0x55ffffff"; DISPLAY="$name (offline)"; CLICK=""
     elif [[ "$name" == "$PREFERRED" ]]; then
-      ICON="$CHECK"; COLOR="$WHITE"
-      DISPLAY="$name"
-      CLICK="mic-guard set '$ESCAPED'; printf '%s' '$ESCAPED' > '$PREF_FILE'; sketchybar --set mic popup.drawing=off"
+      ICON="$CHECK"; COLOR="$WHITE"; DISPLAY="$name"
     else
-      ICON=" "; COLOR="$ORANGE"
-      DISPLAY="$name"
-      CLICK="mic-guard set '$ESCAPED'; printf '%s' '$ESCAPED' > '$PREF_FILE'; sketchybar --set mic popup.drawing=off"
+      ICON=" "; COLOR="$ORANGE"; DISPLAY="$name"
     fi
 
     ARGS+=(--set "$ITEM"
@@ -154,4 +167,10 @@ if [[ "$SENDER" == "mic_status_changed" && -n "$INFO" ]]; then
 
   sketchybar "${ARGS[@]}"
   exit 0
+fi
+
+# ── Health check: periodic 60s — detect dead MicGuard ─────────────
+
+if ! pgrep -xq MicGuard; then
+  show_off
 fi
