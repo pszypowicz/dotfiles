@@ -9,7 +9,6 @@ MIC_ON=󰍬       # nf-md-microphone     (U+F036C)
 MIC_OFF=󰍭      # nf-md-microphone_off (U+F036D)
 CHECK=󰄬        # nf-md-check          (U+F012C)
 
-PREF_FILE="$HOME/.config/mic-guard/preferred-mic"
 SHIELD_CLICK="mic-guard -q toggle"
 
 # ── Helpers ─────────────────────────────────────────────────────────
@@ -151,7 +150,7 @@ if [[ "$SENDER" == "mic_status_changed" && -n "$INFO" ]]; then
     ITEM="mic.device.${SORTED_SLUGS[$i]}"
     ESCAPED=$(printf '%s' "$name" | sed "s/'/'\\\\''/g")
 
-    CLICK="mic-guard -q set '$ESCAPED'; printf '%s' '$ESCAPED' > '$PREF_FILE'; sketchybar --set mic popup.drawing=off"
+    CLICK="mic-guard -q set '$ESCAPED'; sketchybar --set mic popup.drawing=off"
     if [[ -n "${UNAVAILABLE[$name]+x}" ]]; then
       ICON="$CHECK"; COLOR="0x55ffffff"; DISPLAY="$name (offline)"; CLICK=""
     elif [[ "$name" == "$PREFERRED" ]]; then
