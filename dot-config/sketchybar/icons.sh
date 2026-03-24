@@ -4,9 +4,6 @@ export APPLE=󰘳
 export PREFERENCES=􀺽
 export ACTIVITY=􀒓
 export LOCK=􀒳
-export WIFI_CONNECTED=􀙇
-export WIFI_DISCONNECTED=􀙈
-export ETHERNET_CONNECTED=󰈀
 
 export AEROWORKSPACE_1=󰎦
 export AEROWORKSPACE_2=󰎩

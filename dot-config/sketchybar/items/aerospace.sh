@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-PLUGIN_DIR="$CONFIG_DIR/plugins"
-
 # Register custom events
 sketchybar --add event aerospace_workspace_change
 
