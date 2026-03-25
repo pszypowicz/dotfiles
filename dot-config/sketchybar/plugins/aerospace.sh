@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
 # Exit early if AeroSpace isn't running yet (e.g. during boot)
-if ! pgrep -xq AeroSpace; then
+# Note: pgrep doesn't work from sketchybar's context (macOS sandbox isolation),
+# so we use the aerospace CLI itself to check availability.
+if ! aerospace list-workspaces --monitor all --count 2>/dev/null; then
   exit 0
 fi
 
