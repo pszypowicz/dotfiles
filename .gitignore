@@ -9,8 +9,9 @@ dot-config/mic-guard
 # Fish auto-managed
 dot-config/fish/fish_variables
 
-# Claude Code local settings
-.claude/settings.local.json
+# Claude Code — track only settings.json, ignore everything else
+dot-config/claude/*
+!dot-config/claude/settings.json
 
 # Xcode artifacts
 *.profraw
