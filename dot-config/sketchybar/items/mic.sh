@@ -31,12 +31,12 @@ sketchybar --add event mic_app_terminated "com.pszypowicz.MicGuard.appTerminated
 # mic item (rightmost — mic icon + device name label)
 sketchybar --add item mic right \
   --set mic "${mic[@]}" \
-  --subscribe mic mic_status_changed mic_app_terminated mouse.exited mouse.exited.global
+  --subscribe mic mic_status_changed mic_app_terminated mouse.exited.global
 
 # mic.shield item (left of mic — shield icon only)
 sketchybar --add item mic.shield right \
   --set mic.shield "${mic_shield[@]}" \
-  --subscribe mic.shield mouse.exited mouse.exited.global
+  --subscribe mic.shield mouse.exited.global
 
 # Request current status so bar populates immediately on (re)start
 mic-guard -q ping 2>/dev/null &

@@ -16,7 +16,8 @@ source "$ICONS"
 
 bar=(
   position=top
-  height=40
+  height=30
+  notch_display_height=34
   blur_radius=30
   color="$TRANSPARENT_BLACK"
 )
