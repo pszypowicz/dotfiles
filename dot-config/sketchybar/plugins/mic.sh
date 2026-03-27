@@ -50,7 +50,7 @@ slugify() {
 
 # ── Mouse exit → close popup ───────────────────────────────────────
 
-if [[ "$SENDER" == "mouse.exited" || "$SENDER" == "mouse.exited.global" ]]; then
+if [[ "$SENDER" == "mouse.exited.global" ]]; then
   sketchybar --set mic popup.drawing=off
   exit 0
 fi
