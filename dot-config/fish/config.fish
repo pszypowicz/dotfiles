@@ -5,6 +5,7 @@ end
 
 /opt/homebrew/bin/brew shellenv | source
 fish_add_path ~/.local/bin
+set -gx CLAUDE_CONFIG_DIR ~/.config/claude
 
 if status is-interactive
     # Check if tmux is already running by checking the TMUX environment variable
