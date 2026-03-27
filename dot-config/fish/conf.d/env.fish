@@ -10,4 +10,6 @@ set -gx FZF_CTRL_R_OPTS '--layout=reverse --preview "echo {}" --preview-window d
 
 set -gx XDG_CONFIG_HOME ~/.config
 
+fish_add_path /Users/pszypowicz/bin
+
 set -g fish_key_bindings fish_vi_key_bindings
