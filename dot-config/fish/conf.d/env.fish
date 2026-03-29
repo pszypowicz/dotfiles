@@ -9,6 +9,7 @@ set -gx FZF_CTRL_T_OPTS '--select-1 --exit-0 --preview "test -d {} && lsd --tree
 set -gx FZF_CTRL_R_OPTS '--layout=reverse --preview "echo {}" --preview-window down:3:hidden:wrap --bind "?:toggle-preview"'
 
 set -gx XDG_CONFIG_HOME ~/.config
+set -gx CLAUDE_CONFIG_DIR ~/.config/claude
 
 fish_add_path /Users/pszypowicz/bin
 
