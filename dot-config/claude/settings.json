@@ -11,6 +11,17 @@
     "pr": ""
   },
   "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "test -x ~/.journal/hooks/claude-stop-hook.sh && ~/.journal/hooks/claude-stop-hook.sh || true",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write",
