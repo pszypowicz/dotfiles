@@ -6,7 +6,8 @@ function __claude_resume_sessions
 
     # Collect active session IDs to exclude
     set -l active_sids
-    for f in ~/.config/claude/sessions/*.json
+    set -l session_files ~/.config/claude/sessions/*.json
+    for f in $session_files
         test -f $f; or continue
         set -l pid (string match -r '"pid":([0-9]+)' < $f)[2]
         if test -n "$pid"; and kill -0 $pid 2>/dev/null
@@ -19,7 +20,10 @@ function __claude_resume_sessions
         contains -- $sid $active_sids; and continue
 
         # Try session name from active sessions file, fall back to first user message, then date
-        set -l name (grep -m1 '"name"' ~/.config/claude/sessions/*.json 2>/dev/null | string match -r "\"sessionId\":\"$sid\".*\"name\":\"([^\"]+)\"" | tail -1)
+        set -l name
+        if test (count $session_files) -gt 0
+            set name (grep -m1 '"name"' $session_files 2>/dev/null | string match -r "\"sessionId\":\"$sid\".*\"name\":\"([^\"]+)\"" | tail -1)
+        end
 
         if test -n "$name"
             set desc "$name"
