@@ -83,6 +83,18 @@ themeWatcher = hs.distributednotifications.new(function()
     applyTheme()
 end, "AppleInterfaceThemeChangedNotification"):start()
 
+-- Keyboard Viewer: callable via `hs -c "toggleKeyboardViewer()"` (e.g. from sketchybar)
+function toggleKeyboardViewer()
+    hs.osascript.applescript([[
+        tell application "System Events"
+            tell process "TextInputMenuAgent"
+                click menu bar item 1 of menu bar 2
+                click menu item "Show Keyboard Viewer" of menu 1 of menu bar item 1 of menu bar 2
+            end tell
+        end tell
+    ]])
+end
+
 -- Trackpad swipe: 2-finger horizontal swipe switches tmux windows in Terminal.app
 
 local swipe = hs.loadSpoon("Swipe")
