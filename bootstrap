@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Bootstrap — run once on a fresh machine, safe to re-run
+
+DOTFILES_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# 1. Homebrew
+if ! command -v brew &>/dev/null; then
+    echo "Installing Homebrew..."
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+fi
+
+# 2. Packages
+echo "Installing packages..."
+brew bundle --file "$DOTFILES_DIR/dot-config/brewfile/Brewfile"
+
+# 3. Dotfiles
+echo "Stowing dotfiles..."
+stow -d "$DOTFILES_DIR" -t ~ . --dotfiles --restow
+
+# 4. Defaults
+echo "Writing macOS defaults..."
+defaults write org.hammerspoon.Hammerspoon MJConfigFile "~/.config/hammerspoon/init.lua"
+
+# 5. Manual steps
+echo ""
+echo "Done. Manual steps remaining:"
+echo "  - Open Hammerspoon and grant Accessibility permission"
+echo "  - Enable 'Launch Hammerspoon at login' from menu bar icon"
