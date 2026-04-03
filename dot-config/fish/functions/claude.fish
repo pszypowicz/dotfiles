@@ -1,6 +1,6 @@
 function claude --wraps claude --description "Claude Code with tmux window name tracking and auto-theme"
     # Auto-theme: use NODE_OPTIONS to patch theme rendering.
-    # A Swift daemon writes the OS appearance to current-theme; the JS hook
+    # os-state writes the OS appearance to a theme file; the JS hook
     # reads it and reactively switches Claude's theme mid-session.
     set -l theme_hook "$HOME/.config/claude/theme/auto-theme.mjs"
     set -l theme_opts
