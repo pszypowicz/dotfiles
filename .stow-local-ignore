@@ -11,3 +11,4 @@ mic-guard
 \.claude
 
 ^/README.md
+^/bootstrap

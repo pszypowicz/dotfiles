@@ -1,0 +1,26 @@
+[credential]
+	helper = osxkeychain
+[push]
+	default = current
+[pager]
+	branch = false
+[core]
+	autocrlf = false
+	eol = lf
+	excludesfile = ~/.config/git/ignore
+	fileMode = false
+	hooksPath = ~/.config/git/hooks
+
+[pull]
+	ff = only
+[init]
+	defaultBranch = main
+[sequence]
+	editor = code --wait
+
+[user]
+	name = Przemysław Szypowicz
+	email = 2733699+pszypowicz@users.noreply.github.com
+
+[includeIf "gitdir:~/Documents/Code/work/"]
+	path = ~/Documents/Code/work/.gitconfig
