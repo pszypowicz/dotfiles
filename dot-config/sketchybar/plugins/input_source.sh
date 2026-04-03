@@ -6,7 +6,7 @@
 
 # We just need the name of the keyboard layout, so we can use awk to extract it.
 
-keyboard_layout=$(defaults read ~/Library/Preferences/com.apple.HIToolbox.plist AppleSelectedInputSources | egrep -w 'KeyboardLayout Name' | awk -F\" '{print $4}')
+keyboard_layout=$(defaults read ~/Library/Preferences/com.apple.HIToolbox.plist AppleSelectedInputSources | grep -Ew 'KeyboardLayout Name' | awk -F\" '{print $4}')
 
 declare -A keyboard_layout_icons
 keyboard_layout_icons["Polish Pro"]="PL"

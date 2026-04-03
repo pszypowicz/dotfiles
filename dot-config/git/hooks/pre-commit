@@ -6,7 +6,7 @@ files=($(git ls-files | grep '\.tf$'))
 # # find parent directories of all .tf files
 dirs=($(echo $files | xargs -n1 dirname | sort -u))
 
-# run `terraform-docs .`` in each directory only if the firectory contains .terraform-docs.yml or .terraform-docs.yaml
+# run `terraform-docs .`` in each directory only if the directory contains .terraform-docs.yml or .terraform-docs.yaml
 for dir in $dirs; do
   if [ -f "$dir/.terraform-docs.yml" ]; then
     pushd -q $dir

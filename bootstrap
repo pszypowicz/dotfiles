@@ -22,7 +22,7 @@ stow -d "$DOTFILES_DIR" -t ~ . --dotfiles --restow
 
 # 4. Defaults
 echo "Writing macOS defaults..."
-defaults write org.hammerspoon.Hammerspoon MJConfigFile "~/.config/hammerspoon/init.lua"
+defaults write org.hammerspoon.Hammerspoon MJConfigFile "$HOME/.config/hammerspoon/init.lua"
 
 # 5. Manual steps
 echo ""
