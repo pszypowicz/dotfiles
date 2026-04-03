@@ -10,6 +10,7 @@ noremap <Left> <NOP>
 noremap <Right> <NOP>
 
 set shiftwidth=2
+let &viminfofile = expand('~/.local/state/vim/viminfo')
 
 nnoremap <silent> <C-l> :nohl<CR><C-l>
 set rtp+=/opt/homebrew/opt/fzf
