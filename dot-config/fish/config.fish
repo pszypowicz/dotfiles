@@ -11,7 +11,11 @@ if status is-interactive
     # Check if tmux is already running by checking the TMUX environment variable
     # Do not run tmux if inside VSCode terminal
     if not set -q TMUX; and not string match -q "$TERM_PROGRAM" vscode; and isatty stdin
-        exec tmux new-session -A -D -s default -c "$PWD"
+        set -l session_name personal
+        if test (hostname -s) = "HOSTNAME"
+            set session_name work
+        end
+        exec tmux new-session -A -D -s $session_name -c "$PWD"
     end
 
     starship init fish | source
