@@ -1,5 +1,5 @@
 // Auto-theme for Claude Code
-// Reads OS appearance from os-state's theme file
+// Reads OS appearance from Hammerspoon's theme state file
 // and exposes reactive state for the loader hook to subscribe to.
 import { readFileSync, watch } from "node:fs";
 import { register } from "node:module";
@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 const home = process.env.HOME || "/Users/" + process.env.USER;
-const themeFile = join(home, ".config", "os-state", "state", "appearance", "theme");
+const themeFile = join(home, ".config", "hammerspoon", "state", "theme");
 
 let currentIsDark = true;
 
@@ -21,7 +21,7 @@ function readThemeFile() {
 
 currentIsDark = readThemeFile();
 
-// Watch for changes from the Swift daemon
+// Watch for changes from Hammerspoon
 const listeners = new Set();
 try {
   watch(themeFile, () => {

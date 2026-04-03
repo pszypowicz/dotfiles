@@ -30,3 +30,4 @@ dot-config/claude/*
 *token.json
 *.secret
 *.secrets
+dot-config/hammerspoon/state/
