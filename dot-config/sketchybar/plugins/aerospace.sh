@@ -7,6 +7,15 @@ if ! aerospace list-workspaces --monitor all --count 2>/dev/null; then
   exit 0
 fi
 
+# Close popups on mouse exit
+if [[ "$SENDER" == "mouse.exited.global" ]]; then
+  while IFS=: read -r _ monitor_id; do
+    [[ -z "$monitor_id" ]] && continue
+    sketchybar --set "aerospace.monitor.$monitor_id" popup.drawing=off 2>/dev/null
+  done <<<"$(aerospace list-workspaces --monitor all --visible --format '%{workspace}:%{monitor-appkit-nsscreen-screens-id}')"
+  exit 0
+fi
+
 source "$CONFIG_DIR/icons.sh"
 
 # Query existing items once
@@ -34,6 +43,7 @@ while IFS=: read -r workspace monitor_id; do
         icon="${!icon_var}" \
         padding_right=2 \
         icon.font.size=22 \
+        click_script="$CONFIG_DIR/plugins/aerospace_click.sh" \
       --move "$item_name" after aerospace.observer
   fi
 done <<<"$(aerospace list-workspaces --monitor all --visible --format '%{workspace}:%{monitor-appkit-nsscreen-screens-id}')"

@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 
-# defaults read ~/Library/Preferences/com.apple.HIToolbox.plist AppleSelectedInputSources | egrep -w 'KeyboardLayout Name'
-# This returns:
-#       "KeyboardLayout Name" = "Polish Pro";
-
-# We just need the name of the keyboard layout, so we can use awk to extract it.
+if [[ "$SENDER" == "mouse.exited.global" ]]; then
+  sketchybar --set input_source popup.drawing=off
+  exit 0
+fi
 
 keyboard_layout=$(defaults read ~/Library/Preferences/com.apple.HIToolbox.plist AppleSelectedInputSources | grep -Ew 'KeyboardLayout Name' | awk -F\" '{print $4}')
 
@@ -13,4 +12,8 @@ keyboard_layout_icons["Polish Pro"]="PL"
 keyboard_layout_icons["Arabic PC"]="ع"
 keyboard_layout_icons["USInternational-PC"]="US"
 
-sketchybar --set "$NAME" label="${keyboard_layout_icons[$keyboard_layout]}"
+label="${keyboard_layout_icons[$keyboard_layout]}"
+y_offset=0
+[[ "$keyboard_layout" == "Arabic PC" ]] && y_offset=3
+
+sketchybar --set "$NAME" label="$label" label.y_offset="$y_offset"

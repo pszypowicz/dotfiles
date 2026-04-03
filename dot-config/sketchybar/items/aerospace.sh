@@ -8,4 +8,4 @@ sketchybar --add item aerospace.observer left \
   --set aerospace.observer \
   drawing=off \
   script="$PLUGIN_DIR/aerospace.sh" \
-  --subscribe aerospace.observer aerospace_workspace_change
+  --subscribe aerospace.observer aerospace_workspace_change mouse.exited.global

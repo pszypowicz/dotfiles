@@ -5,6 +5,11 @@
 # focused application in the $INFO variable:
 # https://felixkratz.github.io/SketchyBar/config/events#events-and-scripting
 
+if [[ "$SENDER" == "mouse.exited.global" ]]; then
+  sketchybar --set front_app popup.drawing=off
+  exit 0
+fi
+
 if [ "$SENDER" = "front_app_switched" ]; then
   sketchybar --set "$NAME" label="$INFO"
 fi
