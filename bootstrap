@@ -23,9 +23,4 @@ stow -d "$DOTFILES_DIR" -t ~ . --dotfiles --restow
 # 4. Defaults
 echo "Writing macOS defaults..."
 defaults write org.hammerspoon.Hammerspoon MJConfigFile "$HOME/.config/hammerspoon/init.lua"
-
-# 5. Manual steps
-echo ""
-echo "Done. Manual steps remaining:"
-echo "  - Open Hammerspoon and grant Accessibility permission"
-echo "  - Enable 'Launch Hammerspoon at login' from menu bar icon"
+echo "Done."

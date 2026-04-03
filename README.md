@@ -17,21 +17,26 @@ stow . --target ~ --dotfiles --restow
 - `--dotfiles` - takes filename prefix `dot-` and replace it in a target with `.`
 - `--restow` - remove from target non-existent links
 
-## Fish Shell Keybindings
+## What's included
 
-### FZF built-ins (`fzf --fish | source`)
+**Shells:** Fish (primary, vi keybindings), Bash, Zsh
+**Terminal:** Tmux, Starship prompt
+**Window management:** AeroSpace (tiling), Borders, Hammerspoon
+**Status bar:** SketchyBar
+**Dev tools:** Git, GitHub CLI, Vim, fd, fzf
+**Other:** npm, Homebrew (separate work/personal Brewfiles)
 
-| Keybinding | Action                                                      | Customization env var                   |
-| ---------- | ----------------------------------------------------------- | --------------------------------------- |
-| `Ctrl+T`   | Find files under current dir, insert path into command line | `FZF_CTRL_T_COMMAND`, `FZF_CTRL_T_OPTS` |
-| `Ctrl+R`   | Search command history, insert selected command             | `FZF_CTRL_R_OPTS`                       |
-| `Alt+C`    | Find directories under current dir, `cd` into selection     | `FZF_ALT_C_COMMAND`, `FZF_ALT_C_OPTS`   |
+## XDG
 
-All three inherit `FZF_DEFAULT_OPTS` (tmux popup).
+Configs live under `~/.config` via XDG env vars set in `env.fish` (and equivalents in bash/zsh). `env.fish` also relocates tool state directories (Gradle, npm, Android, bundler, etc.) out of `~/`.
 
-## fdignore
+## fzf
 
-`dot-fdignore` stows to `~/.fdignore`, which `fd` reads to exclude paths from search results. This directly affects fzf because `env.fish` sets `FZF_DEFAULT_COMMAND` to `fd --type f` and `FZF_ALT_C_COMMAND` to `fd --type d` — so the fdignore patterns filter what appears in `Ctrl+T` and `Alt+C`.
+Fish sources fzf shell integration (`fzf --fish`), providing `Ctrl+T` (files), `Ctrl+R` (history), and `Alt+C` (directories). `env.fish` customizes these to use `fd` for file/directory discovery, `zoxide` results in `Alt+C`, and a tmux popup for the UI.
+
+## fd ignore
+
+`dot-config/fd/ignore` stows to `~/.config/fd/ignore`, which `fd` reads to exclude paths from search results. Since fzf is configured to use `fd` under the hood, these patterns also filter what appears in `Ctrl+T` and `Alt+C`.
 
 Current config excludes macOS system directories: `/Library`, `/Applications`, `/Movies`, `/Music`, `/Pictures`, `/Public`.
 
