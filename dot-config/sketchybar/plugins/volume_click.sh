@@ -1,32 +1,28 @@
 #!/usr/bin/env bash
 
 source "$CONFIG_DIR/colors.sh"
-
-CHECK=󰄬
-
-shopt -s extglob
-
-slugify() {
-  local s="${1,,}"
-  s="${s//[^a-z0-9]/_}"
-  s="${s//+(_)/_}"
-  s="${s#_}"; s="${s%_}"
-  echo "$s"
-}
-
-cleanup_popup() {
-  local items
-  items=$(sketchybar --query volume 2>/dev/null | jq -r '.popup.items // [] | .[]')
-  while IFS= read -r item; do
-    [[ -n "$item" ]] && sketchybar --remove "$item"
-  done <<< "$items"
-}
+source "$CONFIG_DIR/icons.sh"
+source "$CONFIG_DIR/utils.sh"
 
 show_slider() {
-  cleanup_popup
+  cleanup_popup volume
 
   local vol
   vol=$(osascript -e 'output volume of (get volume settings)')
+
+  if [[ "$vol" == "missing value" ]]; then
+    sketchybar \
+      --add item volume.fixed popup.volume \
+      --set volume.fixed \
+        label="Fixed volume" \
+        icon="$VOLUME_HIGH" \
+        icon.color="$WHITE" \
+        label.color="$WHITE" \
+        background.color="$TRANSPARENT" \
+        background.height=30 \
+      --set volume popup.drawing=on
+    return
+  fi
 
   sketchybar \
     --add slider volume.slider popup.volume \
@@ -36,7 +32,7 @@ show_slider() {
       slider.background.height=5 \
       slider.background.corner_radius=3 \
       slider.background.color="$TRANSPARENT_BLACK" \
-      slider.knob=󰏝 \
+      slider.knob="$SLIDER_KNOB" \
       slider.knob.color="$WHITE" \
       slider.width=150 \
       script="$CONFIG_DIR/plugins/volume_slider.sh" \
@@ -45,7 +41,7 @@ show_slider() {
 }
 
 show_devices() {
-  cleanup_popup
+  cleanup_popup volume
 
   local devices current
   devices=$(hs -c '
@@ -77,7 +73,7 @@ show_devices() {
         icon.width=20
         icon.color="$color"
         label.color="$color"
-        background.color=0x00000000
+        background.color="$TRANSPARENT"
         background.height=30
         background.drawing=on
         click_script="hs -c \"hs.audiodevice.findOutputByName('$escaped'):setDefaultOutputDevice()\"; sketchybar --set volume popup.drawing=off"

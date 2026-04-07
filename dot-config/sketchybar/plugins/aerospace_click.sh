@@ -2,18 +2,13 @@
 
 source "$CONFIG_DIR/icons.sh"
 source "$CONFIG_DIR/colors.sh"
-
-CHECK=󰄬
+source "$CONFIG_DIR/utils.sh"
 
 if [[ "$BUTTON" != "right" ]]; then
   exit 0
 fi
 
-# Close any open aerospace popup
-items=$(sketchybar --query "$NAME" 2>/dev/null | jq -r '.popup.items // [] | .[]')
-while IFS= read -r item; do
-  [[ -n "$item" ]] && sketchybar --remove "$item"
-done <<< "$items"
+cleanup_popup "$NAME"
 
 visible=$(aerospace list-workspaces --monitor focused --visible 2>/dev/null)
 
@@ -42,7 +37,7 @@ while IFS= read -r ws; do
       icon.width=20
       icon.color="$color"
       label.color="$color"
-      background.color=0x00000000
+      background.color="$TRANSPARENT"
       background.height=30
       background.drawing=on
       click_script="aerospace workspace $ws; sketchybar --set $NAME popup.drawing=off"

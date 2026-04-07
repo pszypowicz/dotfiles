@@ -1,13 +1,8 @@
 #!/usr/bin/env bash
 
 source "$CONFIG_DIR/colors.sh"
-
-# ── Nerd Font glyphs ────────────────────────────────────────────────
-SHIELD_CHECK=󰕥  # nf-md-shield_check (U+F0565)
-SHIELD_OFF=󰦞   # nf-md-shield_off   (U+F099E)
-MIC_ON=󰍬       # nf-md-microphone     (U+F036C)
-MIC_OFF=󰍭      # nf-md-microphone_off (U+F036D)
-CHECK=󰄬        # nf-md-check          (U+F012C)
+source "$CONFIG_DIR/icons.sh"
+source "$CONFIG_DIR/utils.sh"
 
 SHIELD_CLICK="mic-guard -q toggle"
 
@@ -22,10 +17,11 @@ update_bar() {
 }
 
 show_off() {
+  local args=()
+
   # Remove stale popup items
   local items
   items=$(sketchybar --query mic 2>/dev/null | jq -r '.popup.items // [] | .[]')
-  local args=()
   while IFS= read -r item; do
     [[ -n "$item" ]] && args+=(--remove "$item")
   done <<< "$items"
@@ -37,15 +33,6 @@ show_off() {
     --set mic drawing=off popup.drawing=off
   )
   sketchybar -m "${args[@]}"
-}
-
-shopt -s extglob
-slugify() {
-  local s="${1,,}"
-  s="${s//[^a-z0-9]/_}"
-  s="${s//+(_)/_}"
-  s="${s#_}"; s="${s%_}"
-  echo "$s"
 }
 
 # ── Mouse exit → close popup ───────────────────────────────────────
@@ -152,7 +139,7 @@ if [[ "$SENDER" == "mic_status_changed" && -n "$INFO" ]]; then
 
     CLICK="mic-guard -q set '$ESCAPED'; sketchybar --set mic popup.drawing=off"
     if [[ -n "${UNAVAILABLE[$name]+x}" ]]; then
-      ICON="$CHECK"; COLOR="0x55ffffff"; DISPLAY="$name (offline)"; CLICK=""
+      ICON="$CHECK"; COLOR="$DIM_WHITE"; DISPLAY="$name (offline)"; CLICK=""
     elif [[ "$name" == "$PREFERRED" ]]; then
       ICON="$CHECK"; COLOR="$WHITE"; DISPLAY="$name"
     else
@@ -165,7 +152,7 @@ if [[ "$SENDER" == "mic_status_changed" && -n "$INFO" ]]; then
       icon.width=20
       icon.color="$COLOR"
       label.color="$COLOR"
-      background.color=0x00000000
+      background.color="$TRANSPARENT"
       background.height=30
       background.drawing=on
       click_script="$CLICK")
