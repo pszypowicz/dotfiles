@@ -10,12 +10,8 @@ set -gx CLAUDE_CONFIG_DIR ~/.config/claude
 if status is-interactive
     # Check if tmux is already running by checking the TMUX environment variable
     # Do not run tmux if inside VSCode terminal
-    if not set -q TMUX; and not string match -q "$TERM_PROGRAM" vscode; and isatty stdin
-        set -l session_name personal
-        if test (hostname -s) = "HOSTNAME"
-            set session_name work
-        end
-        exec tmux new-session -A -D -s $session_name -c "$PWD"
+    if not set -q TMUX; and test "$TERM_PROGRAM" = ghostty
+        exec tmux new-session -A -D -s (hostname -s) -c "$PWD"
     end
 
     starship init fish | source

@@ -1,0 +1,10 @@
+# Quick terminal (drop-down Quake-style)
+keybind = global:super+§=toggle_quick_terminal
+
+# Appearance
+theme = light:GitHub Light Default,dark:Catppuccin Mocha
+font-family = CaskaydiaCove Nerd Font
+font-size = 14
+macos-option-as-alt = left
+window-padding-x = 8
+window-padding-y = 8

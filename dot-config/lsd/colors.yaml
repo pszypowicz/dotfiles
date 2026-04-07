@@ -1,0 +1,13 @@
+user: dark_yellow
+group: dark_cyan
+
+size:
+  none: dark_grey
+  small: green
+  medium: dark_yellow
+  large: dark_red
+
+date:
+  hour-old: green
+  day-old: dark_green
+  older: dark_cyan
