@@ -54,30 +54,6 @@ cask "sf-symbols"
 cask "sublime-text"
 cask "visual-studio-code"
 cask "vlc"
-
-# Non work-specific packages — update hostname to match non work machine
-if `hostname`.strip != "HOSTNAME"
-  cask "audacity"
-  cask "blackhole-2ch"
-  cask "zoom"
-  cask "github-copilot-for-xcode"
-end
-
-# Work-specific packages — update hostname to match your work machine
-if `hostname`.strip == "HOSTNAME"
-  tap "azure/kubelogin"
-  tap "warrensbox/tap"
-  brew "azure-cli"
-  brew "azure/kubelogin/kubelogin"
-  brew "k9s"
-  brew "sshuttle"
-  brew "terraform-docs"
-  brew "tflint"
-  brew "trivy"
-  brew "warrensbox/tap/tfswitch"
-  cask "1password"
-  cask "1password-cli"
-  cask "microsoft-teams"
-  cask "dotnet-sdk"
-  cask "drawio"
-end
+cask "audacity"
+cask "blackhole-2ch"
+cask "zoom"

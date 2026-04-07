@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Bootstrap — run once on a fresh machine, safe to re-run
+# Bootstrap -- run once on a fresh machine, safe to re-run
 
-DOTFILES_DIR="$(cd "$(dirname "$0")" && pwd)"
+STOW_DIR="$HOME/Developer"
+DOTFILES_PRIVATE_DIR="$STOW_DIR/dotfiles-private"
 
 # 1. Homebrew
 if ! command -v brew &>/dev/null; then
@@ -14,11 +15,20 @@ fi
 
 # 2. Packages
 echo "Installing packages..."
-brew bundle --file "$DOTFILES_DIR/dot-config/brewfile/Brewfile"
+brew bundle --file "$STOW_DIR/dotfiles/dot-config/brewfile/Brewfile"
+if [ -f "$DOTFILES_PRIVATE_DIR/dot-config/brewfile/Brewfile.private" ]; then
+    echo "Installing private packages..."
+    brew bundle --file "$DOTFILES_PRIVATE_DIR/dot-config/brewfile/Brewfile.private"
+fi
 
-# 3. Dotfiles
+# 3. Dotfiles -- both repos share the same stow directory (~/Developer)
+# so stow can unfold directories shared between packages
 echo "Stowing dotfiles..."
-stow -d "$DOTFILES_DIR" -t ~ . --dotfiles --restow
+stow -d "$STOW_DIR" -t ~ dotfiles --dotfiles --restow
+if [ -d "$DOTFILES_PRIVATE_DIR" ]; then
+    echo "Stowing private dotfiles..."
+    stow -d "$STOW_DIR" -t ~ dotfiles-private --dotfiles --restow
+fi
 
 # 4. Defaults
 echo "Writing macOS defaults..."

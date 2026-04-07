@@ -8,14 +8,17 @@
 
 Installs Homebrew (if missing), packages, stows dotfiles, and writes macOS defaults. Safe to re-run.
 
+If `~/Developer/dotfiles-private` exists, the bootstrap script also installs its packages and stows its configs as an overlay.
+
 ### Stow only
 
 ```bash
-stow . --target ~ --dotfiles --restow
+stow -d ~/Developer -t ~ dotfiles --dotfiles --restow
 ```
 
-- `--dotfiles` - takes filename prefix `dot-` and replace it in a target with `.`
-- `--restow` - remove from target non-existent links
+- `--dotfiles` -- takes filename prefix `dot-` and replace it in a target with `.`
+- `--restow` -- remove from target non-existent links
+- `-d ~/Developer` -- shared stow directory, allows the private overlay to coexist
 
 ## What's included
 
@@ -24,7 +27,7 @@ stow . --target ~ --dotfiles --restow
 **Window management:** AeroSpace (tiling), Borders, Hammerspoon
 **Status bar:** SketchyBar
 **Dev tools:** Git, GitHub CLI, Vim, fd, fzf, Claude Code
-**Other:** npm, Homebrew (separate work/personal Brewfiles)
+**Other:** npm, Homebrew
 
 ## XDG
 
