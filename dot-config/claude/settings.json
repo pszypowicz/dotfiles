@@ -51,13 +51,14 @@
     "swift-lsp@claude-plugins-official": true,
     "frontend-design@claude-plugins-official": true,
     "skill-creator@claude-plugins-official": true,
-    "swift-concurrency@swift-concurrency-skill": true
+    "swift-concurrency@claude-skills": true,
+    "ado@claude-skills": true
   },
   "extraKnownMarketplaces": {
-    "swift-concurrency-skill": {
+    "claude-skills": {
       "source": {
         "source": "directory",
-        "path": "/Users/pszypowicz/Developer/swift-concurrency-skill"
+        "path": "/Users/pszypowicz/Developer/claude-skills"
       }
     }
   }
