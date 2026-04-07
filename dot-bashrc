@@ -13,6 +13,10 @@ export BUNDLE_USER_CACHE="$XDG_CACHE_HOME/bundler"
 export LESSHISTFILE="$XDG_STATE_HOME/less/history"
 export ANDROID_USER_HOME="$XDG_DATA_HOME/android"
 export DOTNET_CLI_HOME="$XDG_DATA_HOME"
+export DOCKER_CONFIG="$XDG_CONFIG_HOME/docker"
+export MPLCONFIGDIR="$XDG_CONFIG_HOME/matplotlib"
+export NUGET_PACKAGES="$XDG_CACHE_HOME/nuget/packages"
+export AZURE_CONFIG_DIR="$XDG_CONFIG_HOME/azure"
 export HISTFILE="$XDG_STATE_HOME/bash/history"
 export SHELL_SESSIONS_DISABLE=1
 
