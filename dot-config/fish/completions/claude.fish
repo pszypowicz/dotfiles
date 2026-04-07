@@ -6,8 +6,7 @@ function __claude_resume_sessions
 
     # Collect active session IDs to exclude
     set -l active_sids
-    set -l session_files ~/.config/claude/sessions/*.json
-    for f in $session_files
+    for f in ~/.config/claude/sessions/*.json
         test -f $f; or continue
         set -l pid (string match -r '"pid":([0-9]+)' < $f)[2]
         if test -n "$pid"; and kill -0 $pid 2>/dev/null
@@ -19,27 +18,24 @@ function __claude_resume_sessions
         set -l sid (path change-extension '' $f | path basename)
         contains -- $sid $active_sids; and continue
 
-        # Try session name from active sessions file, fall back to first user message, then date
-        set -l name
-        if test (count $session_files) -gt 0
-            set name (grep -m1 '"name"' $session_files 2>/dev/null | string match -r "\"sessionId\":\"$sid\".*\"name\":\"([^\"]+)\"" | tail -1)
+        # Extract customTitle from JSONL (last occurrence wins, as renames overwrite)
+        set -l title (grep '"type":"custom-title"' $f 2>/dev/null | tail -1 | string match -r '"customTitle":"([^"]*)"')[2]
+
+        # Build description from first user message or file date
+        set -l msg (grep -m1 '"type":"user"' $f | jq -r '
+            .message.content
+            | if type == "array" then map(select(.type == "text") | .text)[0] else . end
+            | .[0:50] | gsub("[\\t\\n<>]"; " ") | ltrimstr(" ")' 2>/dev/null)
+        if test -z "$msg"
+            set msg (date -r (stat -f %m $f) '+%b %d %H:%M')
         end
 
-        if test -n "$name"
-            set desc "$name"
+        # Use title if named, UUID otherwise (fish handles quoting automatically)
+        if test -n "$title"
+            printf '%s\t%s\n' $title $msg
         else
-            set -l msg (grep -m1 '"type":"user"' $f | jq -r '
-                .message.content
-                | if type == "array" then map(select(.type == "text") | .text)[0] else . end
-                | .[0:50] | gsub("[\\t\\n<>]"; " ") | ltrimstr(" ")' 2>/dev/null)
-            if test -n "$msg"
-                set desc "$msg"
-            else
-                set desc (date -r (stat -f %m $f) '+%b %d %H:%M')
-            end
+            printf '%s\t%s\n' $sid $msg
         end
-
-        printf '%s\t%s\n' $sid $desc
     end
 end
 
