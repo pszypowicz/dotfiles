@@ -8,3 +8,6 @@ font-size = 14
 macos-option-as-alt = left
 window-padding-x = 8
 window-padding-y = 8
+
+# Bell notifications (triggered by Claude Code Notification hook)
+bell-features = attention,title,system

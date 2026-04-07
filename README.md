@@ -23,7 +23,7 @@ stow . --target ~ --dotfiles --restow
 **Terminal:** Tmux, Starship prompt
 **Window management:** AeroSpace (tiling), Borders, Hammerspoon
 **Status bar:** SketchyBar
-**Dev tools:** Git, GitHub CLI, Vim, fd, fzf
+**Dev tools:** Git, GitHub CLI, Vim, fd, fzf, Claude Code
 **Other:** npm, Homebrew (separate work/personal Brewfiles)
 
 ## XDG
@@ -67,4 +67,3 @@ killall sketchybar
 ```
 
 **Upstream issue:** [FelixKratz/homebrew-formulae#17](https://github.com/FelixKratz/homebrew-formulae/issues/17) — once resolved, `brew services` can be used directly and this custom plist can be removed.
-

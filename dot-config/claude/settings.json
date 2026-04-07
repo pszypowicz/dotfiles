@@ -12,6 +12,16 @@
     "pr": ""
   },
   "hooks": {
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "printf '\\a'"
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [
@@ -61,5 +71,6 @@
         "path": "/Users/pszypowicz/Developer/claude-skills"
       }
     }
-  }
+  },
+  "effortLevel": "high"
 }
