@@ -18,6 +18,8 @@ local function writeThemeFile(theme)
     end
 end
 
+local TMUX = "/opt/homebrew/bin/tmux"
+
 local function applyTheme()
     local theme = hs.host.interfaceStyle() == "Dark" and "dark" or "light"
     writeThemeFile(theme)
@@ -47,8 +49,6 @@ end
 -- Trackpad swipe: 2-finger horizontal swipe switches tmux windows in Ghostty
 
 local swipe = hs.loadSpoon("Swipe")
-
-local TMUX = "/opt/homebrew/bin/tmux"
 local TERMINAL_BUNDLE_ID = "com.mitchellh.ghostty"
 local DEBOUNCE_SECONDS = 0.3
 local MIN_SWIPE_DISTANCE = 0.05 -- 0.0–1.0, increase for longer swipes
