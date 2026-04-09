@@ -1,6 +1,8 @@
 # Set the default editor
 set -gx EDITOR vim
 
+set -gx LESS -RFiSW -x2 --mouse --incsearch
+
 set -gx FZF_DEFAULT_COMMAND 'fd --type f'
 set -gx FZF_DEFAULT_OPTS '--tmux bottom,80%,70%,border-native'
 set -gx FZF_ALT_C_COMMAND '{ zoxide query --list 2>/dev/null; fd --type d; } | awk "!seen[\$0]++"'
