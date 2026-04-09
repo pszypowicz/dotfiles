@@ -37,3 +37,5 @@ export BATTERY_0=
 export BATTERY_CHARGING=
 
 export CLAUDE=󰚩
+export CLOCK=󰅐
+export CALENDAR=󰃭

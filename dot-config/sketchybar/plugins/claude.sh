@@ -78,9 +78,12 @@ if (( FIVE_INT >= 80 )) && [[ -n "$FIVE_RESETS" ]]; then
 fi
 
 if [[ -n "$COUNTDOWN" ]]; then
-  LABEL="${FIVE_INT}% ${COUNTDOWN}"
+  LABEL="$CLOCK ${FIVE_INT}% ${COUNTDOWN}"
+  if (( SEVEN_INT >= 80 )); then
+    LABEL+=" $CALENDAR ${SEVEN_INT}%"
+  fi
 else
-  LABEL="${FIVE_INT}% ${SEVEN_INT}%"
+  LABEL="$CLOCK ${FIVE_INT}% $CALENDAR ${SEVEN_INT}%"
 fi
 
 sketchybar --set "$NAME" \
