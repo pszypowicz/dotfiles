@@ -26,7 +26,8 @@ function claude --wraps claude --description "Claude Code with tmux window name 
     # picks up via pane_current_command. Override the format for THIS window to use
     # pane_title instead, which Claude sets to the session name (e.g. "⠂ test").
     set -l prev_format (tmux show-window-option -t $win_id -v automatic-rename-format 2>/dev/null)
-    tmux set-window-option -t $win_id automatic-rename-format '#{pane_title}'
+    set -l project_name (basename $PWD)
+    tmux set-window-option -t $win_id automatic-rename-format "$project_name #{pane_title}"
 
     env $node_opts command claude $argv
     set -l s $status
