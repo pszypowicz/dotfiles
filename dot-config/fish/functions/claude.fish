@@ -1,15 +1,21 @@
 function claude --wraps claude --description "Claude Code with tmux window name tracking and auto-theme"
-    # Auto-theme: use NODE_OPTIONS to patch theme rendering.
-    # os-state writes the OS appearance to a theme file; the JS hook
+    # Build NODE_OPTIONS for runtime patches loaded via --import.
+    set -l node_imports
+
+    # Auto-theme: os-state writes OS appearance to a theme file; the JS hook
     # reads it and reactively switches Claude's theme mid-session.
     set -l theme_hook "$HOME/.config/claude/theme/auto-theme.mjs"
-    set -l theme_opts
     if test -f $theme_hook
-        set theme_opts NODE_OPTIONS="--import $theme_hook"
+        set -a node_imports "--import" $theme_hook
+    end
+
+    set -l node_opts
+    if test (count $node_imports) -gt 0
+        set node_opts NODE_OPTIONS="$node_imports"
     end
 
     if not set -q TMUX
-        env $theme_opts command claude $argv
+        env $node_opts command claude $argv
         return $status
     end
 
@@ -22,7 +28,7 @@ function claude --wraps claude --description "Claude Code with tmux window name 
     set -l prev_format (tmux show-window-option -t $win_id -v automatic-rename-format 2>/dev/null)
     tmux set-window-option -t $win_id automatic-rename-format '#{pane_title}'
 
-    env $theme_opts command claude $argv
+    env $node_opts command claude $argv
     set -l s $status
 
     # Restore original format so non-claude processes show normally

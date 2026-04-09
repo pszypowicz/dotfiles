@@ -58,6 +58,7 @@ source "$ITEMS_DIR/chevron.sh"
 # -- Right side items --
 
 source "$ITEMS_DIR/mic.sh"
+source "$ITEMS_DIR/claude.sh"
 source "$ITEMS_DIR/status.sh"
 source "$ITEMS_DIR/input_source.sh"
 
