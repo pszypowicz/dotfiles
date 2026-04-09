@@ -75,6 +75,7 @@
   },
   "effortLevel": "high",
   "statusLine": {
+    "type": "command",
     "command": "~/.config/claude/statusline.sh",
     "refreshInterval": 60
   }
