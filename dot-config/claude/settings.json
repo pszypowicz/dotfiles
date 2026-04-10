@@ -28,7 +28,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "test -x ~/.journal/hooks/claude-stop-hook.sh && ~/.journal/hooks/claude-stop-hook.sh || true",
+            "command": "test -x ~/.config/journal-agent/hooks/claude-stop-hook.sh && ~/.config/journal-agent/hooks/claude-stop-hook.sh || true",
             "timeout": 10
           }
         ]
@@ -56,6 +56,11 @@
       }
     ]
   },
+  "statusLine": {
+    "type": "command",
+    "command": "~/.config/claude/statusline.sh",
+    "refreshInterval": 60
+  },
   "enabledPlugins": {
     "microsoft-docs@claude-plugins-official": true,
     "pyright-lsp@claude-plugins-official": true,
@@ -63,7 +68,8 @@
     "frontend-design@claude-plugins-official": true,
     "skill-creator@claude-plugins-official": true,
     "swift-concurrency@claude-skills": true,
-    "ado@claude-skills": true
+    "ado@claude-skills": true,
+    "gopls-lsp@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "claude-skills": {
@@ -73,10 +79,5 @@
       }
     }
   },
-  "effortLevel": "high",
-  "statusLine": {
-    "type": "command",
-    "command": "~/.config/claude/statusline.sh",
-    "refreshInterval": 60
-  }
+  "effortLevel": "high"
 }

@@ -3,7 +3,7 @@ Swipe.__index         = Swipe
 
 -- Metadata
 Swipe.name            = "Swipe"
-Swipe.version         = "0.1"
+Swipe.version         = "0.2"
 Swipe.author          = "Michael Mogenson"
 Swipe.homepage        = "https://github.com/mogenson/Swipe.spoon"
 Swipe.license         = "MIT - https://opensource.org/licenses/MIT"
@@ -11,16 +11,19 @@ Swipe.license         = "MIT - https://opensource.org/licenses/MIT"
 local gesture <const> = hs.eventtap.event.types.gesture
 local doAfter <const> = hs.timer.doAfter
 
-local Cache           = { id = 1, direction = nil, distance = 0, size = 0, touches = {} }
+-- Per-finger-count touch cache
 
-function Cache:clear()
+local CacheMT = {}
+CacheMT.__index = CacheMT
+
+function CacheMT:clear()
     self.touches = {}
     self.size = 0
     self.direction = nil
     self.distance = 0
 end
 
-function Cache:none(touches)
+function CacheMT:none(touches)
     local absent = true
     for _, touch in ipairs(touches) do
         absent = absent and (self.touches[touch.identity] == nil)
@@ -28,7 +31,7 @@ function Cache:none(touches)
     return absent
 end
 
-function Cache:all(touches)
+function CacheMT:all(touches)
     local present = true
     for _, touch in ipairs(touches) do
         present = present and (self.touches[touch.identity] ~= nil)
@@ -36,7 +39,7 @@ function Cache:all(touches)
     return present
 end
 
-function Cache:set(touches)
+function CacheMT:set(touches)
     self:clear()
     for i, touch in ipairs(touches) do
         self.touches[touch.identity] = {
@@ -51,7 +54,7 @@ function Cache:set(touches)
     return self.id
 end
 
-function Cache:detect(touches)
+function CacheMT:detect(touches)
     local left, right, up, down = true, true, true, true
     local distance = { dx = 0, dy = 0 }
     local size = 0
@@ -98,32 +101,52 @@ function Cache:detect(touches)
     return direction, self.distance, self.id
 end
 
+local function newCache()
+    return setmetatable({ id = 1, direction = nil, distance = 0, size = 0, touches = {} }, CacheMT)
+end
+
 -- fingers: number of fingers for swipe (must be at least 2)
 -- callback: function(direction, distance, id) end
 --           direction is a string, either "left", "right", "up", "down"
---           distance is accumulated distance for swipe, beteeen 0.0 and 1.0
+--           distance is accumulated distance for swipe, between 0.0 and 1.0
 --           id is a unique integer across callbacks for the same swipe
+-- Can be called multiple times with different finger counts.
 function Swipe:start(fingers, callback)
     assert(fingers > 1)
     assert(callback)
 
-    self.watcher = hs.eventtap.new({ gesture }, function(event)
-        local type = event:getType(true)
-        if type ~= gesture then return end
-        local touches = event:getTouches()
-        if #touches ~= fingers then return end
+    if not self._handlers then
+        self._handlers = {}
+        self._caches = {}
+    end
 
-        if Cache:none(touches) then
-            local id = Cache:set(touches)
-        elseif Cache:all(touches) then
-            local direction, distance, id = Cache:detect(touches)
+    self._handlers[fingers] = callback
+    self._caches[fingers] = newCache()
+
+    -- (Re)create a single eventtap that dispatches by finger count
+    if self.watcher then self.watcher:stop() end
+
+    local handlers = self._handlers
+    local caches = self._caches
+
+    self.watcher = hs.eventtap.new({ gesture }, function(event)
+        if event:getType(true) ~= gesture then return end
+        local touches = event:getTouches()
+        local n = #touches
+        local cache = caches[n]
+        local handler = handlers[n]
+        if not cache or not handler then return end
+
+        if cache:none(touches) then
+            cache:set(touches)
+        elseif cache:all(touches) then
+            local direction, distance, id = cache:detect(touches)
             if direction then
-                doAfter(0, function() callback(direction, distance, id) end)
+                doAfter(0, function() handler(direction, distance, id) end)
             end
         end
     end)
 
-    Cache:clear()
     self.watcher:start()
 end
 
@@ -132,6 +155,8 @@ function Swipe:stop()
         self.watcher:stop()
         self.watcher = nil
     end
+    self._handlers = nil
+    self._caches = nil
 end
 
 return Swipe

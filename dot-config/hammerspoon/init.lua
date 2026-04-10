@@ -75,3 +75,111 @@ swipe:start(2, function(direction, distance, id)
         lastSwipeTime = now
     end
 end)
+
+-- Workspace navigation: Ctrl+Left/Right cycles AeroSpace workspaces on the
+-- focused monitor. At the edges, switches macOS Spaces instead.
+-- Requires disabling Ctrl+Left/Right in System Settings > Keyboard >
+-- Keyboard Shortcuts > Mission Control (macOS grabs them before Hammerspoon).
+
+local AEROSPACE = "/opt/homebrew/bin/aerospace"
+
+local function aerospaceExec(args)
+    local output, status, _, rc = hs.execute(AEROSPACE .. " " .. args)
+    if status and rc == 0 and output then
+        return output
+    end
+    return nil
+end
+
+local function getMonitorWorkspaces()
+    local output = aerospaceExec("list-workspaces --monitor focused")
+    if not output then return {} end
+    local workspaces = {}
+    for ws in output:gmatch("%S+") do
+        workspaces[#workspaces + 1] = ws
+    end
+    table.sort(workspaces, function(a, b) return tonumber(a) < tonumber(b) end)
+    return workspaces
+end
+
+local function getFocusedWorkspace()
+    local output = aerospaceExec("list-workspaces --focused")
+    if not output then return nil end
+    return output:match("%S+")
+end
+
+local function switchSpace(direction)
+    local screen = hs.mouse.getCurrentScreen()
+    if not screen then return end
+    local spaces = hs.spaces.spacesForScreen(screen)
+    local active = hs.spaces.activeSpaceOnScreen(screen)
+    if not spaces or not active then return end
+
+    local currentIdx = nil
+    for i, sid in ipairs(spaces) do
+        if sid == active then currentIdx = i; break end
+    end
+    if not currentIdx then return end
+
+    local targetIdx = (direction == "left") and (currentIdx - 1) or (currentIdx + 1)
+    if targetIdx < 1 or targetIdx > #spaces then return end
+
+    hs.spaces.gotoSpace(spaces[targetIdx])
+end
+
+local function navigateWorkspace(direction)
+    local workspaces = getMonitorWorkspaces()
+    local focused = getFocusedWorkspace()
+
+    if #workspaces == 0 or not focused then
+        switchSpace(direction)
+        return
+    end
+
+    local currentIndex = nil
+    for i, ws in ipairs(workspaces) do
+        if ws == focused then currentIndex = i; break end
+    end
+    if not currentIndex then
+        switchSpace(direction)
+        return
+    end
+
+    local targetIndex = (direction == "left") and (currentIndex - 1) or (currentIndex + 1)
+    if targetIndex < 1 or targetIndex > #workspaces then
+        switchSpace(direction)
+        return
+    end
+
+    hs.execute(AEROSPACE .. " workspace " .. workspaces[targetIndex])
+end
+
+hs.hotkey.bind({ "ctrl" }, "left",
+    function() navigateWorkspace("left") end, nil,
+    function() navigateWorkspace("left") end)
+hs.hotkey.bind({ "ctrl" }, "right",
+    function() navigateWorkspace("right") end, nil,
+    function() navigateWorkspace("right") end)
+
+-- Trackpad swipe: 3-finger horizontal swipe navigates workspaces/spaces
+
+local lastNavSwipeTime = 0
+local lastNavSwipeId = nil
+
+swipe:start(3, function(direction, distance, id)
+    if id == lastNavSwipeId then return end
+    if distance < MIN_SWIPE_DISTANCE then return end
+
+    local now = hs.timer.secondsSinceEpoch()
+    if now - lastNavSwipeTime < DEBOUNCE_SECONDS then return end
+
+    if direction == "left" then
+        navigateWorkspace("right")
+        lastNavSwipeId = id
+        lastNavSwipeTime = now
+    elseif direction == "right" then
+        navigateWorkspace("left")
+        lastNavSwipeId = id
+        lastNavSwipeTime = now
+    end
+end)
