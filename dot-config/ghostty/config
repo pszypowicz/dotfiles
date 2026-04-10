@@ -9,5 +9,9 @@ macos-option-as-alt = left
 window-padding-x = 8
 window-padding-y = 8
 
+# Switch tmux windows like Safari tabs (Cmd+Shift+[ and Cmd+Shift+])
+keybind = super+shift+left_bracket=text:\x02p
+keybind = super+shift+right_bracket=text:\x02n
+
 # Bell notifications (triggered by Claude Code Notification hook)
 bell-features = attention,title,system
