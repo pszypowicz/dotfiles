@@ -154,12 +154,17 @@ local function navigateWorkspace(direction)
     hs.execute(AEROSPACE .. " workspace " .. workspaces[targetIndex])
 end
 
-hs.hotkey.bind({ "ctrl" }, "left",
-    function() navigateWorkspace("left") end, nil,
-    function() navigateWorkspace("left") end)
-hs.hotkey.bind({ "ctrl" }, "right",
-    function() navigateWorkspace("right") end, nil,
-    function() navigateWorkspace("right") end)
+workspaceTap = hs.eventtap.new({ hs.eventtap.event.types.keyDown }, function(event)
+    local flags = event:getFlags()
+    if not flags:containExactly({ "ctrl", "fn" }) then return false end
+
+    local keyCode = event:getKeyCode()
+    local direction = (keyCode == 123 and "left") or (keyCode == 124 and "right") or nil
+    if not direction then return false end
+
+    navigateWorkspace(direction)
+    return true
+end):start()
 
 -- Trackpad swipe: 3-finger horizontal swipe navigates workspaces/spaces
 
