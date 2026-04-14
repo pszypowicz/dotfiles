@@ -57,7 +57,7 @@ export async function load(url, context, nextLoad) {
     replacement +
     source.slice(absIndex + ue[0].length);
 
-  // Patch 2: disable /theme picker — theme follows OS appearance
+  // Patch 2: disable /theme picker - theme follows OS appearance
   source = source.replace(
     'name:"theme",description:"Change the theme"',
     'name:"theme",description:"Theme follows OS appearance (auto)"'

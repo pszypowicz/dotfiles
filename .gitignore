@@ -12,7 +12,7 @@ dot-config/matplotlib
 # Fish auto-managed
 dot-config/fish/fish_variables
 
-# Claude Code — track only settings.json, ignore everything else
+# Claude Code - track only settings.json, ignore everything else
 dot-config/claude/*
 !dot-config/claude/settings.json
 !dot-config/claude/statusline.sh

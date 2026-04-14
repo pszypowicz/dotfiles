@@ -32,7 +32,7 @@ try {
     }
   });
 } catch {
-  // file doesn't exist yet — initial value still works
+  // file doesn't exist yet - initial value still works
 }
 
 globalThis.__ccThemeState = {

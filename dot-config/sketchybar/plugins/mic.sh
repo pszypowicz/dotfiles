@@ -121,7 +121,7 @@ if [[ "$SENDER" == "mic_status_changed" && -n "$INFO" ]]; then
   ARGS=()
 
   if [[ "$OLD_SLUGS" != "$NEW_SLUGS" ]]; then
-    # Device list changed — full rebuild (remove all, re-add in sorted order)
+    # Device list changed - full rebuild (remove all, re-add in sorted order)
     while IFS= read -r item; do
       [[ -n "$item" ]] && ARGS+=(--remove "$item")
     done <<< "$OLD_SLUGS"
@@ -162,7 +162,7 @@ if [[ "$SENDER" == "mic_status_changed" && -n "$INFO" ]]; then
   exit 0
 fi
 
-# ── Health check: periodic 60s — detect dead MicGuard ─────────────
+# ── Health check: periodic 60s - detect dead MicGuard ─────────────
 
 if ! pgrep -xq MicGuard; then
   show_off
