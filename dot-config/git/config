@@ -23,4 +23,4 @@
 	email = 2733699+pszypowicz@users.noreply.github.com
 
 [includeIf "gitdir:~/Documents/Code/work/"]
-	path = ~/Documents/Code/work/.gitconfig
+	path = ~/.config/git/work.config
