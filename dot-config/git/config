@@ -20,7 +20,8 @@
 
 [user]
 	name = Przemysław Szypowicz
-	email = 2733699+pszypowicz@users.noreply.github.com
 
+[includeIf "gitdir:~/Developer/github.com/"]
+	path = ~/.config/git/github.config
 [includeIf "gitdir:~/Developer/dev.azure.com/***REMOVED***/"]
 	path = ~/.config/git/work.config
