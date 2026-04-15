@@ -23,12 +23,21 @@ fi
 
 # 3. Dotfiles -- both repos share the same stow directory
 # (~/Developer/github.com/pszypowicz) so stow can unfold directories
-# shared between packages
+# shared between packages.
+#
+# --no-folding forces stow to create every package subdirectory as a real
+# directory in the target and symlink individual files, instead of collapsing
+# whole subtrees into a single dir-symlink. This matters for any config
+# directory where the tool writes live runtime state next to tracked files
+# (Claude Code's ~/.config/claude is the obvious case: history.jsonl,
+# projects/, sessions/, caches, etc.). With folding, those writes would
+# pass through a dir-symlink and land inside the git repo; without folding,
+# the target dir is real and the runtime writes stay local.
 echo "Stowing dotfiles..."
-stow -d "$STOW_DIR" -t ~ dotfiles --dotfiles --restow
+stow -d "$STOW_DIR" -t ~ dotfiles --dotfiles --restow --no-folding
 if [ -d "$DOTFILES_PRIVATE_DIR" ]; then
     echo "Stowing private dotfiles..."
-    stow -d "$STOW_DIR" -t ~ dotfiles-private --dotfiles --restow
+    stow -d "$STOW_DIR" -t ~ dotfiles-private --dotfiles --restow --no-folding
 fi
 
 # 4. Defaults

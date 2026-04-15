@@ -13,12 +13,13 @@ If `~/Developer/dotfiles-private` exists, the bootstrap script also installs its
 ### Stow only
 
 ```bash
-stow -d ~/Developer -t ~ dotfiles --dotfiles --restow
+stow -d ~/Developer/github.com/pszypowicz -t ~ dotfiles --dotfiles --restow --no-folding
 ```
 
 - `--dotfiles` -- takes filename prefix `dot-` and replace it in a target with `.`
 - `--restow` -- remove from target non-existent links
-- `-d ~/Developer` -- shared stow directory, allows the private overlay to coexist
+- `--no-folding` -- create package subdirs as real dirs in the target and only symlink individual files, instead of collapsing subtrees into one dir-symlink. Prevents tools that write live state inside a config dir (e.g. Claude Code writing `history.jsonl`, `projects/`, caches into `~/.config/claude`) from accidentally writing into the git repo through a folded dir-symlink.
+- `-d ~/Developer/github.com/pszypowicz` -- shared stow directory, allows the private overlay to coexist
 
 ## What's included
 

@@ -1,33 +1,15 @@
-# stow ignore files
-
-# https://www.gnu.org/software/stow/manual/html_node/Types-And-Syntax-Of-Ignore-Lists.html
+# stow ignore file -- https://www.gnu.org/software/stow/manual/html_node/Types-And-Syntax-Of-Ignore-Lists.html
+#
+# With --no-folding (see bootstrap), stow walks into every package subdir
+# and links files individually. The invariant this repo relies on is:
+# "whatever exists on disk in the package is tracked and meant to be stowed."
+# Keeping the repo clean of untracked/gitignored files (via .gitignore and
+# `git clean -fdX`) means this ignore file only needs to cover git metadata
+# and repo-root files that aren't part of any package.
 
 \.git
 \.gitignore
 \.gitmodules
-
-mic-guard
-\.claude
-
-# Ephemeral Claude Code session data - never stow these, they are
-# written live and would race with stow on every migration/restow.
-# The repo still holds historical copies; reconcile offline as needed.
-/dot-config/claude/projects(/.*)?
-/dot-config/claude/history\.jsonl
-/dot-config/claude/file-history(/.*)?
-/dot-config/claude/shell-snapshots(/.*)?
-/dot-config/claude/session-env(/.*)?
-/dot-config/claude/sessions(/.*)?
-/dot-config/claude/tasks(/.*)?
-/dot-config/claude/paste-cache(/.*)?
-/dot-config/claude/backups(/.*)?
-/dot-config/claude/telemetry(/.*)?
-/dot-config/claude/debug(/.*)?
-/dot-config/claude/statsig(/.*)?
-/dot-config/claude/ide(/.*)?
-/dot-config/claude/cache(/.*)?
-/dot-config/claude/downloads(/.*)?
-/dot-config/claude/chrome(/.*)?
 
 ^/README.md
 ^/bootstrap
