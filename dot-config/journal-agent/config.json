@@ -1,0 +1,5 @@
+{
+  "env": {
+    "CLAUDE_CONFIG_DIR": "/Users/pszypowicz/.config/claude"
+  }
+}
