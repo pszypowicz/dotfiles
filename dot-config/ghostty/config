@@ -13,6 +13,9 @@ window-padding-y = 8
 keybind = super+shift+left_bracket=text:\x02p
 keybind = super+shift+right_bracket=text:\x02n
 
+# Paste tmux buffer (Cmd+Shift+V -> tmux prefix + ] -> paste-buffer)
+keybind = super+shift+v=text:\x02]
+
 # Jump directly to tmux windows 1-9 (Cmd+1..9)
 keybind = super+digit_1=text:\x021
 keybind = super+digit_2=text:\x022
