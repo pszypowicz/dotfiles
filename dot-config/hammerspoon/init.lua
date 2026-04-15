@@ -288,13 +288,46 @@ local function findCurrentChainIndex(chain, screen)
     return nil
 end
 
-local function navigateToChainEntry(entry)
-    if entry.kind == "aerospace" then
-        if entry.visitableWid then
-            hs.execute(string.format("%s focus --window-id %d", AEROSPACE, entry.visitableWid))
-        else
-            hs.execute(AEROSPACE .. " workspace " .. entry.workspace)
+-- All aerospace workspaces share a single macOS user Space on a given screen.
+-- Return its space-id so we can drive a macOS-level transition back into it
+-- when leaving a fullscreen Space.
+local function getAerospaceUserSpaceId(screen)
+    local spaces = hs.spaces.spacesForScreen(screen) or {}
+    for _, sid in ipairs(spaces) do
+        if hs.spaces.spaceType(sid) == "user" then
+            return sid
         end
+    end
+    return nil
+end
+
+local function runAerospaceFocus(entry)
+    if entry.visitableWid then
+        hs.execute(string.format("%s focus --window-id %d", AEROSPACE, entry.visitableWid))
+    else
+        hs.execute(AEROSPACE .. " workspace " .. entry.workspace)
+    end
+end
+
+local function navigateToChainEntry(entry, screen)
+    if entry.kind == "aerospace" then
+        -- If macOS is currently displaying a non-user Space (fullscreen), we
+        -- must drive the OS-level transition ourselves before asking aerospace
+        -- to focus a workspace. `aerospace workspace N` and
+        -- `aerospace focus --window-id N` both return success from inside a
+        -- fullscreen Space but do NOT pull macOS out of it - verified against
+        -- a Safari YouTube fullscreen - so the user stays trapped.
+        -- hs.spaces.gotoSpace _does_ cross the fullscreen boundary, so we run
+        -- it first to land back on the aerospace user Space, then let aerospace
+        -- focus the intended workspace within it.
+        local active = hs.spaces.activeSpaceOnScreen(screen)
+        if active and hs.spaces.spaceType(active) ~= "user" then
+            local userSpace = getAerospaceUserSpaceId(screen)
+            if userSpace then
+                hs.spaces.gotoSpace(userSpace)
+            end
+        end
+        runAerospaceFocus(entry)
     elseif entry.kind == "macos-fullscreen" then
         hs.spaces.gotoSpace(entry.spaceId)
     end
@@ -321,7 +354,7 @@ local function navigateWorkspace(direction)
         return
     end
 
-    navigateToChainEntry(chain[targetIdx])
+    navigateToChainEntry(chain[targetIdx], screen)
 end
 
 workspaceTap = hs.eventtap.new({ hs.eventtap.event.types.keyDown }, function(event)
