@@ -5,7 +5,7 @@ set -gx LESS -RFiSW -x2 --mouse --incsearch
 
 set -gx FZF_DEFAULT_COMMAND 'fd --type f'
 set -gx FZF_DEFAULT_OPTS '--tmux bottom,80%,70%,border-native'
-set -gx FZF_ALT_C_COMMAND '{ zoxide query --list 2>/dev/null; fd --type d; } | awk "!seen[\$0]++"'
+set -gx FZF_ALT_C_COMMAND __fzf_alt_c_source
 set -gx FZF_ALT_C_OPTS '--preview "lsd --tree --depth 1 {}"'
 set -gx FZF_CTRL_T_OPTS '--select-1 --exit-0 --preview "test -d {} && lsd --tree --depth 1 {} || bat --color=always --style=numbers {}"'
 set -gx FZF_CTRL_R_OPTS '--layout=reverse --preview "echo {}" --preview-window down:3:hidden:wrap --bind "?:toggle-preview"'
