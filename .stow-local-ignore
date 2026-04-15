@@ -9,5 +9,25 @@
 mic-guard
 \.claude
 
+# Ephemeral Claude Code session data - never stow these, they are
+# written live and would race with stow on every migration/restow.
+# The repo still holds historical copies; reconcile offline as needed.
+/dot-config/claude/projects(/.*)?
+/dot-config/claude/history\.jsonl
+/dot-config/claude/file-history(/.*)?
+/dot-config/claude/shell-snapshots(/.*)?
+/dot-config/claude/session-env(/.*)?
+/dot-config/claude/sessions(/.*)?
+/dot-config/claude/tasks(/.*)?
+/dot-config/claude/paste-cache(/.*)?
+/dot-config/claude/backups(/.*)?
+/dot-config/claude/telemetry(/.*)?
+/dot-config/claude/debug(/.*)?
+/dot-config/claude/statsig(/.*)?
+/dot-config/claude/ide(/.*)?
+/dot-config/claude/cache(/.*)?
+/dot-config/claude/downloads(/.*)?
+/dot-config/claude/chrome(/.*)?
+
 ^/README.md
 ^/bootstrap

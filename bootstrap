@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Bootstrap -- run once on a fresh machine, safe to re-run
 
-STOW_DIR="$HOME/Developer"
+STOW_DIR="$HOME/Developer/github.com/pszypowicz"
 DOTFILES_PRIVATE_DIR="$STOW_DIR/dotfiles-private"
 
 # 1. Homebrew
@@ -21,8 +21,9 @@ if [ -f "$DOTFILES_PRIVATE_DIR/dot-config/brewfile/Brewfile.private" ]; then
     brew bundle --file "$DOTFILES_PRIVATE_DIR/dot-config/brewfile/Brewfile.private"
 fi
 
-# 3. Dotfiles -- both repos share the same stow directory (~/Developer)
-# so stow can unfold directories shared between packages
+# 3. Dotfiles -- both repos share the same stow directory
+# (~/Developer/github.com/pszypowicz) so stow can unfold directories
+# shared between packages
 echo "Stowing dotfiles..."
 stow -d "$STOW_DIR" -t ~ dotfiles --dotfiles --restow
 if [ -d "$DOTFILES_PRIVATE_DIR" ]; then

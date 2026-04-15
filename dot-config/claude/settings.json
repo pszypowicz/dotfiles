@@ -75,7 +75,7 @@
     "claude-skills": {
       "source": {
         "source": "directory",
-        "path": "/Users/pszypowicz/Developer/claude-skills"
+        "path": "/Users/pszypowicz/Developer/github.com/pszypowicz/claude-skills"
       }
     }
   },

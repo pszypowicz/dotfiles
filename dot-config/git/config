@@ -22,5 +22,5 @@
 	name = Przemysław Szypowicz
 	email = 2733699+pszypowicz@users.noreply.github.com
 
-[includeIf "gitdir:~/Documents/Code/work/"]
+[includeIf "gitdir:~/Developer/dev.azure.com/***REMOVED***/"]
 	path = ~/.config/git/work.config
