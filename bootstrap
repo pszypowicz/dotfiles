@@ -4,7 +4,6 @@ set -euo pipefail
 # Bootstrap -- run once on a fresh machine, safe to re-run
 
 STOW_DIR="$HOME/Developer/github.com/pszypowicz"
-DOTFILES_PRIVATE_DIR="$STOW_DIR/dotfiles-private"
 
 # 1. Homebrew
 if ! command -v brew &>/dev/null; then
@@ -16,12 +15,16 @@ fi
 # 2. Packages
 echo "Installing packages..."
 brew bundle --file "$STOW_DIR/dotfiles/dot-config/brewfile/Brewfile"
-if [ -f "$DOTFILES_PRIVATE_DIR/dot-config/brewfile/Brewfile.private" ]; then
-    echo "Installing private packages..."
-    brew bundle --file "$DOTFILES_PRIVATE_DIR/dot-config/brewfile/Brewfile.private"
-fi
+for overlay_dir in "$STOW_DIR"/dotfiles-private-*; do
+    [ -d "$overlay_dir" ] || continue
+    for bf in "$overlay_dir"/dot-config/brewfile/Brewfile.*; do
+        [ -f "$bf" ] || continue
+        echo "Installing packages from $(basename "$bf")..."
+        brew bundle --file "$bf"
+    done
+done
 
-# 3. Dotfiles -- both repos share the same stow directory
+# 3. Dotfiles -- all repos share the same stow directory
 # (~/Developer/github.com/pszypowicz) so stow can unfold directories
 # shared between packages.
 #
@@ -35,10 +38,12 @@ fi
 # the target dir is real and the runtime writes stay local.
 echo "Stowing dotfiles..."
 stow -d "$STOW_DIR" -t ~ dotfiles --dotfiles --restow --no-folding
-if [ -d "$DOTFILES_PRIVATE_DIR" ]; then
-    echo "Stowing private dotfiles..."
-    stow -d "$STOW_DIR" -t ~ dotfiles-private --dotfiles --restow --no-folding
-fi
+for overlay_dir in "$STOW_DIR"/dotfiles-private-*; do
+    [ -d "$overlay_dir" ] || continue
+    overlay=$(basename "$overlay_dir")
+    echo "Stowing $overlay..."
+    stow -d "$STOW_DIR" -t ~ "$overlay" --dotfiles --restow --no-folding
+done
 
 # 4. Defaults
 echo "Writing macOS defaults..."
