@@ -25,14 +25,22 @@ local function applyTheme()
     writeThemeFile(theme)
 end
 
--- Apply immediately on load
-applyTheme()
-
 -- Watch for system appearance changes
 -- Must keep a reference to prevent garbage collection
+-- Register BEFORE the initial applyTheme() so no notification is missed.
 themeWatcher = hs.distributednotifications.new(function()
     applyTheme()
 end, "AppleInterfaceThemeChangedNotification"):start()
+
+-- Apply immediately on load
+applyTheme()
+
+-- Re-check after a short delay: on boot, macOS auto dark/light may switch
+-- appearance after Hammerspoon has already loaded and written the file.
+-- The AppleInterfaceThemeChangedNotification can arrive before the watcher
+-- is ready (or before Hammerspoon even starts). This delayed re-check
+-- catches that gap.
+hs.timer.doAfter(5, applyTheme)
 
 -- Keyboard Viewer: callable via `hs -c "toggleKeyboardViewer()"` (e.g. from sketchybar)
 function toggleKeyboardViewer()
