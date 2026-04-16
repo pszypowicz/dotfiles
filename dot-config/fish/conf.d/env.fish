@@ -31,7 +31,16 @@ set -gx NUGET_PACKAGES $XDG_CACHE_HOME/nuget/packages
 set -gx AZURE_CONFIG_DIR $XDG_CONFIG_HOME/azure
 set -gx HISTFILE $XDG_STATE_HOME/zsh/history
 set -gx SHELL_SESSIONS_DISABLE 1
+set -gx GOPATH $XDG_DATA_HOME/go
+set -gx GOMODCACHE $XDG_CACHE_HOME/go/mod
+set -gx KUBECONFIG $XDG_CONFIG_HOME/kube/config
+set -gx KUBECACHEDIR $XDG_CACHE_HOME/kube
+set -gx TF_CLI_CONFIG_FILE $XDG_CONFIG_HOME/terraform/terraformrc
+set -gx TF_PLUGIN_CACHE_DIR $XDG_CACHE_HOME/terraform/plugins
+set -gx CHECKPOINT_DISABLE 1
+set -gx BICEP_CACHE_ROOT $XDG_CACHE_HOME/bicep
 
+fish_add_path $GOPATH/bin
 fish_add_path /Users/pszypowicz/bin
 
 set -g fish_key_bindings fish_vi_key_bindings

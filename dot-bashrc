@@ -19,9 +19,17 @@ export NUGET_PACKAGES="$XDG_CACHE_HOME/nuget/packages"
 export AZURE_CONFIG_DIR="$XDG_CONFIG_HOME/azure"
 export HISTFILE="$XDG_STATE_HOME/bash/history"
 export SHELL_SESSIONS_DISABLE=1
+export GOPATH="$XDG_DATA_HOME/go"
+export GOMODCACHE="$XDG_CACHE_HOME/go/mod"
+export KUBECONFIG="$XDG_CONFIG_HOME/kube/config"
+export KUBECACHEDIR="$XDG_CACHE_HOME/kube"
+export TF_CLI_CONFIG_FILE="$XDG_CONFIG_HOME/terraform/terraformrc"
+export TF_PLUGIN_CACHE_DIR="$XDG_CACHE_HOME/terraform/plugins"
+export CHECKPOINT_DISABLE=1
+export BICEP_CACHE_ROOT="$XDG_CACHE_HOME/bicep"
 
 # Go
-export PATH="$HOME/go/bin:$PATH"
+export PATH="$GOPATH/bin:$PATH"
 
 if [ -S "$HOME/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh" ] && pgrep -qf com.maxgoedjen.Secretive.SecretAgent; then
   export SSH_AUTH_SOCK="$HOME/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh"
