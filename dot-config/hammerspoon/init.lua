@@ -33,8 +33,18 @@ swipe:start(2, function(direction, distance, id)
     local now = hs.timer.secondsSinceEpoch()
     if now - lastSwipeTime < DEBOUNCE_SECONDS then return end
 
+    -- After unlock/wake, hs.application.frontmostApplication() can lag the real
+    -- window focus until an app-activate notification resyncs it. Fall back to
+    -- the focused window's application so swipes work immediately post-login
+    -- instead of requiring a manual app switch to "unstick" Hammerspoon's view.
     local app = hs.application.frontmostApplication()
-    if not app or app:bundleID() ~= TERMINAL_BUNDLE_ID then return end
+    local bundle = app and app:bundleID()
+    if bundle ~= TERMINAL_BUNDLE_ID then
+        local fw = hs.window.focusedWindow()
+        local fwApp = fw and fw:application()
+        bundle = fwApp and fwApp:bundleID()
+    end
+    if bundle ~= TERMINAL_BUNDLE_ID then return end
 
     -- Natural-scroll convention: swipe left = next tmux window, right = previous.
     -- 30ms key delay so Ghostty latches the Cmd+Shift modifier flags before
