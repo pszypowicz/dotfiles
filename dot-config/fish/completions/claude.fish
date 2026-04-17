@@ -1,7 +1,7 @@
 # Extend the official completions with project-aware --resume suggestions
 
 function __claude_resume_sessions
-    set -l project_dir ~/.config/claude/projects/(string replace -a / - $PWD)
+    set -l project_dir ~/.config/claude/projects/(string replace -ar '[^a-zA-Z0-9-]' - $PWD)
     test -d $project_dir; or return
 
     # Collect active session IDs to exclude
@@ -22,7 +22,7 @@ function __claude_resume_sessions
         set -l title (grep '"type":"custom-title"' $f 2>/dev/null | tail -1 | string match -r '"customTitle":"([^"]*)"')[2]
 
         # Build description from first user message or file date
-        set -l msg (grep -m1 '"type":"user"' $f | jq -r '
+        set -l msg (grep -m1 '"type":"user"' $f 2>/dev/null | jq -r '
             .message.content
             | if type == "array" then map(select(.type == "text") | .text)[0] else . end
             | .[0:50] | gsub("[\\t\\n<>]"; " ") | ltrimstr(" ")' 2>/dev/null)
