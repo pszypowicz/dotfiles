@@ -5,3 +5,5 @@
 .terraform
 
 .claude/
+CLAUDE.md
+CLAUDE.local.md
