@@ -3,12 +3,12 @@
 ## Installation
 
 ```bash
-./bootstrap
+./bootstrap [profile]
 ```
 
 Installs Homebrew (if missing), packages, stows dotfiles, and writes macOS defaults. Safe to re-run.
 
-If `~/Developer/dotfiles-private` exists, the bootstrap script also installs its packages and stows its configs as an overlay.
+`profile` selects an optional overlay (e.g. `personal`, `work`). Pass it as an argument or the script prompts interactively. Leave blank to skip overlay setup.
 
 ### Stow only
 
@@ -16,10 +16,10 @@ If `~/Developer/dotfiles-private` exists, the bootstrap script also installs its
 stow -d ~/Developer/github.com/pszypowicz -t ~ dotfiles --dotfiles --restow --no-folding
 ```
 
-- `--dotfiles` -- takes filename prefix `dot-` and replace it in a target with `.`
-- `--restow` -- remove from target non-existent links
-- `--no-folding` -- create package subdirs as real dirs in the target and only symlink individual files, instead of collapsing subtrees into one dir-symlink. Prevents tools that write live state inside a config dir (e.g. Claude Code writing `history.jsonl`, `projects/`, caches into `~/.config/claude`) from accidentally writing into the git repo through a folded dir-symlink.
-- `-d ~/Developer/github.com/pszypowicz` -- shared stow directory, allows the private overlay to coexist
+- `--dotfiles` - takes filename prefix `dot-` and replace it in a target with `.`
+- `--restow` - remove from target non-existent links
+- `--no-folding` - create package subdirs as real dirs in the target and only symlink individual files, instead of collapsing subtrees into one dir-symlink. Prevents tools that write live state inside a config dir (e.g. Claude Code writing `history.jsonl`, `projects/`, caches into `~/.config/claude`) from accidentally writing into the git repo through a folded dir-symlink.
+- `-d ~/Developer/github.com/pszypowicz` - shared stow directory, lets overlay packages coexist with the base package
 
 ## What's included
 
