@@ -1,47 +1,5 @@
 require("hs.ipc")
 
-local configDir = hs.configdir
-
--- Theme watcher: detect macOS dark/light mode changes
--- and write theme file for external consumers (e.g. Claude Code auto-theme).
-
-local THEME_FILE = configDir .. "/state/theme"
-
-local function writeThemeFile(theme)
-    -- Non-atomic write to preserve inode for fs.watch() listeners
-    local dir = THEME_FILE:match("(.+)/[^/]+$")
-    hs.fs.mkdir(dir)
-    local f = io.open(THEME_FILE, "w")
-    if f then
-        f:write(theme)
-        f:close()
-    end
-end
-
-local TMUX = "/opt/homebrew/bin/tmux"
-
-local function applyTheme()
-    local theme = hs.host.interfaceStyle() == "Dark" and "dark" or "light"
-    writeThemeFile(theme)
-end
-
--- Watch for system appearance changes
--- Must keep a reference to prevent garbage collection
--- Register BEFORE the initial applyTheme() so no notification is missed.
-themeWatcher = hs.distributednotifications.new(function()
-    applyTheme()
-end, "AppleInterfaceThemeChangedNotification"):start()
-
--- Apply immediately on load
-applyTheme()
-
--- Re-check after a short delay: on boot, macOS auto dark/light may switch
--- appearance after Hammerspoon has already loaded and written the file.
--- The AppleInterfaceThemeChangedNotification can arrive before the watcher
--- is ready (or before Hammerspoon even starts). This delayed re-check
--- catches that gap.
-hs.timer.doAfter(5, applyTheme)
-
 -- Keyboard Viewer: callable via `hs -c "toggleKeyboardViewer()"` (e.g. from sketchybar)
 function toggleKeyboardViewer()
     hs.osascript.applescript([[

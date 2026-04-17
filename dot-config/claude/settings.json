@@ -6,8 +6,7 @@
     "DISABLE_TELEMETRY": "1",
     "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
     "DISABLE_INSTALLATION_CHECKS": "1",
-    "CLAUDE_ENABLE_STREAM_WATCHDOG": "1",
-    "CLAUDE_CODE_NO_FLICKER": "1"
+    "CLAUDE_ENABLE_STREAM_WATCHDOG": "1"
   },
   "attribution": {
     "commit": "",
@@ -80,5 +79,6 @@
       }
     }
   },
-  "effortLevel": "high"
+  "effortLevel": "high",
+  "theme": "auto"
 }
