@@ -10,6 +10,11 @@
 #     dev.azure.com/org/project/repo, ...).
 #   - Top-level directories inside ~/Developer/_scratch (non-repo
 #     playgrounds).
+#   - Container dirs: ~/Developer's immediate children (host dirs,
+#     _scratch) and the owner/org/project groupings beneath each host
+#     (github.com/<owner>, dev.azure.com/<org>,
+#     dev.azure.com/<org>/<project>). _scratch descendants are excluded
+#     from this pass to avoid sub-sub-project noise.
 #
 # Ordering in the fzf list, top to bottom (fzf --fish forces --reverse,
 # so the first input line appears directly under the prompt and the
@@ -20,10 +25,10 @@
 # Zoxide's --base-dir flag natively restricts the frecency list to
 # ~/Developer, and a set-membership check against the fd-discovered
 # candidate set drops zoxide entries that are not jump targets: the
-# ~/Developer root, container dirs (github.com/..., .../***REMOVED***),
-# and nested subdirs inside a repo (.../claude-skills/.claude-plugin).
-# This is the piece that stops "templates" from matching every nested
-# templates/ dir the way the old zoxide-in-home setup did.
+# ~/Developer root and nested subdirs inside a repo
+# (.../claude-skills/.claude-plugin). This is the piece that stops
+# "templates" from matching every nested templates/ dir the way the
+# old zoxide-in-home setup did.
 #
 # From anywhere else: fall back to zoxide frecency plus fd's recursive
 # walk rooted at $PWD, so Alt-C stays useful for both "jump within this
@@ -66,6 +71,8 @@ function __fzf_alt_c_source
         (begin
             fd --type d --hidden --prune '^\.git$' "$HOME/Developer" --exec dirname
             fd --type d --max-depth 1 . "$HOME/Developer/_scratch"
+            fd --type d --max-depth 1 . "$HOME/Developer"
+            fd --type d --min-depth 2 --max-depth 3 --exclude _scratch . "$HOME/Developer"
         end | psub) \
         (zoxide query --list --base-dir "$HOME/Developer" 2>/dev/null | psub)
     else
