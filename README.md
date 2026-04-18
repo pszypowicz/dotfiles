@@ -3,12 +3,12 @@
 ## Installation
 
 ```bash
-./bootstrap [profile]
+./bootstrap
 ```
 
-Installs Homebrew (if missing), packages, stows dotfiles, and writes macOS defaults. Safe to re-run.
+Installs Homebrew (if missing), packages, stows dotfiles, installs Go and npm globals, and writes macOS defaults. Safe to re-run.
 
-`profile` selects an optional overlay (e.g. `personal`, `work`). Pass it as an argument or the script prompts interactively. Leave blank to skip overlay setup.
+Private overlays (work, personal) live in sibling `dotfiles-private-*` repos, each with its own self-contained `./bootstrap`. Run those separately on machines that need them - they complement this bootstrap rather than replacing it.
 
 ### Stow only
 
