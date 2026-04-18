@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Bootstrap -- run once on a fresh machine, safe to re-run
+# Bootstrap - run once on a fresh machine, safe to re-run.
+# Handles the public dotfiles only. Private overlays (work, personal)
+# live in sibling dotfiles-private-* repos and each ship their own
+# self-contained ./bootstrap.
 
 STOW_DIR="$HOME/Developer/github.com/pszypowicz"
 
@@ -12,37 +15,11 @@ if ! command -v brew &>/dev/null; then
     eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
 
-# 2. Resolve which overlay to activate. Pass as the first argument or the
-# script prompts interactively. Blank input means no overlay (base only).
-PROFILE="${1:-}"
-if [ -z "$PROFILE" ] && [ -t 0 ]; then
-    printf "Overlay profile (blank for none): "
-    read -r PROFILE
-fi
-
-# Overlay packages live in a sibling package directory named
-# "dotfiles-private-<profile>" and expose a Brewfile named
-# "Brewfile.<profile>". Keeping the interpolation profile-driven means
-# this script has no baked-in knowledge of which overlays exist.
-if [ -n "$PROFILE" ]; then
-    OVERLAY_PKG="dotfiles-private-$PROFILE"
-    OVERLAY_BREWFILE="$STOW_DIR/$OVERLAY_PKG/dot-config/brewfile/Brewfile.$PROFILE"
-else
-    OVERLAY_PKG=""
-    OVERLAY_BREWFILE=""
-fi
-
-# 3. Packages
+# 2. Packages
 echo "Installing packages..."
 brew bundle --file "$STOW_DIR/dotfiles/dot-config/brewfile/Brewfile"
-if [ -n "$OVERLAY_BREWFILE" ] && [ -f "$OVERLAY_BREWFILE" ]; then
-    echo "Installing overlay packages..."
-    brew bundle --file "$OVERLAY_BREWFILE"
-fi
 
-# 4. Dotfiles -- all repos share the same stow directory
-# (~/Developer/github.com/pszypowicz) so stow can unfold directories
-# shared between packages.
+# 3. Dotfiles
 #
 # --no-folding forces stow to create every package subdirectory as a real
 # directory in the target and symlink individual files, instead of collapsing
@@ -54,18 +31,24 @@ fi
 # the target dir is real and the runtime writes stay local.
 echo "Stowing dotfiles..."
 stow -d "$STOW_DIR" -t ~ dotfiles --dotfiles --restow --no-folding
-if [ -n "$OVERLAY_PKG" ] && [ -d "$STOW_DIR/$OVERLAY_PKG" ]; then
-    echo "Stowing overlay..."
-    stow -d "$STOW_DIR" -t ~ "$OVERLAY_PKG" --dotfiles --restow --no-folding
-fi
 
-# 5. Go tools
+# 4. Go tools
 if command -v go &>/dev/null; then
     echo "Installing Go tools..."
     go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
     go install golang.org/x/tools/gopls@latest
     go install golang.org/x/vuln/cmd/govulncheck@latest
     go install honnef.co/go/tools/cmd/staticcheck@latest
+fi
+
+# 5. npm globals - tools with no brew formula (or newer than the brew one)
+if command -v npm &>/dev/null; then
+    echo "Installing npm globals..."
+    npm install -g \
+        @anthropic-ai/claude-code \
+        @lhci/cli \
+        cf \
+        lighthouse
 fi
 
 # 6. Defaults
