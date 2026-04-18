@@ -24,14 +24,24 @@
 - Prefer generic phrasing over specifics: "an internal service", "a downstream consumer", "a customer-reported issue" instead of naming them. Link to internal trackers by ID only if the tracker itself is not public; never paste internal ticket bodies into public PRs.
 - This rule **overrides** any instinct to be thorough or to "provide full context" in a commit/PR/comment. A terse, vague public artifact is strictly better than one that leaks information.
 
-## Commit Messages
+## Don't duplicate tool-supplied metadata in prose
 
-- **Do not duplicate information in a commit message that the commit itself already carries.** The commit body should capture the essence of _why_ the change exists and any non-obvious context for reviewers or future readers. It should not restate facts that are naturally part of the commit metadata or its diff:
+Applies to commit messages, code comments, docstrings, PR descriptions, and any other prose artifact that sits next to content some tool already tracks. The rule is the same across all of them: prose captures the _why_ and the non-obvious context; it does not restate facts the surrounding tooling already supplies.
+
+- **Commit messages** should not restate what the commit metadata or diff already shows:
   - No dates, timestamps, author names, or branch names (git already stores these).
   - No version numbers or release tags in the message body when a CHANGELOG entry is part of the same commit (the CHANGELOG diff is the source of truth; repeating `CHANGELOG: vX.Y.Z` in the message is noise).
   - No file lists or line counts (the diff shows this).
   - No "bumped from X to Y" restatements when the version bump is visible in a manifest file in the same commit.
-- What _does_ belong: the problem being solved, the reasoning behind the chosen approach, any trade-offs considered, references to external context a reviewer would need (incident IDs, upstream issues) that are not in the diff itself.
+- **Code comments** should not cite snapshot-in-time state that tooling can produce on demand:
+  - No coverage percentages ("was 0% covered", "sits at 45%") - these rot every test run and the coverage tool is authoritative.
+  - No line-number references into other files (`parse.go:125`) - reference the function or symbol by name so grep stays useful when the file moves.
+  - No session-relative phrasing ("earlier this session", "after the fix we just landed", "recently") - a future reader has no session context.
+  - No "currently" claims about your own code's behavior - if the code changes, the comment drifts silently. State the invariant the code is supposed to hold, not the observation of what it does today.
+- **Durable cross-references are fine** because they don't rot: issue numbers (`#27`), "before/after #N" markers on regression tests, named behaviors of pinned dependencies ("go-cty-yaml quotes object keys"), and links to external trackers a reviewer would need that aren't in the diff.
+- **What _does_ belong in prose**: the problem being solved, the reasoning behind the chosen approach, trade-offs considered, hidden invariants, and constraints a reader couldn't derive from the code or diff.
+
+Rule of thumb: if a comment would still be accurate a year from now without anyone updating it, it's durable. If it depends on current test counts, current coverage, current file layout, or current session context, it isn't - and it will become a lie faster than you'd expect.
 
 ## Private overlay
 
