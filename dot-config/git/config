@@ -23,5 +23,5 @@
 
 [includeIf "gitdir:~/Developer/github.com/"]
 	path = ~/.config/git/github.config
-[includeIf "gitdir:~/Developer/dev.azure.com/***REMOVED***/"]
-	path = ~/.config/git/work.config
+[include]
+	path = ~/.config/git/config.local
