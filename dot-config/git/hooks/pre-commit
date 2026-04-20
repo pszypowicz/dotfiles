@@ -1,20 +1,21 @@
 #!/usr/bin/env zsh
+set -e
 
-# Find all .tf files tracked by git
-files=($(git ls-files | grep '\.tf$'))
+# Dirs with staged .tf files
+dirs=(${(f)"$(git diff --cached --name-only --diff-filter=ACMR -- '*.tf' | xargs -n1 dirname | sort -u)"})
+(( ${#dirs} )) || exit 0
 
-# # find parent directories of all .tf files
-dirs=($(echo $files | xargs -n1 dirname | sort -u))
+# Make the working tree match the index, so --output-check compares against
+# the staged README rather than a locally-modified one.
+if ! git diff --quiet; then
+  git stash push -q --keep-index -m pre-commit-tfdocs
+  trap 'git stash pop -q' EXIT
+fi
 
-# run `terraform-docs .`` in each directory only if the directory contains .terraform-docs.yml or .terraform-docs.yaml
 for dir in $dirs; do
-  if [ -f "$dir/.terraform-docs.yml" ]; then
-    pushd -q $dir
-    terraform-docs . --output-check > /dev/null
-    if [ $? -ne 0 ]; then
-      echo "terraform-docs failed in $dir"
-      exit 1
-    fi
-    popd -q
-  fi
+  [[ -f "$dir/.terraform-docs.yml" ]] || continue
+  (cd $dir && terraform-docs . --output-check >/dev/null) || {
+    echo "terraform-docs stale or unstaged in $dir" >&2
+    exit 1
+  }
 done
