@@ -43,6 +43,17 @@ Applies to commit messages, code comments, docstrings, PR descriptions, and any 
 
 Rule of thumb: if a comment would still be accurate a year from now without anyone updating it, it's durable. If it depends on current test counts, current coverage, current file layout, or current session context, it isn't - and it will become a lie faster than you'd expect.
 
+## Scripts meant to be reused
+
+Applies to any script written to a file that is intended to be invoked more than once or maintained over time (bash, zsh, fish, pwsh, python, node, etc.) - including work-in-progress under `_scratch/` that has not yet been routed to a public or private repo. Treat scratch scripts as proper projects whose destination is undecided, not as throwaways. Does **not** apply to one-off commands pasted directly into a terminal.
+
+- **Prefer named parameters over positional.** Flags like `--input-file foo --dry-run` self-document at the call site and survive argument reordering; `./script.sh foo bar 1 2` does not. Positional args are only acceptable when there is exactly one obvious argument (e.g. a single required path) and its meaning is unambiguous from the script's name.
+- **Expose `--help` (and `-h`) whenever the script takes any input.** The help text should cover: one-line purpose, usage synopsis, every flag with its default, and at least one example invocation. A reader should not need to open the source to learn how to call it.
+- **Use the language's standard argument parser** rather than hand-rolling flag handling: `argparse` (Python), `getopts` or a case-based parser (bash/zsh), `argparse` (fish), `param(...)` with `CmdletBinding` (PowerShell), `commander`/`yargs` (node), `cobra`/`flag` (Go). Standard parsers give you `--help`, type validation, and consistent error messages for free.
+- **Fail loudly on unknown or missing required flags.** Do not silently fall back to defaults for required inputs.
+
+Rule of thumb: if the script is saved to a file with the expectation that someone (including future-you) might run it again, it needs named flags and `--help`, regardless of whether its final home is decided yet.
+
 ## Private overlay
 
 Machine-specific rules live in a single private file stowed from whichever `dotfiles-private-*` overlay is active for this host.
