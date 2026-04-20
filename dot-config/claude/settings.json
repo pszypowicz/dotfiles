@@ -71,6 +71,7 @@
     "skill-creator@claude-plugins-official": true,
     "swift-concurrency@claude-skills": true,
     "ado@claude-skills": true,
+    "worktrees@claude-skills": true,
     "gopls-lsp@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
