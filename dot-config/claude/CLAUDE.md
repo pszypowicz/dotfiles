@@ -6,10 +6,6 @@
 - **Do not use double dashes (`--`) as prose punctuation either.** Use a single `-` with spaces around it (like this). Double dashes are still fine where they have syntactic meaning (CLI flags like `--draft`, SQL comments, etc.), just not as a stand-in for em dashes in writing.
 - **No non-ASCII characters in PowerShell scripts** (`.ps1`, `.psm1`). Use only ASCII in code, comments, and string literals. This avoids BOM/encoding warnings from PSScriptAnalyzer.
 
-## Security
-
-- Never use `$()` subshells or `op` CLI to retrieve secrets from within Claude. Auth credentials must be pre-resolved in the shell environment before starting a session.
-
 ## Privacy in Public Artifacts
 
 - **Be paranoid about leaking private information into publicly traceable artifacts.** This applies to commit messages, PR titles and descriptions, PR/issue comments, code review threads, work item text, wiki pages, changelogs, public repo code and comments, and anything else that ends up in a place other humans (teammates, auditors, the internet) can read now or later.
