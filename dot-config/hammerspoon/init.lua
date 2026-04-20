@@ -172,16 +172,42 @@ local function navigateToChainEntry(entry, screen)
     -- fullscreen Space, so the user stays trapped. hs.spaces.gotoSpace _does_
     -- cross the boundary, so we land back on the aerospace user Space first
     -- and let aerospace focus the workspace within it.
+    local userSid
+    for _, sid in ipairs(hs.spaces.spacesForScreen(screen) or {}) do
+        if hs.spaces.spaceType(sid) == "user" then userSid = sid; break end
+    end
     local active = hs.spaces.activeSpaceOnScreen(screen)
-    if active and hs.spaces.spaceType(active) ~= "user" then
-        for _, sid in ipairs(hs.spaces.spacesForScreen(screen) or {}) do
-            if hs.spaces.spaceType(sid) == "user" then
-                hs.spaces.gotoSpace(sid)
-                break
-            end
+    if active and userSid and hs.spaces.spaceType(active) ~= "user" then
+        hs.spaces.gotoSpace(userSid)
+    end
+
+    -- Prefer focusing a specific user-Space window in the target workspace
+    -- over a bare `aerospace workspace <id>`. If the workspace contains both
+    -- an ordinary window and a Safari window that has been fullscreened into
+    -- its own macOS Space (common when a YouTube video is opened fullscreen),
+    -- aerospace treats the fullscreen window as an eligible focus target and
+    -- the bare workspace switch picks it via MRU - which drags macOS back
+    -- into that fullscreen Space. Picking a window we know is in the user
+    -- Space keeps us on the aerospace user Space.
+    local userWins = {}
+    if userSid then
+        for _, wid in ipairs(hs.spaces.windowsForSpace(userSid) or {}) do
+            userWins[wid] = true
         end
     end
-    hs.execute(AEROSPACE .. " workspace " .. entry.id)
+    local out = aerospaceExec("list-windows --workspace " .. entry.id .. " --format '%{window-id}'")
+    local targetWid
+    if out then
+        for line in out:gmatch("[^\r\n]+") do
+            local wid = tonumber(line:match("%S+"))
+            if wid and userWins[wid] then targetWid = wid; break end
+        end
+    end
+    if targetWid then
+        hs.execute(AEROSPACE .. " focus --window-id " .. targetWid)
+    else
+        hs.execute(AEROSPACE .. " workspace " .. entry.id)
+    end
 end
 
 local function navigateWorkspace(direction)
@@ -196,7 +222,12 @@ end
 
 workspaceTap = hs.eventtap.new({ hs.eventtap.event.types.keyDown }, function(event)
     local flags = event:getFlags()
-    if not flags:containExactly({ "ctrl", "fn" }) then return false end
+    -- Match Ctrl+Left/Right regardless of whether the Fn modifier is also
+    -- held: Apple keyboards set the fn flag automatically when arrow keys
+    -- are pressed on some layouts, and we do not want that to silently
+    -- bypass the binding. Any other modifier (cmd, alt, shift) disables us.
+    if not flags.ctrl then return false end
+    if flags.cmd or flags.alt or flags.shift then return false end
 
     local keyCode = event:getKeyCode()
     local direction = (keyCode == 123 and "left") or (keyCode == 124 and "right") or nil
