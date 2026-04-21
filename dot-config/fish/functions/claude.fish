@@ -7,9 +7,10 @@ function claude --wraps claude --description "Claude Code with tmux window name 
     # Capture this window's ID so updates target it even when focus moves
     set -l win_id (tmux display-message -p '#{window_id}')
 
-    # Claude sets process.title to its version (e.g. "2.1.84"), which automatic-rename
-    # picks up via pane_current_command. Override the format for THIS window to use
-    # pane_title instead, which Claude sets to the session name (e.g. "⠂ test").
+    # tmux's default automatic-rename reads pane_current_command (e.g. "claude.exe"),
+    # which is useless. Claude Code sets pane_title via OSC 2 to the auto-generated
+    # session topic (e.g. "⠂ test") and updates it as the topic evolves. Override
+    # the format for THIS window to surface that, prefixed with the project dir.
     set -l prev_format (tmux show-window-option -t $win_id -v automatic-rename-format 2>/dev/null)
     set -l project_name (basename $PWD)
     tmux set-window-option -t $win_id automatic-rename-format "$project_name #{pane_title}"
