@@ -37,6 +37,8 @@ set -gx KUBECONFIG $XDG_CONFIG_HOME/kube/config
 set -gx KUBECACHEDIR $XDG_CACHE_HOME/kube
 set -gx TF_CLI_CONFIG_FILE $XDG_CONFIG_HOME/terraform/terraformrc
 set -gx TF_PLUGIN_CACHE_DIR $XDG_CACHE_HOME/terraform/plugins
+set -gx TF_INSTALL_PATH $XDG_DATA_HOME
+set -gx TF_BINARY_PATH $HOME/bin/terraform
 set -gx CHECKPOINT_DISABLE 1
 set -gx BICEP_CACHE_ROOT $XDG_CACHE_HOME/bicep
 
