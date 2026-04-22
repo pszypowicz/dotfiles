@@ -70,7 +70,43 @@
     "swift-lsp@claude-plugins-official": true,
     "frontend-design@claude-plugins-official": true,
     "skill-creator@claude-plugins-official": true,
-    "gopls-lsp@claude-plugins-official": true
+    "gopls-lsp@claude-plugins-official": true,
+    "ado@claude-skills": true,
+    "go-dev@claude-skills": true,
+    "modern-swift@claude-skills": true,
+    "swift-concurrency@claude-skills": true,
+    "worktrees@claude-skills": true
+  },
+  "extraKnownMarketplaces": {
+    "claude-skills": {
+      "source": {
+        "source": "github",
+        "repo": "pszypowicz/claude-skills"
+      }
+    }
+  },
+  "sandbox": {
+    "enabled": false,
+    "failIfUnavailable": true,
+    "network": {
+      "allowedDomains": [
+        "api.github.com",
+        "uploads.github.com",
+        "objects.githubusercontent.com",
+        "codeload.github.com"
+      ]
+    },
+    "filesystem": {
+      "allowWrite": [
+        "~/.cache",
+        "~/.local/share",
+        "~/.local/state",
+        "~/.config/azure",
+        "/tmp",
+        "/private/tmp",
+        "/var/folders"
+      ]
+    }
   },
   "effortLevel": "xhigh",
   "theme": "auto"
