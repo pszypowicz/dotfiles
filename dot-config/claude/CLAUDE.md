@@ -57,6 +57,25 @@ Applies to commit messages, code comments, docstrings, PR descriptions, and any 
 
 Rule of thumb: if a comment would still be accurate a year from now without anyone updating it, it's durable. If it depends on current test counts, current coverage, current file layout, or current session context, it isn't - and it will become a lie faster than you'd expect.
 
+## Respect repository and branch policy
+
+Applies to any repository with branch protection, required status checks, required reviews, protected tags, or equivalent policy rules configured on the remote (GitHub, Azure DevOps, GitLab, Bitbucket, etc.).
+
+- **A policy-violation warning from the remote is a stop signal, not a confirmation to proceed.** When `git push` replies with text like `remote: Bypassed rule violations for refs/heads/...`, `Changes must be made through a pull request`, `Required status check "X" is expected`, or similar, stop immediately and report. Do not retry the push, do not re-push with different flags, and do not continue pushing related refs (tags, branches) that depend on the bypassed push. The push may succeed in the moment because the authenticated user has admin rights - the admin *bypass* is the thing that requires permission, and the warning is the server telling you that's what just happened.
+- **Each of the following requires explicit, per-action approval from the user**:
+  - Pushing directly to a branch that requires PRs.
+  - Bypassing required status checks, review approvals, or signed-commit rules.
+  - Force-pushing to a protected branch or tag.
+  - Deleting a protected branch or tag on the remote.
+  - Merging a PR with failing required checks, missing required reviews, or unresolved review threads.
+  - Passing `--no-verify`, `--force`, or any `--admin-*` flag to git.
+
+  Prior authorization earlier in the session does not carry over - each bypass is its own ask. A general directive like "commit and push" authorizes the normal policy-respecting flow, not a bypass.
+- **What approval looks like**: a user message that names the specific action ("push directly to main this one time", "force-push the branch", "delete the release"). Anything less specific should be treated as "use the policy-respecting path".
+- **Default when you hit a policy gate**: open a PR (draft, per the PR defaults). Even for solo repos where the user could self-approve, the policy was configured for a reason - usually CI coverage, reviewable history, or reversibility. Follow it unless explicitly waived for a specific change.
+
+Rule of thumb: if the remote server printed a warning about the action you just took, treat it as an error. Stop and ask before doing anything else.
+
 ## Scripts meant to be reused
 
 Applies to any script written to a file that is intended to be invoked more than once or maintained over time (bash, zsh, fish, pwsh, python, node, etc.) - including work-in-progress under `_scratch/` that has not yet been routed to a public or private repo. Treat scratch scripts as proper projects whose destination is undecided, not as throwaways. Does **not** apply to one-off commands pasted directly into a terminal.
