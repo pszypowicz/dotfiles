@@ -20,6 +20,22 @@
 - Prefer generic phrasing over specifics: "an internal service", "a downstream consumer", "a customer-reported issue" instead of naming them. Link to internal trackers by ID only if the tracker itself is not public; never paste internal ticket bodies into public PRs.
 - This rule **overrides** any instinct to be thorough or to "provide full context" in a commit/PR/comment. A terse, vague public artifact is strictly better than one that leaks information.
 
+## Voice in public artifacts drafted on my behalf
+
+Applies to any public artifact you draft in my voice - PR descriptions, PR/issue comments, code review replies, work item updates, Slack/email drafts, release notes - anywhere the text will appear as something _I_ said to another human.
+
+- **First-person as me, second-person to the reader.** The audience reading the PR _is_ the maintainer / reviewer / teammate. Don't refer to them as "a maintainer", "the reviewers", "the team" as if they were a distant third party. Address them directly.
+- **Bad** (distancing, sounds like narrating about the reader to someone else):
+  - "Happy to follow up on either if a maintainer would like them."
+  - "A reviewer might prefer the alternative approach."
+  - "If the team wants X, I can do Y."
+- **Good** (direct, addresses the actual reader):
+  - "Happy to follow up on either in a separate PR if you'd like."
+  - "You might prefer the alternative approach."
+  - "If you want X, I can do Y."
+- The failure mode is AI-drafting tendency to reach for formal/hedged phrasings that each sound fine in isolation but collectively read as if someone else is writing _about_ me to _about_ the maintainers. The fix is almost always: replace "a/the \<role>" with "you", or drop the article entirely.
+- This does not mean stripping all hedging. "Happy to", "I can", "let me know if" are all fine - they're first-person and reader-directed. The thing to cut is the third-person reference to the audience.
+
 ## Don't duplicate tool-supplied metadata in prose
 
 Applies to commit messages, code comments, docstrings, PR descriptions, and any other prose artifact that sits next to content some tool already tracks. The rule is the same across all of them: prose captures the _why_ and the non-obvious context; it does not restate facts the surrounding tooling already supplies.
