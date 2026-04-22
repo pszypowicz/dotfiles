@@ -42,7 +42,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "file_path=$(jq -r '.tool_input.file_path') && if [[ \"$file_path\" == *.md && \"$file_path\" != */.claude/plans/* ]]; then prettier --write \"$file_path\"; fi"
+            "command": "file_path=$(jq -r '.tool_input.file_path') && if [[ \"$file_path\" == *.md && \"$file_path\" != */.claude/plans/* ]]; then prettier --write \"$(readlink -f \"$file_path\")\"; fi"
           },
           {
             "type": "command",
