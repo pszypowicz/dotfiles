@@ -32,7 +32,8 @@ while IFS=: read -r workspace monitor_id; do
     sketchybar --set "$item_name" \
       display="$monitor_id" \
       icon="${!icon_var}" \
-      icon.font.size=22
+      icon.font.size=22 \
+      --move "$item_name" after aerospace.observer
   else
     sketchybar --add item "$item_name" left \
       --set "$item_name" \

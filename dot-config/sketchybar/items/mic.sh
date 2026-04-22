@@ -5,6 +5,8 @@ set -e
 # Add order (first = rightmost): mic sits to the right of mic.shield, then a
 # separator before input_source. status.sh adds a separator immediately to
 # the right of this group (between mic and volume).
+# sketchybarrc pings MicGuard after the global call so the items exist when
+# the response comes back.
 
 mic=(
   updates=on
@@ -28,16 +30,14 @@ mic_shield=(
   padding_right=0
 )
 
-sketchybar \
-  --add event mic_status_changed "com.pszypowicz.MicGuard.statusChanged" \
-  --add event mic_app_terminated "com.pszypowicz.MicGuard.appTerminated" \
-  --add item mic right \
-  --set mic "${mic[@]}" \
-  --subscribe mic mic_status_changed mic_app_terminated mouse.exited.global \
-  --add item mic.shield right \
-  --set mic.shield "${mic_shield[@]}" \
-  --subscribe mic.shield mouse.exited.global \
-  $(separator_args sep_r4 right)
-
-# Request current status so bar populates immediately on (re)start
-mic-guard -q ping 2>/dev/null &
+SBAR_ARGS+=(
+  --add event mic_status_changed "com.pszypowicz.MicGuard.statusChanged"
+  --add event mic_app_terminated "com.pszypowicz.MicGuard.appTerminated"
+  --add item mic right
+  --set mic "${mic[@]}"
+  --subscribe mic mic_status_changed mic_app_terminated mouse.exited.global
+  --add item mic.shield right
+  --set mic.shield "${mic_shield[@]}"
+  --subscribe mic.shield mouse.exited.global
+)
+SBAR_ARGS+=( $(separator_args sep_r4 right) )

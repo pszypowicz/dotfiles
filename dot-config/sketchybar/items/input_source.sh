@@ -11,8 +11,9 @@ input_source=(
 
 keyboard_event="AppleSelectedInputSourcesChangedNotification"
 
-sketchybar \
-  --add event input_source_changed "$keyboard_event" \
-  --add item input_source right \
-  --set input_source "${input_source[@]}" \
+SBAR_ARGS+=(
+  --add event input_source_changed "$keyboard_event"
+  --add item input_source right
+  --set input_source "${input_source[@]}"
   --subscribe input_source input_source_changed mouse.exited.global
+)

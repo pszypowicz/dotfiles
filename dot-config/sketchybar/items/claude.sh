@@ -11,7 +11,8 @@ claude=(
 
 # Sourced last among right-side items so claude sits at the leftmost
 # position of the right cluster (closest to center).
-sketchybar \
-  $(separator_args sep_r5 right) \
-  --add item claude right \
+SBAR_ARGS+=( $(separator_args sep_r5 right) )
+SBAR_ARGS+=(
+  --add item claude right
   --set claude "${claude[@]}"
+)

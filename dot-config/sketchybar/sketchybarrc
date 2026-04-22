@@ -45,7 +45,9 @@ default=(
   popup.background.shadow.drawing=on
 )
 
-sketchybar --bar "${bar[@]}" --default "${default[@]}"
+# Items files append to this global so the entire bar is configured in
+# one chained `sketchybar` invocation - one fork+exec instead of many.
+SBAR_ARGS=(--bar "${bar[@]}" --default "${default[@]}")
 
 # -- Left side items (added left-to-right) --
 
@@ -62,6 +64,15 @@ source "$ITEMS_DIR/mic.sh"
 source "$ITEMS_DIR/input_source.sh"
 source "$ITEMS_DIR/claude.sh"
 
-##### Disable hotload, then force all scripts to run the first time
+# Disable hotload, then force all scripts to run the first time
+SBAR_ARGS+=(--hotload off --update)
 
-sketchybar --hotload off --update
+sketchybar "${SBAR_ARGS[@]}"
+
+# Post-init:
+# - Trigger aerospace plugin so any pre-existing monitor items get re-moved
+#   into position after aerospace.observer (sketchybar may keep them across
+#   --reload at the leftmost edge otherwise).
+# - Ask MicGuard to publish current status now that mic items exist.
+sketchybar --trigger aerospace_workspace_change &
+mic-guard -q ping 2>/dev/null &
