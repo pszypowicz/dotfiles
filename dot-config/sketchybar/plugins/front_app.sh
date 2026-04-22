@@ -10,6 +10,6 @@ if [[ "$SENDER" == "mouse.exited.global" ]]; then
   exit 0
 fi
 
-if [ "$SENDER" = "front_app_switched" ]; then
+if [[ "$SENDER" == "front_app_switched" ]]; then
   sketchybar --set "$NAME" label="$INFO"
 fi

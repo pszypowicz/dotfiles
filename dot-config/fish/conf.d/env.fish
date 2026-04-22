@@ -43,6 +43,6 @@ set -gx CHECKPOINT_DISABLE 1
 set -gx BICEP_CACHE_ROOT $XDG_CACHE_HOME/bicep
 
 fish_add_path $GOPATH/bin
-fish_add_path /Users/pszypowicz/bin
+fish_add_path $HOME/bin
 
 set -g fish_key_bindings fish_vi_key_bindings

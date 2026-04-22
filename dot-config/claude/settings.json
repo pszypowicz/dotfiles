@@ -69,20 +69,7 @@
     "swift-lsp@claude-plugins-official": true,
     "frontend-design@claude-plugins-official": true,
     "skill-creator@claude-plugins-official": true,
-    "swift-concurrency@claude-skills": true,
-    "ado@claude-skills": true,
-    "worktrees@claude-skills": true,
-    "go-dev@claude-skills": true,
-    "modern-swift@claude-skills": true,
     "gopls-lsp@claude-plugins-official": true
-  },
-  "extraKnownMarketplaces": {
-    "claude-skills": {
-      "source": {
-        "source": "directory",
-        "path": "/Users/pszypowicz/Developer/github.com/pszypowicz/claude-skills"
-      }
-    }
   },
   "effortLevel": "xhigh",
   "theme": "auto"

@@ -23,7 +23,7 @@ end
 local swipe = hs.loadSpoon("Swipe")
 local TERMINAL_BUNDLE_ID = "com.mitchellh.ghostty"
 local DEBOUNCE_SECONDS = 0.3
-local MIN_SWIPE_DISTANCE = 0.05 -- 0.0–1.0, increase for longer swipes
+local MIN_SWIPE_DISTANCE = 0.05 -- 0.0-1.0, increase for longer swipes
 local lastSwipeTime = 0
 local lastSwipeId = nil
 

@@ -28,7 +28,3 @@ export CHECKPOINT_DISABLE=1
 export BICEP_CACHE_ROOT="$XDG_CACHE_HOME/bicep"
 
 export PATH="$GOPATH/bin:$PATH"
-
-if [ -S "$HOME/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh" ] && pgrep -qf com.maxgoedjen.Secretive.SecretAgent; then
-  export SSH_AUTH_SOCK="$HOME/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh"
-fi

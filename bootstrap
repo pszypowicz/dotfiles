@@ -6,7 +6,10 @@ set -euo pipefail
 # live in sibling dotfiles-private-* repos and each ship their own
 # self-contained ./bootstrap.
 
-STOW_DIR="$HOME/Developer/github.com/pszypowicz"
+# Resolve this repo's parent directory so bootstrap works from any clone path.
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+PACKAGE_NAME=$(basename "$SCRIPT_DIR")
+STOW_DIR=$(dirname "$SCRIPT_DIR")
 
 # 1. Homebrew
 if ! command -v brew &>/dev/null; then
@@ -17,7 +20,7 @@ fi
 
 # 2. Packages
 echo "Installing packages..."
-brew bundle --file "$STOW_DIR/dotfiles/dot-config/brewfile/Brewfile"
+brew bundle --file "$SCRIPT_DIR/dot-config/brewfile/Brewfile"
 
 # 3. Dotfiles
 #
@@ -30,7 +33,7 @@ brew bundle --file "$STOW_DIR/dotfiles/dot-config/brewfile/Brewfile"
 # pass through a dir-symlink and land inside the git repo; without folding,
 # the target dir is real and the runtime writes stay local.
 echo "Stowing dotfiles..."
-stow -d "$STOW_DIR" -t ~ dotfiles --dotfiles --restow --no-folding
+stow -d "$STOW_DIR" -t ~ "$PACKAGE_NAME" --dotfiles --restow --no-folding
 
 # 4. Go tools
 if command -v go &>/dev/null; then

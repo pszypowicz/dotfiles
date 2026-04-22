@@ -1,7 +1,4 @@
 set fish_greeting
-if test -S /Users/pszypowicz/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh; and pgrep -qf com.maxgoedjen.Secretive.SecretAgent
-    set -x SSH_AUTH_SOCK /Users/pszypowicz/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh
-end
 
 /opt/homebrew/bin/brew shellenv | source
 fish_add_path ~/.local/bin
