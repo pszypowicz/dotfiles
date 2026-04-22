@@ -8,9 +8,11 @@ if [[ "$BUTTON" != "right" ]]; then
   exit 0
 fi
 
+removes=$(popup_toggle_args "$NAME") || exit 0
+
 visible=$(aerospace list-workspaces --monitor focused --visible 2>/dev/null)
 
-args=( $(popup_remove_args "$NAME") )
+args=( $removes )
 while IFS= read -r ws; do
   [[ -z "$ws" ]] && continue
   item="$NAME.ws.$ws"

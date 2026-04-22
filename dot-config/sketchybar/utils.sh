@@ -26,3 +26,21 @@ popup_remove_args() {
   sketchybar --query "$1" 2>/dev/null \
     | jq -r '.popup.items // [] | .[] | "--remove \(.)"'
 }
+
+# Toggle popup on $1 with one sketchybar --query.
+# If the popup is open: close it, return 1 (caller should exit).
+# If the popup is closed: echo `--remove ITEM` args for any leftover popup
+# items so the caller can splice them into the rebuild call, return 0.
+# Usage:
+#   removes=$(popup_toggle_args "$NAME") || exit 0
+#   sketchybar $removes --add item ... --set "$NAME" popup.drawing=on
+popup_toggle_args() {
+  local query
+  query=$(sketchybar --query "$1" 2>/dev/null)
+  if [[ "$(jq -r '.popup.drawing // "off"' <<< "$query")" == "on" ]]; then
+    sketchybar --set "$1" popup.drawing=off
+    return 1
+  fi
+  jq -r '.popup.items // [] | .[] | "--remove \(.)"' <<< "$query"
+  return 0
+}

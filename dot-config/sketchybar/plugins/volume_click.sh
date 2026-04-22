@@ -8,6 +8,9 @@ show_slider() {
   local vol
   vol=$(osascript -e 'output volume of (get volume settings)')
 
+  # Left-click always (re)builds the slider popup; not a toggle, so that
+  # left-click after a right-click switches devices -> slider rather than
+  # just closing the popup.
   local removes
   removes=$(popup_remove_args volume)
 
@@ -44,6 +47,9 @@ show_slider() {
 }
 
 show_devices() {
+  local removes
+  removes=$(popup_toggle_args volume) || return 0
+
   local devices current
   devices=$(hs -c '
     local devs = hs.audiodevice.allOutputDevices()
@@ -51,7 +57,7 @@ show_devices() {
   ' 2>/dev/null)
   current=$(hs -c 'print(hs.audiodevice.defaultOutputDevice():name())' 2>/dev/null)
 
-  local args=( $(popup_remove_args volume) )
+  local args=( $removes )
   while IFS= read -r name; do
     [[ -z "$name" ]] && continue
     local slug

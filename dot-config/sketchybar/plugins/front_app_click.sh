@@ -5,11 +5,13 @@ source "$CONFIG_DIR/icons.sh"
 source "$CONFIG_DIR/utils.sh"
 
 if [[ "$BUTTON" == "right" ]]; then
+  removes=$(popup_toggle_args front_app) || exit 0
+
   app=$(sketchybar --query front_app | jq -r '.label.value')
   escaped=$(printf '%s' "$app" | sed "s/\"/\\\\\"/g")
 
   sketchybar \
-    $(popup_remove_args front_app) \
+    $removes \
     --add item front_app.quit popup.front_app \
     --set front_app.quit \
       label="Quit $app" \
