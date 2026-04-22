@@ -25,8 +25,6 @@ bar=(
   color="$TRANSPARENT_BLACK"
 )
 
-sketchybar --bar "${bar[@]}"
-
 ##### Changing Defaults
 
 default=(
@@ -47,7 +45,7 @@ default=(
   popup.background.shadow.drawing=on
 )
 
-sketchybar --default "${default[@]}"
+sketchybar --bar "${bar[@]}" --default "${default[@]}"
 
 # -- Left side items (added left-to-right) --
 
@@ -64,8 +62,6 @@ source "$ITEMS_DIR/mic.sh"
 source "$ITEMS_DIR/input_source.sh"
 source "$ITEMS_DIR/claude.sh"
 
-sketchybar --hotload off
+##### Disable hotload, then force all scripts to run the first time
 
-##### Force all scripts to run the first time (never do this in a script)
-
-sketchybar --update
+sketchybar --hotload off --update

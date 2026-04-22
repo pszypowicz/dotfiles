@@ -28,21 +28,16 @@ mic_shield=(
   padding_right=0
 )
 
-# Events
-sketchybar --add event mic_status_changed "com.pszypowicz.MicGuard.statusChanged"
-sketchybar --add event mic_app_terminated "com.pszypowicz.MicGuard.appTerminated"
-
-# mic item (rightmost of the pair - mic icon + device name label)
-sketchybar --add item mic right \
+sketchybar \
+  --add event mic_status_changed "com.pszypowicz.MicGuard.statusChanged" \
+  --add event mic_app_terminated "com.pszypowicz.MicGuard.appTerminated" \
+  --add item mic right \
   --set mic "${mic[@]}" \
-  --subscribe mic mic_status_changed mic_app_terminated mouse.exited.global
-
-# mic.shield item (left of mic - shield icon only)
-sketchybar --add item mic.shield right \
+  --subscribe mic mic_status_changed mic_app_terminated mouse.exited.global \
+  --add item mic.shield right \
   --set mic.shield "${mic_shield[@]}" \
-  --subscribe mic.shield mouse.exited.global
-
-add_separator sep_r4 right
+  --subscribe mic.shield mouse.exited.global \
+  $(separator_args sep_r4 right)
 
 # Request current status so bar populates immediately on (re)start
 mic-guard -q ping 2>/dev/null &

@@ -10,21 +10,13 @@ slugify() {
   echo "$s"
 }
 
-add_separator() {
+# Emit --add/--set args for a vertical separator. Designed to be word-split
+# into a chained `sketchybar` invocation via $(separator_args NAME SIDE).
+# All emitted values are space-free, so unquoted expansion is safe.
+separator_args() {
   local name=$1
   local side=$2
-  sketchybar --add item "$name" "$side" \
-    --set "$name" \
-      label="┃" \
-      label.color=0xaaffffff \
-      icon.drawing=off \
-      background.drawing=off \
-      icon.padding_left=0 \
-      icon.padding_right=0 \
-      label.padding_left=0 \
-      label.padding_right=0 \
-      padding_left=2 \
-      padding_right=2
+  echo "--add item $name $side --set $name label=┃ label.color=0xaaffffff icon.drawing=off background.drawing=off icon.padding_left=0 icon.padding_right=0 label.padding_left=0 label.padding_right=0 padding_left=2 padding_right=2"
 }
 
 cleanup_popup() {

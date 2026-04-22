@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 
-# Register custom events
-sketchybar --add event aerospace_workspace_change
+# Hidden observer item that listens for workspace changes and runs the
+# plugin to add/update visible aerospace.monitor.* items dynamically.
 
-# Create hidden dummy item to listen for display changes
-sketchybar --add item aerospace.observer left \
-  --set aerospace.observer \
-  drawing=off \
-  script="$PLUGIN_DIR/aerospace.sh" \
+sketchybar \
+  --add event aerospace_workspace_change \
+  --add item aerospace.observer left \
+  --set aerospace.observer drawing=off script="$PLUGIN_DIR/aerospace.sh" \
   --subscribe aerospace.observer aerospace_workspace_change mouse.exited.global
