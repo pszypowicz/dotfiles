@@ -10,6 +10,23 @@ slugify() {
   echo "$s"
 }
 
+add_separator() {
+  local name=$1
+  local side=$2
+  sketchybar --add item "$name" "$side" \
+    --set "$name" \
+      label="┃" \
+      label.color=0xaaffffff \
+      icon.drawing=off \
+      background.drawing=off \
+      icon.padding_left=0 \
+      icon.padding_right=0 \
+      label.padding_left=0 \
+      label.padding_right=0 \
+      padding_left=2 \
+      padding_right=2
+}
+
 cleanup_popup() {
   local items
   items=$(sketchybar --query "$1" 2>/dev/null | jq -r '.popup.items // [] | .[]')

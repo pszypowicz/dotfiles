@@ -2,7 +2,7 @@
 
 sketchybar \
   --add item chevron left \
-  --set chevron icon= label.drawing=off \
+  --set chevron icon="$CHEVRON" label.drawing=off \
   --add item front_app left \
   --set front_app icon.drawing=off script="$PLUGIN_DIR/front_app.sh" \
               click_script="$PLUGIN_DIR/front_app_click.sh" \

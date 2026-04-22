@@ -49,18 +49,20 @@ default=(
 
 sketchybar --default "${default[@]}"
 
-# -- Left side items --
+# -- Left side items (added left-to-right) --
 
 source "$ITEMS_DIR/apple.sh"
 source "$ITEMS_DIR/aerospace.sh"
 source "$ITEMS_DIR/chevron.sh"
 
-# -- Right side items --
+# -- Right side items (first sourced sits at the right edge) --
+# Visual L->R after the center:
+#   claude ┃ input_source ┃ mic.shield mic ┃ volume ┃ battery ┃ clock
 
-source "$ITEMS_DIR/mic.sh"
-source "$ITEMS_DIR/claude.sh"
 source "$ITEMS_DIR/status.sh"
+source "$ITEMS_DIR/mic.sh"
 source "$ITEMS_DIR/input_source.sh"
+source "$ITEMS_DIR/claude.sh"
 
 sketchybar --hotload off
 

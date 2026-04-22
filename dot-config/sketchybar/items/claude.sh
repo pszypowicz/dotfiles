@@ -9,5 +9,9 @@ claude=(
   script="$PLUGIN_DIR/claude.sh"
 )
 
+# Sourced last among right-side items so claude sits at the leftmost
+# position of the right cluster (closest to center).
+add_separator sep_r5 right
+
 sketchybar --add item claude right \
   --set claude "${claude[@]}"
