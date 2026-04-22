@@ -3,6 +3,7 @@
 set -e
 
 input_source=(
+  icon.drawing=off
   label.drawing=on
   script="$PLUGIN_DIR/input_source.sh"
   click_script="$PLUGIN_DIR/input_source_click.sh"

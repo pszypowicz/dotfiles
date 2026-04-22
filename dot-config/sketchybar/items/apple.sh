@@ -7,6 +7,7 @@ POPUP_CLICK_SCRIPT='sketchybar --set $NAME popup.drawing=toggle'
 
 apple_logo=(
   icon=$APPLE
+  label.drawing=off
   click_script="$POPUP_CLICK_SCRIPT"
   script="$POPUP_OFF"
 )
