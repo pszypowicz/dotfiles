@@ -68,6 +68,25 @@ Applies to any script written to a file that is intended to be invoked more than
 
 Rule of thumb: if the script is saved to a file with the expectation that someone (including future-you) might run it again, it needs named flags and `--help`, regardless of whether its final home is decided yet.
 
+## Pipeline scripts: extract once they outgrow trivial
+
+Applies to CI/CD pipelines that embed shell (or Python / PowerShell) via `run:`, `script:`, or equivalent inline blocks - GitHub Actions, Azure DevOps YAML, GitLab CI, Jenkinsfile. The default is to keep the inline block tiny and push real logic into a file.
+
+- **Inline is fine** for a single command, or two or three commands with no branching, no loops, no heredocs, no argument parsing. Examples: `run: hugo --minify --gc`, `run: python -m pytest -q`, `script: npm run build`.
+- **Extract to a file** the moment any of these enter the picture:
+  - an `if`, `case`, or loop,
+  - a heredoc, `<<'EOF'` block, or multi-line string,
+  - parsing environment variables or arguments past a single `${{ inputs.x }}` pass-through,
+  - more than roughly 10 lines of logic.
+
+  Put it alongside the pipeline config (`.github/scripts/`, `ci/scripts/`, `pipelines/scripts/`), give it a shebang, name it after the verb (`backfill-releases.sh`, not `release-step-3.sh`), and invoke it from the pipeline step. Extracted scripts inherit the "Scripts meant to be reused" rules above (named flags, `--help`).
+
+- **Prefer the platform's native script-path task** when one exists - Azure DevOps `Bash@3` / `PowerShell@2` with `filePath:`, `PythonScript@0` with `scriptPath:`, `AzureCLI@2` with `scriptPath:`, `AzurePowerShell@5` with `ScriptPath:`; similar on Azure Pipelines and Jenkins declarative. These beat a generic inline step that shells out to the file because the native task handles env setup, error surfacing, and platform idioms (auth context, Python / PowerShell version pinning, tool-installer prereqs) that a generic shell step does not. GitHub Actions and GitLab CI mostly do not have equivalents; on those platforms, just run the extracted file directly.
+- **Let native-task availability nudge language choice.** When picking a language for a nontrivial pipeline task, weigh which languages the target platform has a first-class script-path task for. Azure DevOps has native file-path tasks for Bash, PowerShell, Python, and Azure CLI; GitHub Actions and GitLab CI run everything through a generic shell step. If the work will live in ADO, that is a gentle nudge toward Bash / PowerShell / Python over, say, Node or Go - the native task removes boilerplate and makes the step self-contained. The nudge is not a veto: pick the right tool for the actual job first, then tiebreak on native-task availability.
+- **Why the default matters** (so you can judge edge cases): `shellcheck` and friends lint files, not YAML-embedded blocks - extraction is how the code becomes reviewable. A real file can be run locally with the same flags the pipeline uses, so debugging doesn't require push-and-watch. YAML block-scalar indentation interacts subtly with heredocs, backticks, and `$` expansions; a `.sh` file is authoritative, a YAML embed is not.
+
+Rule of thumb: if you're adding a second `if` or a loop inside an inline pipeline block, stop and extract. A file buys shellcheck, local execution, and an authoritative shebang for free; an inline block buys none of those.
+
 ## Private overlay
 
 Machine-specific rules live in a single private file stowed from whichever `dotfiles-private-*` overlay is active for this host.
