@@ -5,13 +5,15 @@ source "$CONFIG_DIR/icons.sh"
 source "$CONFIG_DIR/utils.sh"
 
 show_slider() {
-  cleanup_popup volume
-
   local vol
   vol=$(osascript -e 'output volume of (get volume settings)')
 
+  local removes
+  removes=$(popup_remove_args volume)
+
   if [[ "$vol" == "missing value" ]]; then
     sketchybar \
+      $removes \
       --add item volume.fixed popup.volume \
       --set volume.fixed \
         label="Fixed volume" \
@@ -25,6 +27,7 @@ show_slider() {
   fi
 
   sketchybar \
+    $removes \
     --add slider volume.slider popup.volume \
     --set volume.slider \
       slider.percentage="$vol" \
@@ -41,8 +44,6 @@ show_slider() {
 }
 
 show_devices() {
-  cleanup_popup volume
-
   local devices current
   devices=$(hs -c '
     local devs = hs.audiodevice.allOutputDevices()
@@ -50,7 +51,7 @@ show_devices() {
   ' 2>/dev/null)
   current=$(hs -c 'print(hs.audiodevice.defaultOutputDevice():name())' 2>/dev/null)
 
-  local args=()
+  local args=( $(popup_remove_args volume) )
   while IFS= read -r name; do
     [[ -z "$name" ]] && continue
     local slug

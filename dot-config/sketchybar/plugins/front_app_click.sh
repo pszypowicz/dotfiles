@@ -8,9 +8,8 @@ if [[ "$BUTTON" == "right" ]]; then
   app=$(sketchybar --query front_app | jq -r '.label.value')
   escaped=$(printf '%s' "$app" | sed "s/\"/\\\\\"/g")
 
-  cleanup_popup front_app
-
   sketchybar \
+    $(popup_remove_args front_app) \
     --add item front_app.quit popup.front_app \
     --set front_app.quit \
       label="Quit $app" \

@@ -5,12 +5,10 @@ source "$CONFIG_DIR/icons.sh"
 source "$CONFIG_DIR/utils.sh"
 
 if [[ "$BUTTON" == "right" ]]; then
-  cleanup_popup input_source
-
   # Get layouts from Hammerspoon
   current=$(hs -c 'print(hs.keycodes.currentLayout())' 2>/dev/null)
 
-  args=()
+  args=( $(popup_remove_args input_source) )
   while IFS= read -r layout; do
     [[ -z "$layout" ]] && continue
     slug=$(slugify "$layout")

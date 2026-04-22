@@ -19,12 +19,10 @@ separator_args() {
   echo "--add item $name $side --set $name label=┃ label.color=0xaaffffff icon.drawing=off background.drawing=off icon.padding_left=0 icon.padding_right=0 label.padding_left=0 label.padding_right=0 padding_left=2 padding_right=2"
 }
 
-cleanup_popup() {
-  local items
-  items=$(sketchybar --query "$1" 2>/dev/null | jq -r '.popup.items // [] | .[]')
-  local args=()
-  while IFS= read -r item; do
-    [[ -n "$item" ]] && args+=(--remove "$item")
-  done <<< "$items"
-  [[ ${#args[@]} -gt 0 ]] && sketchybar "${args[@]}"
+# Emit `--remove ITEM` args for every item currently in $1's popup, so the
+# caller can splice them into a chained sketchybar invocation alongside the
+# rebuild work (saves one fork+exec per popup click).
+popup_remove_args() {
+  sketchybar --query "$1" 2>/dev/null \
+    | jq -r '.popup.items // [] | .[] | "--remove \(.)"'
 }
