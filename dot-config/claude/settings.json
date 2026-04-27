@@ -110,5 +110,6 @@
     }
   },
   "effortLevel": "xhigh",
-  "theme": "auto"
+  "theme": "auto",
+  "editorMode": "vim"
 }
