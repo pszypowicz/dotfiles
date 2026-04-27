@@ -56,5 +56,5 @@ fi
 
 # 6. Defaults
 echo "Writing macOS defaults..."
-defaults write org.hammerspoon.Hammerspoon MJConfigFile "$HOME/.config/hammerspoon/init.lua"
+"$SCRIPT_DIR/macos/defaults"
 echo "Done."

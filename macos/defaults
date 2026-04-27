@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# macos/defaults - apply macOS preference defaults.
+# Idempotent and safe to re-run. Invoked from ../bootstrap, but can also
+# be run standalone to re-apply just this block without redoing the rest
+# of the bootstrap.
+
+usage() {
+    cat <<'EOF'
+Usage: macos/defaults [--help]
+
+Apply macOS preference defaults. Idempotent and safe to re-run.
+
+Touches:
+  - Hammerspoon config path
+  - Trackpad: disable 3- and 4-finger horizontal swipe between full-screen apps
+  - Menu bar: always autohide
+  - Dock: autohide, smallest tile size (16)
+  - Text input: disable auto-capitalization, smart quotes/dashes,
+    auto-period, spelling correction, smart-reply suggestions
+
+Options:
+  -h, --help    Show this help and exit.
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -h|--help) usage; exit 0 ;;
+        *) echo "unknown argument: $1" >&2; usage >&2; exit 2 ;;
+    esac
+done
+
+defaults write org.hammerspoon.Hammerspoon MJConfigFile "$HOME/.config/hammerspoon/init.lua"
+
+# Trackpad: disable horizontal swipe between full-screen apps (3- and 4-finger).
+# Both domains exist; built-in trackpad reads the first, Bluetooth the second.
+for domain in com.apple.AppleMultitouchTrackpad com.apple.driver.AppleBluetoothMultitouch.trackpad; do
+    defaults write "$domain" TrackpadThreeFingerHorizSwipeGesture -int 0
+    defaults write "$domain" TrackpadFourFingerHorizSwipeGesture  -int 0
+done
+
+# Menu bar: always autohide.
+defaults write NSGlobalDomain _HIHideMenuBar -bool true
+
+# Dock: autohide and smallest tile size (16 is the minimum macOS accepts).
+defaults write com.apple.dock autohide -bool true
+defaults write com.apple.dock tilesize -int 16
+
+# Text input: disable macOS auto-substitutions (capitalization, smart quotes/dashes,
+# auto-period, spelling correction, smart-reply suggestions).
+defaults write NSGlobalDomain NSAutomaticCapitalizationEnabled     -bool false
+defaults write NSGlobalDomain NSAutomaticDashSubstitutionEnabled   -bool false
+defaults write NSGlobalDomain NSAutomaticPeriodSubstitutionEnabled -bool false
+defaults write NSGlobalDomain NSAutomaticQuoteSubstitutionEnabled  -bool false
+defaults write NSGlobalDomain NSAutomaticSpellingCorrectionEnabled -bool false
+defaults write NSGlobalDomain NSSmartReplyEnabled                  -bool false
+
+# Apply Dock changes immediately; the rest take effect on next login.
+killall Dock 2>/dev/null || true
