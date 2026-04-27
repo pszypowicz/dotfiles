@@ -16,9 +16,11 @@ Touches:
   - Hammerspoon config path
   - Trackpad: disable 3- and 4-finger horizontal swipe between full-screen apps
   - Menu bar: always autohide
-  - Dock: autohide, smallest tile size (16)
+  - Dock: autohide, tile size 59
   - Text input: disable auto-capitalization, smart quotes/dashes,
     auto-period, spelling correction, smart-reply suggestions
+  - Mission Control: disable Ctrl+Arrow / Ctrl+Shift+Arrow space-switching
+    hotkeys so Hammerspoon owns those chords (takes effect after logout).
 
 Options:
   -h, --help    Show this help and exit.
@@ -44,9 +46,9 @@ done
 # Menu bar: always autohide.
 defaults write NSGlobalDomain _HIHideMenuBar -bool true
 
-# Dock: autohide and smallest tile size (16 is the minimum macOS accepts).
+# Dock: autohide and a small but legible tile size.
 defaults write com.apple.dock autohide -bool true
-defaults write com.apple.dock tilesize -int 16
+defaults write com.apple.dock tilesize -int 59
 
 # Text input: disable macOS auto-substitutions (capitalization, smart quotes/dashes,
 # auto-period, spelling correction, smart-reply suggestions).
@@ -57,5 +59,20 @@ defaults write NSGlobalDomain NSAutomaticQuoteSubstitutionEnabled  -bool false
 defaults write NSGlobalDomain NSAutomaticSpellingCorrectionEnabled -bool false
 defaults write NSGlobalDomain NSSmartReplyEnabled                  -bool false
 
-# Apply Dock changes immediately; the rest take effect on next login.
+# Mission Control: disable the four space-switching hotkeys so the chords are
+# free for Hammerspoon to claim. IDs:
+#   79 = Move left a space          (Ctrl+Left)
+#   80 = Move left a space + apps   (Ctrl+Shift+Left)
+#   81 = Move right a space         (Ctrl+Right)
+#   82 = Move right a space + apps  (Ctrl+Shift+Right)
+# These take effect after logout; cfprefsd is killed below to ensure the
+# write is flushed to disk before that.
+for id in 79 80 81 82; do
+    defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys \
+        -dict-add "$id" "{enabled = 0;}"
+done
+
+# Apply Dock changes immediately; flush cfprefsd so the symbolichotkeys
+# write lands on disk; the rest take effect on next login.
+killall cfprefsd 2>/dev/null || true
 killall Dock 2>/dev/null || true
