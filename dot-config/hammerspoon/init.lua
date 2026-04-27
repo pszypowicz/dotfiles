@@ -131,8 +131,21 @@ local function buildNavChain(screen)
     if out then
         local firstWid = firstUserWindowPerWorkspace(screen)
         local workspaces = {}
+        local seen = {}
         for ws in out:gmatch("%S+") do
-            if firstWid[ws] then workspaces[#workspaces + 1] = ws end
+            if firstWid[ws] then
+                workspaces[#workspaces + 1] = ws
+                seen[ws] = true
+            end
+        end
+        -- Include the focused workspace even when empty, so closing the last
+        -- window in it doesn't strand navigation: without this the workspace
+        -- isn't in the chain, findCurrentChainIndex returns nil, and the swipe
+        -- and Ctrl+arrow handlers become no-ops.
+        local focused = aerospaceExec("list-workspaces --focused")
+        focused = focused and focused:match("%S+") or nil
+        if focused and not seen[focused] then
+            workspaces[#workspaces + 1] = focused
         end
         table.sort(workspaces, function(a, b) return tonumber(a) < tonumber(b) end)
         for _, ws in ipairs(workspaces) do
@@ -186,7 +199,13 @@ local function navigateToChainEntry(entry, screen)
     -- Focus a known user-Space window in the workspace rather than running
     -- `aerospace workspace <id>`: the bare switch MRU-picks any fullscreen
     -- Safari video sibling in the same workspace and drags us into its Space.
-    hs.execute(AEROSPACE .. " focus --window-id " .. entry.wid)
+    -- Empty workspaces have no window to focus, so fall back to the plain
+    -- workspace switch - there's no fullscreen sibling to worry about.
+    if entry.wid then
+        hs.execute(AEROSPACE .. " focus --window-id " .. entry.wid)
+    else
+        hs.execute(AEROSPACE .. " workspace " .. entry.id)
+    end
 end
 
 local function navigateWorkspace(direction)
