@@ -9,7 +9,10 @@
 	eol = lf
 	excludesfile = ~/.config/git/ignore
 	fileMode = false
-	hooksPath = ~/.config/git/hooks
+
+[hook "tfdocs"]
+	event = pre-commit
+	command = ~/.config/git/hooks/tfdocs-check
 
 [pull]
 	ff = only
