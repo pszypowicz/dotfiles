@@ -16,6 +16,8 @@ if [[ -n "$RATE_LIMITS" ]]; then
   echo "$INPUT" | jq -c '{
     timestamp: now,
     five_hour: .rate_limits.five_hour,
-    seven_day: .rate_limits.seven_day
+    seven_day: .rate_limits.seven_day,
+    effort: .effort.level,
+    thinking: .thinking.enabled
   }' > "$TMPFILE" && mv "$TMPFILE" "$CACHE_FILE"
 fi
