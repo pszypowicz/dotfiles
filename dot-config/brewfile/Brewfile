@@ -50,7 +50,6 @@ brew "wget"
 brew "xcodegen"
 brew "yt-dlp"
 brew "zoxide"
-brew "felixkratz/formulae/borders"
 brew "felixkratz/formulae/sketchybar"
 # cask "nikitabobko/tap/aerospace"   # disabled while dogfooding the bsp fork build below
 cask "pszypowicz/tap/aerospace-bsp"
