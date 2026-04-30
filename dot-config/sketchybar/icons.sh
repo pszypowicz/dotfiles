@@ -15,6 +15,8 @@ export AEROWORKSPACE_7=󰎸
 export AEROWORKSPACE_8=󰎻
 export AEROWORKSPACE_9=󰎾
 
+export AEROSPACE_DOWN=󰀦
+
 export CHECK=󰄬
 export QUIT=󰅙
 

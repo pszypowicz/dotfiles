@@ -70,9 +70,11 @@ SBAR_ARGS+=(--hotload off --update)
 sketchybar "${SBAR_ARGS[@]}"
 
 # Post-init:
-# - Trigger aerospace plugin so any pre-existing monitor items get re-moved
-#   into position after aerospace.observer (sketchybar may keep them across
-#   --reload at the leftmost edge otherwise).
+# - Trigger aerospace observer so it (re)renders the monitor cluster, picks
+#   up the current binding mode, and clears any stale "down" warning.
+#   Also re-anchors any pre-existing monitor items to their position after
+#   aerospace.observer (sketchybar may keep them across --reload at the
+#   leftmost edge otherwise).
 # - Ask MicGuard to publish current status now that mic items exist.
 sketchybar --trigger aerospace_workspace_change &
 mic-guard -q ping 2>/dev/null &

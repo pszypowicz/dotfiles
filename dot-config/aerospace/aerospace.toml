@@ -5,10 +5,18 @@ config-version = 2
 # Available commands: https://nikitabobko.github.io/AeroSpace/commands
 after-login-command = []
 
-# You can use it to add commands that run after AeroSpace startup.
-# 'after-startup-command' is run after 'after-login-command'
-# Available commands : https://nikitabobko.github.io/AeroSpace/commands
-after-startup-command = []
+# Refresh sketchybar's aerospace cluster on AeroSpace startup so the bar
+# clears any stale "down" warning and re-renders the workspace icons in
+# the current mode without waiting for the next user-driven event.
+after-startup-command = [
+    'exec-and-forget sketchybar --trigger aerospace_health',
+]
+
+# Fires on every binding-mode transition so sketchybar can re-tint the
+# workspace icons (e.g. orange in 'service' mode). The current mode is
+# fetched in the plugin via `aerospace list-modes --current` because no
+# env var is exposed to this callback.
+on-mode-changed = ['exec-and-forget sketchybar --trigger aerospace_mode_change']
 
 # Start AeroSpace at login
 start-at-login = true
@@ -123,6 +131,16 @@ PATH = '/opt/homebrew/bin:/opt/homebrew/sbin:${PATH}'
     alt-shift-j = 'move down'
     alt-shift-k = 'move up'
     alt-shift-l = 'move right'
+
+    # See: https://nikitabobko.github.io/AeroSpace/commands#swap
+    # bspwm/yabai-style position swap with the tree neighbor in that
+    # direction. Tree shape stays intact; only window identities exchange
+    # places. Pairs naturally with enable-normalization-bsp-shape on a
+    # workspace where you want BSP-style direction keys.
+    alt-cmd-h = 'swap left'
+    alt-cmd-j = 'swap down'
+    alt-cmd-k = 'swap up'
+    alt-cmd-l = 'swap right'
 
     # See: https://nikitabobko.github.io/AeroSpace/commands#resize
     alt-minus = 'resize smart -50'

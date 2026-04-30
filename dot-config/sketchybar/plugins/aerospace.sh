@@ -1,50 +1,96 @@
 #!/usr/bin/env bash
 
-# Exit early if AeroSpace isn't running yet (e.g. during boot)
-# Note: pgrep doesn't work from sketchybar's context (macOS sandbox isolation),
-# so we use the aerospace CLI itself to check availability.
-if ! aerospace list-workspaces --monitor all --count 2>/dev/null; then
-  exit 0
-fi
+source "$CONFIG_DIR/icons.sh"
+source "$CONFIG_DIR/colors.sh"
 
-# Close popups on mouse exit
+# Mouse-exit closes any open monitor popup without touching state.
 if [[ "$SENDER" == "mouse.exited.global" ]]; then
   while IFS=: read -r _ monitor_id; do
     [[ -z "$monitor_id" ]] && continue
     sketchybar --set "aerospace.monitor.$monitor_id" popup.drawing=off 2>/dev/null
-  done <<<"$(aerospace list-workspaces --monitor all --visible --format '%{workspace}:%{monitor-appkit-nsscreen-screens-id}')"
+  done <<<"$(aerospace list-workspaces --monitor all --visible \
+              --format '%{workspace}:%{monitor-appkit-nsscreen-screens-id}' 2>/dev/null)"
   exit 0
 fi
 
-source "$CONFIG_DIR/icons.sh"
+mapfile -t monitor_items < <(
+  sketchybar --query bar | jq -r '.items[] | select(startswith("aerospace.monitor."))'
+)
 
-# Query existing items once
-existing_items=$(sketchybar --query bar | grep -o '"aerospace\.monitor\.[^"]*"')
+args=()
 
-# Update all monitor items with current visible workspaces
+# AeroSpace down: surface the warning on the always-present observer
+# (cheaper than the CLI and survives a wedged daemon) and hide whatever
+# workspace icons are still cached from a prior healthy render.
+if ! pgrep -xq AeroSpace; then
+  args+=(
+    --set aerospace.observer
+      drawing=on
+      padding_left=2
+      padding_right=2
+      icon.padding_left=7
+      icon.padding_right=7
+      y_offset=1
+      icon="$AEROSPACE_DOWN"
+      icon.color="$RED"
+  )
+  for item in "${monitor_items[@]}"; do
+    args+=( --set "$item" drawing=off )
+  done
+  sketchybar "${args[@]}"
+  exit 0
+fi
+
+# AeroSpace up: hide the warning carrier; render workspaces below.
+args+=( --set aerospace.observer drawing=off )
+
+mode=$(aerospace list-modes --current 2>/dev/null)
+if [[ "$mode" == "main" || -z "$mode" ]]; then
+  color="$WHITE"
+else
+  color="$ORANGE"
+fi
+
 while IFS=: read -r workspace monitor_id; do
   [[ -z "$workspace" ]] && continue
 
   item_name="aerospace.monitor.$monitor_id"
   icon_var="AEROWORKSPACE_$workspace"
 
-  if echo "$existing_items" | grep -q "\"$item_name\""; then
-    sketchybar --set "$item_name" \
-      display="$monitor_id" \
-      icon="${!icon_var}" \
-      icon.font.size=22 \
+  exists=0
+  for item in "${monitor_items[@]}"; do
+    [[ "$item" == "$item_name" ]] && { exists=1; break; }
+  done
+
+  if (( exists )); then
+    args+=(
+      --set "$item_name"
+        drawing=on
+        display="$monitor_id"
+        padding_left=2
+        padding_right=2
+        icon="${!icon_var}"
+        icon.color="$color"
+        icon.font.size=22
       --move "$item_name" after aerospace.observer
+    )
   else
-    sketchybar --add item "$item_name" left \
-      --set "$item_name" \
-        display="$monitor_id" \
-        background.drawing=off \
-        background.padding_right=0 \
-        padding_left=2 \
-        icon="${!icon_var}" \
-        padding_right=2 \
-        icon.font.size=22 \
-        click_script="$CONFIG_DIR/plugins/aerospace_click.sh" \
+    args+=(
+      --add item "$item_name" left
+      --set "$item_name"
+        display="$monitor_id"
+        background.drawing=off
+        background.padding_right=0
+        padding_left=2
+        padding_right=2
+        icon="${!icon_var}"
+        icon.color="$color"
+        icon.font.size=22
+        click_script="$CONFIG_DIR/plugins/aerospace_click.sh"
       --move "$item_name" after aerospace.observer
+    )
   fi
-done <<<"$(aerospace list-workspaces --monitor all --visible --format '%{workspace}:%{monitor-appkit-nsscreen-screens-id}')"
+done <<<"$(aerospace list-workspaces --monitor all --visible \
+            --format '%{workspace}:%{monitor-appkit-nsscreen-screens-id}')"
+
+sketchybar "${args[@]}"
