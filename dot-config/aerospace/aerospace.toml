@@ -5,18 +5,20 @@ config-version = 2
 # Available commands: https://nikitabobko.github.io/AeroSpace/commands
 after-login-command = []
 
-# Refresh sketchybar's aerospace cluster on AeroSpace startup so the bar
-# clears any stale "down" warning and re-renders the workspace icons in
-# the current mode without waiting for the next user-driven event.
+# Tell sketchybar to refresh its aerospace cluster on AeroSpace startup so
+# the bar clears any stale "down" warning and re-renders the workspace
+# icons in the current mode without waiting for the next user-driven
+# event. The plugin reads full state on every invocation, so the same
+# trigger covers startup, mode change, and workspace change.
 after-startup-command = [
-    'exec-and-forget sketchybar --trigger aerospace_health',
+    'exec-and-forget sketchybar --trigger aerospace_state_change',
 ]
 
 # Fires on every binding-mode transition so sketchybar can re-tint the
 # workspace icons (e.g. orange in 'service' mode). The current mode is
 # fetched in the plugin via `aerospace list-modes --current` because no
 # env var is exposed to this callback.
-on-mode-changed = ['exec-and-forget sketchybar --trigger aerospace_mode_change']
+on-mode-changed = ['exec-and-forget sketchybar --trigger aerospace_state_change']
 
 # Start AeroSpace at login
 start-at-login = true
@@ -46,7 +48,7 @@ default-root-container-layout = 'tiles'
 default-root-container-orientation = 'auto'
 
 exec-on-workspace-change = ['/bin/bash', '-c',
-    'sketchybar --trigger aerospace_workspace_change'
+    'sketchybar --trigger aerospace_state_change'
 ]
 
 # You can effectively turn off macOS "Hide application" (cmd-h) feature by toggling this flag

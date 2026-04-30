@@ -2,6 +2,7 @@
 
 source "$CONFIG_DIR/icons.sh"
 source "$CONFIG_DIR/colors.sh"
+source "$CONFIG_DIR/aerospace_style.sh"
 
 # Mouse-exit closes any open monitor popup without touching state.
 if [[ "$SENDER" == "mouse.exited.global" ]]; then
@@ -19,21 +20,12 @@ mapfile -t monitor_items < <(
 
 args=()
 
-# AeroSpace down: surface the warning on the always-present observer
-# (cheaper than the CLI and survives a wedged daemon) and hide whatever
-# workspace icons are still cached from a prior healthy render.
+# AeroSpace down: show the always-present aerospace.status carrier (its
+# warning visuals are pre-configured in items/aerospace.sh) and hide
+# whatever workspace icons are still cached from a prior healthy render.
+# pgrep is cheaper than the CLI and survives a wedged daemon.
 if ! pgrep -xq AeroSpace; then
-  args+=(
-    --set aerospace.observer
-      drawing=on
-      padding_left=2
-      padding_right=2
-      icon.padding_left=7
-      icon.padding_right=7
-      y_offset=1
-      icon="$AEROSPACE_DOWN"
-      icon.color="$RED"
-  )
+  args+=( --set aerospace.status drawing=on )
   for item in "${monitor_items[@]}"; do
     args+=( --set "$item" drawing=off )
   done
@@ -42,7 +34,7 @@ if ! pgrep -xq AeroSpace; then
 fi
 
 # AeroSpace up: hide the warning carrier; render workspaces below.
-args+=( --set aerospace.observer drawing=off )
+args+=( --set aerospace.status drawing=off )
 
 mode=$(aerospace list-modes --current 2>/dev/null)
 if [[ "$mode" == "main" || -z "$mode" ]]; then
@@ -62,34 +54,27 @@ while IFS=: read -r workspace monitor_id; do
     [[ "$item" == "$item_name" ]] && { exists=1; break; }
   done
 
-  if (( exists )); then
-    args+=(
-      --set "$item_name"
-        drawing=on
-        display="$monitor_id"
-        padding_left=2
-        padding_right=2
-        icon="${!icon_var}"
-        icon.color="$color"
-        icon.font.size=22
-      --move "$item_name" after aerospace.observer
-    )
-  else
+  if (( ! exists )); then
     args+=(
       --add item "$item_name" left
       --set "$item_name"
-        display="$monitor_id"
         background.drawing=off
         background.padding_right=0
-        padding_left=2
-        padding_right=2
-        icon="${!icon_var}"
-        icon.color="$color"
-        icon.font.size=22
         click_script="$CONFIG_DIR/plugins/aerospace_click.sh"
-      --move "$item_name" after aerospace.observer
     )
   fi
+
+  args+=(
+    --set "$item_name"
+      drawing=on
+      display="$monitor_id"
+      padding_left=2
+      padding_right=2
+      icon="${!icon_var}"
+      icon.color="$color"
+      icon.font.size="$AEROSPACE_FONT_SIZE"
+    --move "$item_name" after aerospace.status
+  )
 done <<<"$(aerospace list-workspaces --monitor all --visible \
             --format '%{workspace}:%{monitor-appkit-nsscreen-screens-id}')"
 

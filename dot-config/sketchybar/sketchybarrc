@@ -7,6 +7,7 @@ ITEMS_DIR="$CONFIG_DIR/items"
 COLORS="$CONFIG_DIR/colors.sh"
 ICONS="$CONFIG_DIR/icons.sh"
 UTILS="$CONFIG_DIR/utils.sh"
+AEROSPACE_STYLE="$CONFIG_DIR/aerospace_style.sh"
 
 # shellcheck source=$COLORS
 source "$COLORS"
@@ -14,6 +15,8 @@ source "$COLORS"
 source "$ICONS"
 # shellcheck source=$UTILS
 source "$UTILS"
+# shellcheck source=$AEROSPACE_STYLE
+source "$AEROSPACE_STYLE"
 
 ##### Bar Appearance
 
@@ -69,12 +72,8 @@ SBAR_ARGS+=(--hotload off --update)
 
 sketchybar "${SBAR_ARGS[@]}"
 
-# Post-init:
-# - Trigger aerospace observer so it (re)renders the monitor cluster, picks
-#   up the current binding mode, and clears any stale "down" warning.
-#   Also re-anchors any pre-existing monitor items to their position after
-#   aerospace.observer (sketchybar may keep them across --reload at the
-#   leftmost edge otherwise).
-# - Ask MicGuard to publish current status now that mic items exist.
-sketchybar --trigger aerospace_workspace_change &
+# Post-init: ask MicGuard to publish current status now that mic items
+# exist. The aerospace cluster doesn't need a kickoff trigger here - the
+# `--update` in SBAR_ARGS above already fires aerospace.status's script
+# once items are added.
 mic-guard -q ping 2>/dev/null &
