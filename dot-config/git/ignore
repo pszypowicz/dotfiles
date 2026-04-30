@@ -4,6 +4,10 @@
 .venv
 .terraform
 
+# Operator-local working area in any repo. Convention: anything inside
+# a _scratch/ directory is local, never pushed.
+_scratch/
+
 .claude/
 CLAUDE.md
 CLAUDE.local.md

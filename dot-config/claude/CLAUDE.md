@@ -61,7 +61,7 @@ Rule of thumb: if a comment would still be accurate a year from now without anyo
 
 Applies to any repository with branch protection, required status checks, required reviews, protected tags, or equivalent policy rules configured on the remote (GitHub, Azure DevOps, GitLab, Bitbucket, etc.).
 
-- **A policy-violation warning from the remote is a stop signal, not a confirmation to proceed.** When `git push` replies with text like `remote: Bypassed rule violations for refs/heads/...`, `Changes must be made through a pull request`, `Required status check "X" is expected`, or similar, stop immediately and report. Do not retry the push, do not re-push with different flags, and do not continue pushing related refs (tags, branches) that depend on the bypassed push. The push may succeed in the moment because the authenticated user has admin rights - the admin *bypass* is the thing that requires permission, and the warning is the server telling you that's what just happened.
+- **A policy-violation warning from the remote is a stop signal, not a confirmation to proceed.** When `git push` replies with text like `remote: Bypassed rule violations for refs/heads/...`, `Changes must be made through a pull request`, `Required status check "X" is expected`, or similar, stop immediately and report. Do not retry the push, do not re-push with different flags, and do not continue pushing related refs (tags, branches) that depend on the bypassed push. The push may succeed in the moment because the authenticated user has admin rights - the admin _bypass_ is the thing that requires permission, and the warning is the server telling you that's what just happened.
 - **Each of the following requires explicit, per-action approval from the user**:
   - Pushing directly to a branch that requires PRs.
   - Bypassing required status checks, review approvals, or signed-commit rules.
@@ -71,6 +71,7 @@ Applies to any repository with branch protection, required status checks, requir
   - Passing `--no-verify`, `--force`, or any `--admin-*` flag to git.
 
   Prior authorization earlier in the session does not carry over - each bypass is its own ask. A general directive like "commit and push" authorizes the normal policy-respecting flow, not a bypass.
+
 - **What approval looks like**: a user message that names the specific action ("push directly to main this one time", "force-push the branch", "delete the release"). Anything less specific should be treated as "use the policy-respecting path".
 - **Default when you hit a policy gate**: open a PR (draft, per the PR defaults). Even for solo repos where the user could self-approve, the policy was configured for a reason - usually CI coverage, reviewable history, or reversibility. Follow it unless explicitly waived for a specific change.
 
@@ -105,6 +106,17 @@ Applies to CI/CD pipelines that embed shell (or Python / PowerShell) via `run:`,
 - **Why the default matters** (so you can judge edge cases): `shellcheck` and friends lint files, not YAML-embedded blocks - extraction is how the code becomes reviewable. A real file can be run locally with the same flags the pipeline uses, so debugging doesn't require push-and-watch. YAML block-scalar indentation interacts subtly with heredocs, backticks, and `$` expansions; a `.sh` file is authoritative, a YAML embed is not.
 
 Rule of thumb: if you're adding a second `if` or a loop inside an inline pipeline block, stop and extract. A file buys shellcheck, local execution, and an authoritative shebang for free; an inline block buys none of those.
+
+## Local clone layout
+
+I keep all repository clones under `~/Developer/`, mirroring the remote URL one level deeper so the host, owner, and repo are all visible from `cd`. Use this layout whenever cloning on my behalf.
+
+- **GitHub and other `<host>/<owner>/<repo>` remotes**: `~/Developer/<host>/<owner>/<repo>`. Examples: `~/Developer/github.com/hashicorp/terraform-provider-azurerm`, `~/Developer/github.com/pszypowicz/dotfiles`.
+- **Azure DevOps** (`dev.azure.com/<organization>/<project>/_git/<repo>`): `~/Developer/dev.azure.com/<organization>/<project>/<repo>`. Drop the `_git` segment; keep organization and project.
+- **Scratch / experiments not tied to a remote**: `~/Developer/_scratch/<name>`.
+- **Forks** live under my own owner directory (`github.com/pszypowicz/<repo>`); upstream lives under the upstream owner (`github.com/<upstream>/<repo>`). Both can coexist when I need to compare or cherry-pick.
+
+`mkdir -p` the parent directories before cloning; `gh repo clone <owner>/<repo>` and plain `git clone` both accept the destination path as the second argument.
 
 ## Private overlay
 
