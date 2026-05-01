@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# Forward a tmux bell event to Hammerspoon for a clickable macOS notification.
+# Invoked from tmux's alert-bell hook.
+set -euo pipefail
+
+usage() {
+    cat <<'EOF'
+Usage: tmux-bell-notify --session <name> --window <index> [--pane-title <text>]
+
+  --session NAME        tmux session name that belled (required)
+  --window INDEX        tmux window index within that session (required)
+  --pane-title TEXT     active pane title for the notification body (optional)
+  -h, --help            show this help and exit
+
+Example (from tmux.conf):
+  set-hook -g alert-bell 'run-shell -b "~/.config/tmux/tmux-bell-notify \
+      --session #{q:session_name} \
+      --window #{q:window_index} \
+      --pane-title #{q:pane_title}"'
+EOF
+}
+
+session=""
+window=""
+pane_title=""
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --session)     session="$2"; shift 2 ;;
+        --window)      window="$2"; shift 2 ;;
+        --pane-title)  pane_title="$2"; shift 2 ;;
+        -h|--help)     usage; exit 0 ;;
+        *) echo "tmux-bell-notify: unknown argument: $1" >&2; usage >&2; exit 2 ;;
+    esac
+done
+
+if [[ -z "$session" || -z "$window" ]]; then
+    echo "tmux-bell-notify: --session and --window are required" >&2
+    usage >&2
+    exit 2
+fi
+
+if ! command -v hs >/dev/null 2>&1; then
+    echo "tmux-bell-notify: 'hs' CLI not found on PATH; install via Hammerspoon menu > Install Command Line Tool" >&2
+    exit 1
+fi
+
+# Lua long-bracket strings ([==[...]==]) accept arbitrary content without
+# escaping, which defends against pane titles containing quotes, backslashes,
+# or anything else a running program might set via OSC 0/2.
+# Stdout is redirected because the hs CLI prints "-- Loading extension: <name>"
+# the first time a Hammerspoon module loads in a session, and tmux's run-shell -b
+# can leak that into the user's tmux view. Stderr is preserved so genuine errors
+# still surface in tmux's server log.
+exec hs -c "tmuxBell([==[${session}]==], [==[${window}]==], [==[${pane_title}]==])" >/dev/null

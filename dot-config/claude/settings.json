@@ -16,13 +16,14 @@
     "commit": "",
     "pr": ""
   },
+  "preferredNotifChannel": "notifications_disabled",
   "hooks": {
     "Notification": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "printf '\\a'"
+            "command": "printf '\\a' > /dev/tty 2>/dev/null || true"
           }
         ]
       }
@@ -34,6 +35,10 @@
             "type": "command",
             "command": "test -x ~/.config/journal-agent/hooks/claude-stop-hook.sh && ~/.config/journal-agent/hooks/claude-stop-hook.sh || true",
             "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "printf '\\a' > /dev/tty 2>/dev/null || true"
           }
         ]
       }

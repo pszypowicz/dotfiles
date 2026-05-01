@@ -26,6 +26,3 @@ keybind = super+digit_6=text:\x026
 keybind = super+digit_7=text:\x027
 keybind = super+digit_8=text:\x028
 keybind = super+digit_9=text:\x029
-
-# Bell notifications (triggered by Claude Code Notification hook)
-bell-features = attention,title,system

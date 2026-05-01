@@ -14,7 +14,10 @@ Apply macOS preference defaults. Idempotent and safe to re-run.
 
 Touches:
   - Hammerspoon config path
-  - Trackpad: disable 3- and 4-finger horizontal swipe between full-screen apps
+  - Trackpad: disable 3- and 4-finger horizontal swipe between full-screen apps,
+    disable 4-finger vertical swipe (frees both up/down for Hammerspoon - the
+    4-finger up handler routes to tmux's session tree; 3-finger swipe up still
+    triggers macOS Mission Control), and disable Launchpad pinch / Show Desktop spread
   - Menu bar: always autohide
   - Dock: autohide, tile size 59
   - Text input: disable auto-capitalization, smart quotes/dashes,
@@ -36,11 +39,17 @@ done
 
 defaults write org.hammerspoon.Hammerspoon MJConfigFile "$HOME/.config/hammerspoon/init.lua"
 
-# Trackpad: disable horizontal swipe between full-screen apps (3- and 4-finger).
+# Trackpad: disable horizontal swipe between full-screen apps (3- and 4-finger),
+# and disable 4-finger vertical swipe so Hammerspoon owns 4-finger up (it routes
+# to tmux's session tree) and 4-finger down stays inert. Three-finger swipe up
+# still triggers macOS Mission Control. Value 0 disables, 2 enables.
 # Both domains exist; built-in trackpad reads the first, Bluetooth the second.
 for domain in com.apple.AppleMultitouchTrackpad com.apple.driver.AppleBluetoothMultitouch.trackpad; do
     defaults write "$domain" TrackpadThreeFingerHorizSwipeGesture -int 0
     defaults write "$domain" TrackpadFourFingerHorizSwipeGesture  -int 0
+    defaults write "$domain" TrackpadFourFingerVertSwipeGesture   -int 0
+    defaults write "$domain" TrackpadFourFingerPinchGesture        -int 0
+    defaults write "$domain" TrackpadFiveFingerPinchGesture        -int 0
 done
 
 # Menu bar: always autohide.

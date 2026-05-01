@@ -1,5 +1,101 @@
 require("hs.ipc")
 
+local TMUX = "/opt/homebrew/bin/tmux"
+
+-- tmux bell router: callable via `hs -c "tmuxBell(session, window, pane_title)"`
+-- from the alert-bell hook in tmux.conf. Replaces Ghostty's default bell
+-- notification (which has no session context and no useful click target)
+-- with a clickable notification that switches the tmux client to the
+-- session/window that belled. Notifications for the currently-focused
+-- window are suppressed so only background sessions page the user.
+local tmuxBellNotifs = {}
+
+function tmuxBell(session, window, paneTitle)
+    local target = session .. ":" .. window
+
+    -- Suppress only when the user is literally staring at the belling window.
+    -- Three conditions must hold: (a) Ghostty is the frontmost macOS app,
+    -- (b) the focused Ghostty window's title prefix matches the belling
+    -- session (one tmux client per Ghostty window, titles set via tmux's
+    -- set-titles-string "#S / #W"), and (c) that session's client is on the
+    -- belling window. Anything else - different app focused, different
+    -- Ghostty window focused, different tmux window within the right session
+    -- - means the user can't see the bell, so we should notify.
+    --
+    -- hs.execute notes:
+    --   * Omitting the second arg keeps it on /bin/sh; passing `true` switches
+    --     to the user's $SHELL, and `fish -l -i -c` eats `#` as a comment even
+    --     inside double quotes, silently truncating tmux format strings.
+    --   * `list-clients -t <session>` resolves against concrete attached state
+    --     and doesn't suffer the default-target race that `display-message -p`
+    --     hits during alert-bell hook context.
+    local frontApp = hs.application.frontmostApplication()
+    if frontApp and frontApp:bundleID() == "com.mitchellh.ghostty" then
+        local fw = frontApp:focusedWindow()
+        if fw then
+            -- Ghostty's `title` bell-feature prepends "🔔 " to the title when
+            -- a bell is pending; strip it so prefix matching survives a fresh
+            -- bell on the same window we're trying to suppress.
+            local title = (fw:title() or ""):gsub("^🔔 ", "")
+            local prefix = session .. " / "
+            if title:sub(1, #prefix) == prefix then
+                local view = (hs.execute(TMUX .. " list-clients -t '" .. session .. "' -F '#{session_name}:#{window_index}'") or "")
+                    :match("([^\r\n]+)") or ""
+                if view == target then return end
+            end
+        end
+    end
+
+    -- Coalesce: if a prior notification for this target is still pending,
+    -- withdraw it so a burst of bells doesn't stack the notification center.
+    if tmuxBellNotifs[target] then tmuxBellNotifs[target]:withdraw() end
+
+    local n = hs.notify.new(function()
+        -- Multi-Ghostty-window setups have one tmux client per Ghostty window.
+        -- Tmux's set-titles-string is "#S / #W", so each Ghostty window's title
+        -- starts with its session name (after stripping Ghostty's "🔔 " bell
+        -- prefix). Match on that to raise the right window rather than focus()
+        -- whichever Ghostty window happens to be frontmost, and pin switch-client
+        -- to that session's own client via -c so we don't hijack a different
+        -- Ghostty window's client to another session.
+        local app = hs.application.get("com.mitchellh.ghostty")
+        local prefix = session .. " / "
+        local sessionWin
+        if app then
+            for _, w in ipairs(app:allWindows()) do
+                local t = (w:title() or ""):gsub("^🔔 ", "")
+                if t:sub(1, #prefix) == prefix then sessionWin = w; break end
+            end
+        end
+
+        if sessionWin then
+            local clientTty = (hs.execute(TMUX .. " list-clients -t '" .. session .. "' -F '#{client_tty}'") or "")
+                :match("([^\r\n]+)")
+            if clientTty and clientTty ~= "" then
+                hs.execute(TMUX .. " switch-client -c '" .. clientTty .. "' -t '" .. target .. "'")
+            end
+            sessionWin:focus()
+        else
+            hs.execute(TMUX .. " switch-client -t '" .. target .. "'")
+            hs.application.launchOrFocus("Ghostty")
+        end
+        tmuxBellNotifs[target] = nil
+    end, {
+        title = "tmux: " .. session,
+        subTitle = "window " .. window,
+        informativeText = paneTitle or "",
+        autoWithdraw = true,
+        -- Hammerspoon's withdrawAfter only controls its own auto-withdraw
+        -- timer; the on-screen persistence is governed by the macOS alert
+        -- style (banner vs alert) in System Settings > Notifications >
+        -- Hammerspoon. With "Alerts" selected and withdrawAfter=0, the
+        -- notification sticks on screen until clicked or dismissed.
+        withdrawAfter = 0,
+    })
+    n:send()
+    tmuxBellNotifs[target] = n
+end
+
 -- Keyboard Viewer: callable via `hs -c "toggleKeyboardViewer()"` (e.g. from sketchybar)
 function toggleKeyboardViewer()
     hs.osascript.applescript([[
@@ -251,4 +347,36 @@ swipe:start(3, function(direction, distance, id)
     lastNavSwipeId = id
     lastNavSwipeTime = now
     navigateWorkspace(nav)
+end)
+
+-- Trackpad swipe: 4-finger swipe up in Ghostty opens tmux's session/window
+-- tree (prefix + s). Sends Ctrl+b followed by s as two sequential keystrokes
+-- with a small gap between them, so tmux registers the prefix before the
+-- second key arrives. Requires 4-finger vertical swipe to be disabled in
+-- macOS (TrackpadFourFingerVertSwipeGesture=0 in macos/defaults), otherwise
+-- macOS intercepts the gesture for Mission Control.
+local lastTreeSwipeTime = 0
+local lastTreeSwipeId = nil
+
+swipe:start(4, function(direction, distance, id)
+    if direction ~= "up" then return end
+    if id == lastTreeSwipeId then return end
+    if distance < MIN_SWIPE_DISTANCE then return end
+    local now = hs.timer.secondsSinceEpoch()
+    if now - lastTreeSwipeTime < DEBOUNCE_SECONDS then return end
+
+    local app = hs.application.frontmostApplication()
+    local bundle = app and app:bundleID()
+    if bundle ~= TERMINAL_BUNDLE_ID then
+        local fw = hs.window.focusedWindow()
+        local fwApp = fw and fw:application()
+        bundle = fwApp and fwApp:bundleID()
+    end
+    if bundle ~= TERMINAL_BUNDLE_ID then return end
+
+    lastTreeSwipeId = id
+    lastTreeSwipeTime = now
+    hs.eventtap.keyStroke({ "ctrl" }, "b", 30000)
+    hs.timer.usleep(20000)
+    hs.eventtap.keyStroke({}, "s", 30000)
 end)
