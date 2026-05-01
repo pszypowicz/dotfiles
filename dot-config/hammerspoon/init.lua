@@ -33,10 +33,7 @@ function tmuxBell(session, window, paneTitle)
     if frontApp and frontApp:bundleID() == "com.mitchellh.ghostty" then
         local fw = frontApp:focusedWindow()
         if fw then
-            -- Ghostty's `title` bell-feature prepends "🔔 " to the title when
-            -- a bell is pending; strip it so prefix matching survives a fresh
-            -- bell on the same window we're trying to suppress.
-            local title = (fw:title() or ""):gsub("^🔔 ", "")
+            local title = fw:title() or ""
             local prefix = session .. " / "
             if title:sub(1, #prefix) == prefix then
                 local view = (hs.execute(TMUX .. " list-clients -t '" .. session .. "' -F '#{session_name}:#{window_index}'") or "")
@@ -53,17 +50,17 @@ function tmuxBell(session, window, paneTitle)
     local n = hs.notify.new(function()
         -- Multi-Ghostty-window setups have one tmux client per Ghostty window.
         -- Tmux's set-titles-string is "#S / #W", so each Ghostty window's title
-        -- starts with its session name (after stripping Ghostty's "🔔 " bell
-        -- prefix). Match on that to raise the right window rather than focus()
-        -- whichever Ghostty window happens to be frontmost, and pin switch-client
-        -- to that session's own client via -c so we don't hijack a different
-        -- Ghostty window's client to another session.
+        -- starts with its session name. Match on that to raise the right window
+        -- rather than focus()-ing whichever Ghostty window happens to be
+        -- frontmost, and pin switch-client to that session's own client via -c
+        -- so we don't hijack a different Ghostty window's client to another
+        -- session.
         local app = hs.application.get("com.mitchellh.ghostty")
         local prefix = session .. " / "
         local sessionWin
         if app then
             for _, w in ipairs(app:allWindows()) do
-                local t = (w:title() or ""):gsub("^🔔 ", "")
+                local t = w:title() or ""
                 if t:sub(1, #prefix) == prefix then sessionWin = w; break end
             end
         end

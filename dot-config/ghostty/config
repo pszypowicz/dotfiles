@@ -26,3 +26,10 @@ keybind = super+digit_6=text:\x026
 keybind = super+digit_7=text:\x027
 keybind = super+digit_8=text:\x028
 keybind = super+digit_9=text:\x029
+
+# Bell features: keep `attention` (Dock bounce on bell while unfocused) but
+# disable `title` so the macOS window title isn't decorated with "🔔 " on a
+# pending bell. The title prefix would otherwise need stripping in
+# Hammerspoon's title-based window matching, and Hammerspoon's clickable
+# notification is the actual signal we want to keep clean.
+bell-features = no-system,no-audio,attention,no-title,no-border
