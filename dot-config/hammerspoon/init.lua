@@ -93,6 +93,19 @@ function tmuxBell(session, window, paneTitle)
     tmuxBellNotifs[target] = n
 end
 
+-- Withdraw any pending bell notification for the given session/window when
+-- the user visits it. Called from tmux's after-select-window and
+-- client-session-changed hooks so notifications self-clean instead of
+-- piling up in Notification Center after the user has already seen the
+-- relevant tmux window.
+function tmuxClearBell(session, window)
+    local target = session .. ":" .. window
+    if tmuxBellNotifs[target] then
+        tmuxBellNotifs[target]:withdraw()
+        tmuxBellNotifs[target] = nil
+    end
+end
+
 -- Keyboard Viewer: callable via `hs -c "toggleKeyboardViewer()"` (e.g. from sketchybar)
 function toggleKeyboardViewer()
     hs.osascript.applescript([[
