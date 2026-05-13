@@ -17,6 +17,7 @@ inactive() {
     label="--" label.color="$DIM_WHITE" \
     --set claude.fivehour label="no data" label.color="$DIM_WHITE" \
     --set claude.sevenday label="no data" label.color="$DIM_WHITE" \
+    --set claude.effort label="no data" label.color="$DIM_WHITE" \
     --set claude.age label="statusline has not written a cache yet" label.color="$DIM_WHITE"
   exit 0
 }
@@ -34,6 +35,7 @@ FIVE_PCT=$(echo "$CACHE" | jq -r '.five_hour.used_percentage // empty')
 SEVEN_PCT=$(echo "$CACHE" | jq -r '.seven_day.used_percentage // empty')
 FIVE_RESETS=$(echo "$CACHE" | jq -r '.five_hour.resets_at // empty')
 SEVEN_RESETS=$(echo "$CACHE" | jq -r '.seven_day.resets_at // empty')
+EFFORT=$(echo "$CACHE" | jq -r '.effort // empty')
 
 # No rate limit data
 [[ -z "$FIVE_PCT" && -z "$SEVEN_PCT" ]] && inactive
@@ -182,4 +184,5 @@ sketchybar --set "$NAME" \
   label.color="$ICON_COLOR" \
   --set claude.fivehour label="$FIVE_ROW" label.color="$FIVE_COLOR" \
   --set claude.sevenday label="$SEVEN_ROW" label.color="$SEVEN_COLOR" \
+  --set claude.effort label="${EFFORT:-unset}" label.color="$WHITE" \
   --set claude.age label="$AGE_LABEL" label.color="$AGE_COLOR"
