@@ -10,7 +10,14 @@ local TMUX = "/opt/homebrew/bin/tmux"
 -- window are suppressed so only background sessions page the user.
 local tmuxBellNotifs = {}
 
-function tmuxBell(session, window, paneTitle)
+-- Sound played for "notification" pages (Claude is waiting on the user).
+-- hs.notify.defaultNotificationSound is the macOS default alert sound; any
+-- basename from /System/Library/Sounds also works, and nil means silent.
+local CLAUDE_NOTIFICATION_SOUND = hs.notify.defaultNotificationSound
+
+function tmuxBell(session, window, paneTitle, kind, msg)
+    kind = kind or ""
+    msg = msg or ""
     local target = session .. ":" .. window
 
     -- Suppress only when the user is literally staring at the belling window.
@@ -47,6 +54,35 @@ function tmuxBell(session, window, paneTitle)
     -- withdraw it so a burst of bells doesn't stack the notification center.
     if tmuxBellNotifs[target] then tmuxBellNotifs[target]:withdraw() end
 
+    -- Appearance varies by who rang the bell. `kind` and `msg` come from the
+    -- @claude_bell_kind / @claude_bell_msg pane options set by Claude Code's
+    -- bell.sh hook (see tmux.conf).
+    --   "notification" - Claude Code is waiting on the user (permission
+    --                    prompt or idle). Plays a sound because it needs a
+    --                    response; msg carries the reason.
+    --   "stop"         - Claude Code finished a turn. Silent and calmer-
+    --                    titled so per-turn completions don't page as
+    --                    loudly as a permission prompt.
+    --   ""             - a plain terminal bell from any other program;
+    --                    rendered exactly as before.
+    local title, subTitle, infoText, sound
+    if kind == "notification" then
+        title = "Claude needs you"
+        subTitle = session .. " / window " .. window
+        infoText = (msg ~= "" and msg) or paneTitle or ""
+        sound = CLAUDE_NOTIFICATION_SOUND
+    elseif kind == "stop" then
+        title = "Claude finished"
+        subTitle = session .. " / window " .. window
+        infoText = paneTitle or ""
+        sound = nil
+    else
+        title = "tmux: " .. session
+        subTitle = "window " .. window
+        infoText = paneTitle or ""
+        sound = nil
+    end
+
     local n = hs.notify.new(function()
         -- Multi-Ghostty-window setups have one tmux client per Ghostty window.
         -- Tmux's set-titles-string is "#S / #W", so each Ghostty window's title
@@ -73,14 +109,26 @@ function tmuxBell(session, window, paneTitle)
             end
             sessionWin:focus()
         else
-            hs.execute(TMUX .. " switch-client -t '" .. target .. "'")
-            hs.application.launchOrFocus("Ghostty")
+            -- No Ghostty window is attached to the belling session - Ghostty
+            -- is closed, or open on other sessions only. There is no client
+            -- to switch-client, and a fresh Ghostty window would run the
+            -- shell's MRU tmux-attach, which lands on whichever session was
+            -- last viewed - not necessarily the one that belled. So set the
+            -- session's current window directly (select-window works with
+            -- zero clients attached) and open a Ghostty window bound straight
+            -- to that session with `-e`. `-n` is required: without it `open`
+            -- won't pass `-e` to an already-running Ghostty, so when Ghostty
+            -- is already up this spawns a second instance - consistent with
+            -- the one-tmux-client-per-Ghostty-window model.
+            hs.execute(TMUX .. " select-window -t '" .. target .. "'")
+            hs.execute("open -na Ghostty --args -e " .. TMUX .. " attach -t '" .. session .. "'")
         end
         tmuxBellNotifs[target] = nil
     end, {
-        title = "tmux: " .. session,
-        subTitle = "window " .. window,
-        informativeText = paneTitle or "",
+        title = title,
+        subTitle = subTitle,
+        informativeText = infoText,
+        soundName = sound,
         autoWithdraw = true,
         -- Hammerspoon's withdrawAfter only controls its own auto-withdraw
         -- timer; the on-screen persistence is governed by the macOS alert

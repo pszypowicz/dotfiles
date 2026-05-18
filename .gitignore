@@ -17,6 +17,7 @@ dot-config/claude/*
 !dot-config/claude/settings.json
 !dot-config/claude/statusline.sh
 !dot-config/claude/theme/
+!dot-config/claude/hooks/
 
 # Xcode artifacts
 *.profraw

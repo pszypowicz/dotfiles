@@ -23,7 +23,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "printf '\\a' > /dev/tty 2>/dev/null || true"
+            "command": "~/.config/claude/hooks/bell.sh --event notification"
           }
         ]
       }
@@ -38,7 +38,7 @@
           },
           {
             "type": "command",
-            "command": "printf '\\a' > /dev/tty 2>/dev/null || true"
+            "command": "~/.config/claude/hooks/bell.sh --event stop"
           }
         ]
       }
