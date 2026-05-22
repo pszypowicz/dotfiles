@@ -4,3 +4,6 @@ Host *
   UseKeychain yes
   AddKeysToAgent yes
   ForwardAgent yes
+  ControlMaster auto
+  ControlPath ~/.ssh/cm-%C
+  ControlPersist 10m
