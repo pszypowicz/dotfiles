@@ -305,6 +305,16 @@ local function buildNavChain(screen)
         for _, ws in ipairs(workspaces) do
             chain[#chain + 1] = { kind = "workspace", id = ws, wid = firstWid[ws] }
         end
+    else
+        -- Aerospace not responding: anchor the chain on the macOS user Space
+        -- so 3-finger swipe and Ctrl+arrow can still cross between the regular
+        -- desktop and any fullscreen Spaces on this screen.
+        for _, sid in ipairs(hs.spaces.spacesForScreen(screen) or {}) do
+            if hs.spaces.spaceType(sid) == "user" then
+                chain[#chain + 1] = { kind = "user", id = sid }
+                break
+            end
+        end
     end
 
     for _, sid in ipairs(hs.spaces.spacesForScreen(screen) or {}) do
@@ -324,6 +334,13 @@ local function findCurrentChainIndex(chain, screen)
         end
         return nil
     end
+    -- Aerospace-down fallback: the chain anchors on the user Space directly,
+    -- so resolve by sid before shelling out to a dead aerospace.
+    if active and hs.spaces.spaceType(active) == "user" then
+        for i, e in ipairs(chain) do
+            if e.kind == "user" and e.id == active then return i end
+        end
+    end
     local focused = aerospaceExec("list-workspaces --focused")
     if not focused then return nil end
     focused = focused:match("%S+")
@@ -334,7 +351,7 @@ local function findCurrentChainIndex(chain, screen)
 end
 
 local function navigateToChainEntry(entry, screen)
-    if entry.kind == "fullscreen" then
+    if entry.kind == "fullscreen" or entry.kind == "user" then
         hs.spaces.gotoSpace(entry.id)
         return
     end
