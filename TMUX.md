@@ -47,7 +47,8 @@ shows just the session name as a redundant anchor.
 
 1. `prefix + f`.
 2. fzf popup shows all dirs from `__fzf_alt_c_source`: every git repo
-   under `~/Developer`, `_scratch` playgrounds, host containers.
+   under `~/Developer`, `_scratch` playgrounds, host containers, plus `~/`
+   and its visible direct children (Downloads, Documents, ...).
 3. Type `dot`, hit enter on `dotfiles`.
 4. If `dotfiles` session doesn't exist, it's created at the repo root.
 5. Either way, `switch-client` moves you there. Titlebar updates.

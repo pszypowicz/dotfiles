@@ -1,4 +1,5 @@
-# Curated candidate set of "places I actually jump to" under ~/Developer.
+# Curated candidate set of "places I actually jump to": every project
+# under ~/Developer, plus ~/ itself and its visible direct children.
 #
 # The candidate set is:
 #   - Every git repository under ~/Developer, discovered by presence of
@@ -11,19 +12,23 @@
 #     (github.com/<owner>, dev.azure.com/<org>,
 #     dev.azure.com/<org>/<project>). _scratch descendants are excluded
 #     from this pass to avoid sub-sub-project noise.
+#   - ~/ itself and its visible direct children (Developer, Downloads,
+#     Documents, ...). Hidden dotfile dirs (~/.config, ~/.ssh, ...) are
+#     intentionally excluded: fd skips them without --hidden, and the
+#     set-membership filter below drops any that zoxide surfaces.
 #
 # Output ordering, top to bottom:
 #   1. Visited candidates in zoxide frecency order (most-frecent first).
 #   2. Unvisited candidates after, in fd discovery order.
 #
-# Zoxide's --base-dir flag natively restricts the frecency list to
-# ~/Developer, and a set-membership check against the fd-discovered
-# candidate set drops zoxide entries that are not jump targets: the
-# ~/Developer root and nested subdirs inside a repo
+# Zoxide's --base-dir flag natively restricts the frecency list to ~/
+# (so home children rank by frecency too), and a set-membership check
+# against the fd-discovered candidate set drops zoxide entries that are
+# not jump targets: hidden home dirs and nested subdirs inside a repo
 # (.../claude-skills/.claude-plugin). This is the piece that stops
 # "templates" from matching every nested templates/ dir the way the
 # old zoxide-in-home setup did.
-function __fzf_developer_repos
+function __fzf_jump_targets
     awk '
         # Normalize: strip trailing slash so fd (emits with slash on
         # --type d) and zoxide / fd --exec dirname (emit without)
@@ -62,6 +67,8 @@ function __fzf_developer_repos
         fd --type d --max-depth 1 . "$HOME/Developer/_scratch"
         fd --type d --max-depth 1 . "$HOME/Developer"
         fd --type d --min-depth 2 --max-depth 3 --exclude _scratch . "$HOME/Developer"
+        echo "$HOME"
+        fd --type d --max-depth 1 . "$HOME"
     end | psub) \
-    (zoxide query --list --base-dir "$HOME/Developer" 2>/dev/null | psub)
+    (zoxide query --list --base-dir "$HOME" 2>/dev/null | psub)
 end
