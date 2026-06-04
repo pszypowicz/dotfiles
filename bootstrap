@@ -22,6 +22,21 @@ fi
 echo "Installing packages..."
 brew bundle --file "$SCRIPT_DIR/dot-config/brewfile/Brewfile"
 
+# Trust the non-official taps so they load under HOMEBREW_REQUIRE_TAP_TRUST (set
+# in the fish env). This is an explicit allowlist, maintained by hand: when you
+# add a tap to the Brewfile, add it here too. Keeping trust separate from the
+# Brewfile makes it a deliberate, reviewable decision rather than auto-trusting
+# whatever the Brewfile happens to reference.
+trusted_taps=(
+    felixkratz/formulae
+    nikitabobko/tap
+    pszypowicz/tap
+    warrensbox/tap
+)
+for tap in "${trusted_taps[@]}"; do
+    brew trust --tap "$tap"
+done
+
 # 3. Dotfiles
 #
 # --no-folding forces stow to create every package subdirectory as a real
