@@ -61,7 +61,8 @@ if command -v npm &>/dev/null; then
         @anthropic-ai/claude-code \
         @lhci/cli \
         cf \
-        lighthouse
+        lighthouse \
+        yarn
 fi
 
 # 5. Defaults
