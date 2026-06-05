@@ -19,23 +19,27 @@ if ! command -v brew &>/dev/null; then
 fi
 
 # 2. Packages
-echo "Installing packages..."
-brew bundle --file "$SCRIPT_DIR/dot-config/brewfile/Brewfile"
+#
+# Trust the exact packages we install from non-official taps before the bundle
+# runs. With HOMEBREW_REQUIRE_TAP_TRUST set (see the fish env), brew refuses to
+# load a formula or cask from a non-official tap unless it is explicitly
+# trusted, so an untrusted entry would abort the bundle. Trust the tap-qualified
+# Brewfile entries (user/tap/name form) and nothing broader, so trust tracks
+# precisely what we install rather than blanket-trusting every formula a tap
+# might ever ship. brew trust only records the name - it does not need the tap
+# present - so trusting before the bundle taps anything is safe.
+BREWFILE="$SCRIPT_DIR/dot-config/brewfile/Brewfile"
+echo "Trusting tap packages..."
+while IFS= read -r line; do
+    if [[ "$line" =~ ^brew\ \"([^\"/]+/[^\"/]+/[^\"/]+)\" ]]; then
+        brew trust --formula "${BASH_REMATCH[1]}"
+    elif [[ "$line" =~ ^cask\ \"([^\"/]+/[^\"/]+/[^\"/]+)\" ]]; then
+        brew trust --cask "${BASH_REMATCH[1]}"
+    fi
+done <"$BREWFILE"
 
-# Trust the non-official taps so they load under HOMEBREW_REQUIRE_TAP_TRUST (set
-# in the fish env). This is an explicit allowlist, maintained by hand: when you
-# add a tap to the Brewfile, add it here too. Keeping trust separate from the
-# Brewfile makes it a deliberate, reviewable decision rather than auto-trusting
-# whatever the Brewfile happens to reference.
-trusted_taps=(
-    felixkratz/formulae
-    nikitabobko/tap
-    pszypowicz/tap
-    warrensbox/tap
-)
-for tap in "${trusted_taps[@]}"; do
-    brew trust --tap "$tap"
-done
+echo "Installing packages..."
+brew bundle --file "$BREWFILE"
 
 # 3. Dotfiles
 #
