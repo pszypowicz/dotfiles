@@ -27,17 +27,6 @@
         ]
       }
     ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "test -x ~/.config/journal-agent/hooks/claude-stop-hook.sh && ~/.config/journal-agent/hooks/claude-stop-hook.sh || true",
-            "timeout": 10
-          }
-        ]
-      }
-    ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write",
