@@ -1,5 +1,5 @@
 tap "felixkratz/formulae"
-tap "nikitabobko/tap"
+# tap "nikitabobko/tap"   # disabled while dogfooding the bsp fork build (see aerospace-bsp below)
 tap "pszypowicz/tap"
 tap "warrensbox/tap"
 brew "bat"
