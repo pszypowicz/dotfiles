@@ -55,6 +55,7 @@ brew "xcodegen"
 brew "yt-dlp"
 brew "zoxide"
 brew "felixkratz/formulae/sketchybar"
+brew "pszypowicz/tap/afm-summarize"
 # cask "nikitabobko/tap/aerospace"   # disabled while dogfooding the bsp fork build below
 cask "pszypowicz/tap/aerospace-bsp"
 cask "alt-tab"

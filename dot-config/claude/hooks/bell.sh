@@ -63,17 +63,39 @@ PAYLOAD="$(cat)"
 
 MSG="$(printf '%s' "$PAYLOAD" | jq -r '.message // empty')"
 
-# For idle pages, prefer an excerpt of Claude's last reply over the generic
-# "waiting for your input" message - with several sessions running, the
-# excerpt tells which one is worth visiting first. Falls back to .message
-# when the transcript is missing or yields no text.
+# Summarize text with the on-device Apple Intelligence model via
+# afm-summarize (brew "pszypowicz/tap/afm-summarize"). Prints nothing on any
+# failure - tool not installed, model unavailable, guardrail refusal,
+# timeout - so callers degrade to clipping instead of losing the page.
+summarize() {
+  command -v afm-summarize >/dev/null || return 1
+  command -v timeout >/dev/null || return 1
+  printf '%s' "$1" \
+    | timeout 10 afm-summarize --max-chars 150 2>/dev/null \
+    | jq -Rrs 'gsub("\\s+"; " ") | .[0:150]'
+}
+
+# For idle pages, prefer Claude's last reply over the generic "waiting for
+# your input" message - with several sessions running, it tells which one is
+# worth visiting first. Replies that fit the ~150-char notification budget
+# pass through untouched; longer ones are summarized on-device. The page
+# must still fire when summarization is impossible, so every failure path
+# falls back to a bare clip (and ultimately to the payload .message).
 if [[ "$EVENT" == "idle" ]]; then
   TRANSCRIPT="$(printf '%s' "$PAYLOAD" | jq -r '.transcript_path // empty')"
   if [[ -n "$TRANSCRIPT" && -f "$TRANSCRIPT" ]]; then
     EXCERPT="$(tail -n 200 "$TRANSCRIPT" \
       | jq -rs '[.[] | select(.type=="assistant") | .message.content[]? | select(.type=="text") | .text]
-                | last // empty | gsub("\\s+"; " ") | .[0:150]' 2>/dev/null || true)"
-    [[ -n "$EXCERPT" ]] && MSG="$EXCERPT"
+                | last // empty | gsub("\\s+"; " ") | .[0:4000]' 2>/dev/null || true)"
+    if [[ -n "$EXCERPT" ]]; then
+      if (( ${#EXCERPT} <= 150 )); then
+        MSG="$EXCERPT"
+      else
+        MSG="${EXCERPT:0:150}"
+        SUMMARY="$(summarize "$EXCERPT" || true)"
+        [[ -n "$SUMMARY" ]] && MSG="$SUMMARY"
+      fi
+    fi
   fi
 fi
 
