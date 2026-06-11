@@ -16,13 +16,24 @@
     "commit": "",
     "pr": ""
   },
+  "model": "claude-fable-5",
   "hooks": {
     "Notification": [
       {
+        "matcher": "permission_prompt|elicitation_dialog",
         "hooks": [
           {
             "type": "command",
             "command": "~/.config/claude/hooks/bell.sh --event notification"
+          }
+        ]
+      },
+      {
+        "matcher": "idle_prompt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.config/claude/hooks/bell.sh --event idle"
           }
         ]
       }
@@ -101,6 +112,5 @@
   "effortLevel": "xhigh",
   "theme": "auto",
   "editorMode": "vim",
-  "preferredNotifChannel": "notifications_disabled",
-  "model": "claude-fable-5"
+  "preferredNotifChannel": "notifications_disabled"
 }

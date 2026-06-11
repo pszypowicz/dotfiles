@@ -6,20 +6,20 @@
 # notification (see tmux.conf and hammerspoon/init.lua). Before emitting,
 # it stashes the page kind and reason on the current tmux pane as options
 # @claude_bell_kind / @claude_bell_msg, so the notification can show *why*
-# Claude paged (permission prompt, idle, turn finished) rather than a
-# generic "tmux: <session>" line.
+# Claude paged (permission prompt or idle wait) rather than a generic
+# "tmux: <session>" line.
 set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: bell.sh --event <notification|stop>
+Usage: bell.sh --event <notification|idle>
 
 Claude Code hook script. Reads the hook JSON payload on stdin, records the
 page kind and reason on the current tmux pane (options @claude_bell_kind and
 @claude_bell_msg), and prints a terminalSequence BEL for Claude Code to emit.
 
 Options:
-  --event <kind>   Hook event kind. One of: notification, stop. Required.
+  --event <kind>   Hook event kind. One of: notification, idle. Required.
   -h, --help       Show this help and exit.
 
 Example:
@@ -48,31 +48,47 @@ while [[ $# -gt 0 ]]; do
 done
 
 case "$EVENT" in
-  notification|stop) ;;
+  notification|idle) ;;
   "")
     echo "bell.sh: --event is required" >&2
     exit 2
     ;;
   *)
-    echo "bell.sh: invalid --event: $EVENT (expected notification|stop)" >&2
+    echo "bell.sh: invalid --event: $EVENT (expected notification|idle)" >&2
     exit 2
     ;;
 esac
 
 PAYLOAD="$(cat)"
 
-# Only the Notification event carries a human-readable reason; Stop does not.
-MSG=""
-if [[ "$EVENT" == "notification" ]]; then
-  MSG="$(printf '%s' "$PAYLOAD" | jq -r '.message // empty')"
+MSG="$(printf '%s' "$PAYLOAD" | jq -r '.message // empty')"
+
+# For idle pages, prefer an excerpt of Claude's last reply over the generic
+# "waiting for your input" message - with several sessions running, the
+# excerpt tells which one is worth visiting first. Falls back to .message
+# when the transcript is missing or yields no text.
+if [[ "$EVENT" == "idle" ]]; then
+  TRANSCRIPT="$(printf '%s' "$PAYLOAD" | jq -r '.transcript_path // empty')"
+  if [[ -n "$TRANSCRIPT" && -f "$TRANSCRIPT" ]]; then
+    EXCERPT="$(tail -n 200 "$TRANSCRIPT" \
+      | jq -rs '[.[] | select(.type=="assistant") | .message.content[]? | select(.type=="text") | .text]
+                | last // empty | gsub("\\s+"; " ") | .[0:150]' 2>/dev/null || true)"
+    [[ -n "$EXCERPT" ]] && MSG="$EXCERPT"
+  fi
 fi
 
+# Both events render with the same Hammerspoon appearance ("Claude needs you"
+# plus sound) - they differ only in where MSG comes from - so the kind is
+# always "notification" here.
+KIND="notification"
+
 # Stash kind/reason on the belling pane for the tmux alert-bell hook to read.
-# Pane options persist, so each Claude bell overwrites the previous; a plain
-# non-Claude bell in the same pane may briefly show a stale reason, which is
-# cosmetic. Failures here must not suppress the BEL, hence `|| true`.
+# The alert-bell hook unsets both options after consuming them (see
+# tmux.conf), so the metadata is one-shot and a later plain bell in the same
+# pane renders as a plain bell again. Failures here must not suppress the
+# BEL, hence `|| true`.
 if [[ -n "${TMUX:-}" && -n "${TMUX_PANE:-}" ]]; then
-  tmux set-option -p -t "$TMUX_PANE" @claude_bell_kind "$EVENT" 2>/dev/null || true
+  tmux set-option -p -t "$TMUX_PANE" @claude_bell_kind "$KIND" 2>/dev/null || true
   tmux set-option -p -t "$TMUX_PANE" @claude_bell_msg "$MSG" 2>/dev/null || true
 fi
 

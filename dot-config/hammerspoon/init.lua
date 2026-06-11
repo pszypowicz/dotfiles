@@ -43,7 +43,7 @@ function tmuxBell(session, window, paneTitle, kind, msg)
             local title = fw:title() or ""
             local prefix = session .. " / "
             if title:sub(1, #prefix) == prefix then
-                local view = (hs.execute(TMUX .. " list-clients -t '" .. session .. "' -F '#{session_name}:#{window_index}'") or "")
+                local view = (hs.execute(TMUX .. " list-clients -t '=" .. session .. "' -F '#{session_name}:#{window_index}'") or "")
                     :match("([^\r\n]+)") or ""
                 if view == target then return end
             end
@@ -59,10 +59,8 @@ function tmuxBell(session, window, paneTitle, kind, msg)
     -- bell.sh hook (see tmux.conf).
     --   "notification" - Claude Code is waiting on the user (permission
     --                    prompt or idle). Plays a sound because it needs a
-    --                    response; msg carries the reason.
-    --   "stop"         - Claude Code finished a turn. Silent and calmer-
-    --                    titled so per-turn completions don't page as
-    --                    loudly as a permission prompt.
+    --                    response; msg carries the reason - for idle waits,
+    --                    an excerpt of Claude's last reply.
     --   ""             - a plain terminal bell from any other program;
     --                    rendered exactly as before.
     local title, subTitle, infoText, sound
@@ -71,11 +69,6 @@ function tmuxBell(session, window, paneTitle, kind, msg)
         subTitle = session .. " / window " .. window
         infoText = (msg ~= "" and msg) or paneTitle or ""
         sound = CLAUDE_NOTIFICATION_SOUND
-    elseif kind == "stop" then
-        title = "Claude finished"
-        subTitle = session .. " / window " .. window
-        infoText = paneTitle or ""
-        sound = nil
     else
         title = "tmux: " .. session
         subTitle = "window " .. window
@@ -102,10 +95,10 @@ function tmuxBell(session, window, paneTitle, kind, msg)
         end
 
         if sessionWin then
-            local clientTty = (hs.execute(TMUX .. " list-clients -t '" .. session .. "' -F '#{client_tty}'") or "")
+            local clientTty = (hs.execute(TMUX .. " list-clients -t '=" .. session .. "' -F '#{client_tty}'") or "")
                 :match("([^\r\n]+)")
             if clientTty and clientTty ~= "" then
-                hs.execute(TMUX .. " switch-client -c '" .. clientTty .. "' -t '" .. target .. "'")
+                hs.execute(TMUX .. " switch-client -c '" .. clientTty .. "' -t '=" .. target .. "'")
             end
             sessionWin:focus()
         else
@@ -120,8 +113,8 @@ function tmuxBell(session, window, paneTitle, kind, msg)
             -- won't pass `-e` to an already-running Ghostty, so when Ghostty
             -- is already up this spawns a second instance - consistent with
             -- the one-tmux-client-per-Ghostty-window model.
-            hs.execute(TMUX .. " select-window -t '" .. target .. "'")
-            hs.execute("open -na Ghostty --args -e " .. TMUX .. " attach -t '" .. session .. "'")
+            hs.execute(TMUX .. " select-window -t '=" .. target .. "'")
+            hs.execute("open -na Ghostty --args -e " .. TMUX .. " attach -t '=" .. session .. "'")
         end
         tmuxBellNotifs[target] = nil
     end, {
@@ -153,6 +146,35 @@ function tmuxClearBell(session, window)
         tmuxBellNotifs[target] = nil
     end
 end
+
+-- The tmux-side self-clean hooks can't see macOS-level focus changes: when
+-- the user Cmd-Tabs back to a Ghostty window that is already sitting on the
+-- belled tmux window, no tmux hook fires and the notification would linger
+-- in Notification Center. Watch Ghostty window focus and withdraw any
+-- pending notification for the focused session's current window. The
+-- pending-notification guard keeps the common case (no bells outstanding)
+-- free of tmux subprocess calls.
+local ghosttyBellWf = hs.window.filter.new(function(w)
+    local app = w:application()
+    return app ~= nil and app:bundleID() == "com.mitchellh.ghostty"
+end)
+ghosttyBellWf:subscribe(hs.window.filter.windowFocused, function(w)
+    -- set-titles-string is "#S / #W"; session names can't contain " / ".
+    local session = (w:title() or ""):match("^(.-) / ")
+    if not session or session == "" then return end
+    local pending = false
+    for target in pairs(tmuxBellNotifs) do
+        if target:sub(1, #session + 1) == session .. ":" then
+            pending = true
+            break
+        end
+    end
+    if not pending then return end
+    local view = (hs.execute(TMUX .. " list-clients -t '=" .. session .. "' -F '#{session_name}:#{window_index}'") or "")
+        :match("([^\r\n]+)") or ""
+    local window = view:match(":(%d+)%s*$")
+    if window then tmuxClearBell(session, window) end
+end)
 
 -- Keyboard Viewer: callable via `hs -c "toggleKeyboardViewer()"` (e.g. from sketchybar)
 function toggleKeyboardViewer()
