@@ -20,24 +20,11 @@ fi
 
 # 2. Packages
 #
-# Trust the exact packages we install from non-official taps before the bundle
-# runs. With HOMEBREW_REQUIRE_TAP_TRUST set (see the fish env), brew refuses to
-# load a formula or cask from a non-official tap unless it is explicitly
-# trusted, so an untrusted entry would abort the bundle. Trust the tap-qualified
-# Brewfile entries (user/tap/name form) and nothing broader, so trust tracks
-# precisely what we install rather than blanket-trusting every formula a tap
-# might ever ship. brew trust only records the name - it does not need the tap
-# present - so trusting before the bundle taps anything is safe.
+# Tap trust is declared in the Brewfile itself: tap-qualified entries carry
+# `trusted: true` (Homebrew >= 6.0), and brew bundle trusts each such entry
+# before installing it. Trust stays scoped to the exact formulae and casks we
+# install rather than blanket-trusting whole taps.
 BREWFILE="$SCRIPT_DIR/dot-config/brewfile/Brewfile"
-echo "Trusting tap packages..."
-while IFS= read -r line; do
-    if [[ "$line" =~ ^brew\ \"([^\"/]+/[^\"/]+/[^\"/]+)\" ]]; then
-        brew trust --formula "${BASH_REMATCH[1]}"
-    elif [[ "$line" =~ ^cask\ \"([^\"/]+/[^\"/]+/[^\"/]+)\" ]]; then
-        brew trust --cask "${BASH_REMATCH[1]}"
-    fi
-done <"$BREWFILE"
-
 echo "Installing packages..."
 brew bundle --file "$BREWFILE"
 

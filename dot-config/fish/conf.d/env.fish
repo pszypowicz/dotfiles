@@ -44,10 +44,6 @@ set -gx TF_BINARY_PATH $HOME/bin/terraform
 set -gx CHECKPOINT_DISABLE 1
 set -gx BICEP_CACHE_ROOT $XDG_CACHE_HOME/bicep
 
-# Opt into Homebrew's upcoming default: non-official taps must be explicitly
-# trusted (brew trust). ./bootstrap trusts a hand-maintained allowlist of taps.
-set -gx HOMEBREW_REQUIRE_TAP_TRUST 1
-
 fish_add_path $GOPATH/bin
 fish_add_path $HOME/bin
 
