@@ -17,6 +17,12 @@
     "pr": ""
   },
   "model": "claude-fable-5",
+  "permissions": {
+    "deny": [
+      "Bash(*_apis/pipelines/approvals*)",
+      "Bash(*devops invoke*approvals*)"
+    ]
+  },
   "hooks": {
     "Notification": [
       {
