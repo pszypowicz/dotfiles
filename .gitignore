@@ -18,6 +18,7 @@ dot-config/claude/*
 !dot-config/claude/statusline.sh
 !dot-config/claude/theme/
 !dot-config/claude/hooks/
+!dot-config/claude/scripts/
 !dot-config/claude/skills/
 
 # Xcode artifacts
