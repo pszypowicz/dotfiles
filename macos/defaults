@@ -22,6 +22,8 @@ Touches:
   - Dock: autohide, tile size 59
   - Text input: disable auto-capitalization, smart quotes/dashes,
     auto-period, spelling correction, smart-reply suggestions
+  - Keyboard: remap Caps Lock to Escape for all keyboards (the "All Keyboards"
+    Modifier Keys entry; takes effect after logout)
   - Mission Control: disable Ctrl+Arrow / Ctrl+Shift+Arrow space-switching
     hotkeys so Hammerspoon owns those chords (takes effect after logout).
 
@@ -67,6 +69,17 @@ defaults write NSGlobalDomain NSAutomaticPeriodSubstitutionEnabled -bool false
 defaults write NSGlobalDomain NSAutomaticQuoteSubstitutionEnabled  -bool false
 defaults write NSGlobalDomain NSAutomaticSpellingCorrectionEnabled -bool false
 defaults write NSGlobalDomain NSSmartReplyEnabled                  -bool false
+
+# Keyboard: remap Caps Lock to Escape for every keyboard. macOS stores the
+# "All Keyboards" entry from System Settings > Keyboard > Keyboard Shortcuts >
+# Modifier Keys under the wildcard device key 0-0-0 (vendor 0, product 0,
+# keyboard type 0) in the per-host global domain - so this is hardware-
+# independent and applies to built-in and external keyboards alike. HID usage
+# codes: 0x700000039 (Caps Lock) = 30064771129, 0x700000029 (Escape) =
+# 30064771113. Written as an XML plist value so the codes land as integers,
+# matching what the GUI panel produces. Takes effect after logout.
+defaults -currentHost write -g com.apple.keyboard.modifiermapping.0-0-0 \
+    '<array><dict><key>HIDKeyboardModifierMappingSrc</key><integer>30064771129</integer><key>HIDKeyboardModifierMappingDst</key><integer>30064771113</integer></dict></array>'
 
 # Mission Control: disable the four space-switching hotkeys so the chords are
 # free for Hammerspoon to claim. IDs:
