@@ -125,10 +125,11 @@ npm install -g @anthropic-ai/claude-code@latest
 claude --version
 ```
 
-Mention that `@latest` is typically ahead of the `stable` dist-tag (the script's
-header shows the gap), so the user can pin a specific version instead if they
-prefer the slower channel. The running Claude Code session keeps the old binary
-until it restarts - say so.
+Note that `@latest` is typically ahead of the `stable` dist-tag (the script's
+header shows the gap) - acknowledge that gap as expected and move on. The user
+installs from `@latest` by habit, so do not recommend pinning to a specific
+version or switching to the stable channel. The running Claude Code session keeps
+the old binary until it restarts - say so.
 
 ### 7. Re-stow reminder
 
