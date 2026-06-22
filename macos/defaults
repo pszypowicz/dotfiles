@@ -24,8 +24,9 @@ Touches:
     auto-period, spelling correction, smart-reply suggestions
   - Keyboard: remap Caps Lock to Escape for all keyboards (the "All Keyboards"
     Modifier Keys entry; takes effect after logout)
-  - Mission Control: disable Ctrl+Arrow / Ctrl+Shift+Arrow space-switching
-    hotkeys so Hammerspoon owns those chords (takes effect after logout).
+  - Mission Control: bind Ctrl+Cmd+Option+Arrow as the only native space-switch
+    hotkey (macOS's smooth slide); leave plain Ctrl+Arrow free for Hammerspoon
+    (takes effect after logout).
 
 Options:
   -h, --help    Show this help and exit.
@@ -81,15 +82,24 @@ defaults write NSGlobalDomain NSSmartReplyEnabled                  -bool false
 defaults -currentHost write -g com.apple.keyboard.modifiermapping.0-0-0 \
     '<array><dict><key>HIDKeyboardModifierMappingSrc</key><integer>30064771129</integer><key>HIDKeyboardModifierMappingDst</key><integer>30064771113</integer></dict></array>'
 
-# Mission Control: disable the four space-switching hotkeys so the chords are
-# free for Hammerspoon to claim. IDs:
-#   79 = Move left a space          (Ctrl+Left)
-#   80 = Move left a space + apps   (Ctrl+Shift+Left)
-#   81 = Move right a space         (Ctrl+Right)
-#   82 = Move right a space + apps  (Ctrl+Shift+Right)
+# Mission Control: Ctrl+Cmd+Option+Arrow is the only enabled native space-switch
+# hotkey - it triggers macOS's own smooth slide animation between Spaces. Plain
+# Ctrl+Arrow is left unbound from any native action so Hammerspoon can own it
+# (it walks the aerospace workspace chain), so re-bind the two "Move left/right
+# a space" actions (79/81) onto the Ctrl+Cmd+Option chord instead of their
+# Ctrl+Arrow default; keep the +apps variants (80/82) disabled. IDs:
+#   79 = Move left a space          80 = Move left a space + apps
+#   81 = Move right a space         82 = Move right a space + apps
+# value parameters = (key char, key code, modifier mask):
+#   65535 = non-printable (arrow); 123 = Left, 124 = Right
+#   mask 1835008 = Control(262144) + Option(524288) + Command(1048576)
 # These take effect after logout; cfprefsd is killed below to ensure the
 # write is flushed to disk before that.
-for id in 79 80 81 82; do
+defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys -dict-add 79 \
+    "{enabled = 1; value = {parameters = (65535, 123, 1835008); type = standard;};}"
+defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys -dict-add 81 \
+    "{enabled = 1; value = {parameters = (65535, 124, 1835008); type = standard;};}"
+for id in 80 82; do
     defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys \
         -dict-add "$id" "{enabled = 0;}"
 done
