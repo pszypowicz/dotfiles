@@ -43,6 +43,7 @@ set -gx TF_INSTALL_PATH $XDG_DATA_HOME
 set -gx TF_BINARY_PATH $HOME/bin/terraform
 set -gx CHECKPOINT_DISABLE 1
 set -gx BICEP_CACHE_ROOT $XDG_CACHE_HOME/bicep
+set -gx HOMEBREW_NO_ENV_HINTS 1
 
 fish_add_path $GOPATH/bin
 fish_add_path $HOME/bin
