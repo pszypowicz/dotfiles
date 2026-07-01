@@ -28,6 +28,11 @@ function ,cr --description 'Pick a Claude session to resume, with a transcript p
     # Align the list into columns: pad each title to the longest (capped at 45),
     # then a dimmed, aligned date. The path rides along as a hidden second field
     # for the preview and is searched out via --nth=1.
+    #
+    # The preview opens scrolled to the bottom (you tend to remember a session by
+    # its last messages, not its first prompt): `follow` tails the output, and the
+    # focus:preview-bottom bind forces the end even on the focused row, sidestepping
+    # the fzf quirk where follow+wrap can stop mid-content on long wrapped lines.
     set -l choice (printf '%s\n' $rows \
         | awk -F '\t' '
             { ttl[NR]=$1; dt[NR]=$2; pth[NR]=$3; n=length($1); if (n>45) n=45; if (n>w) w=n }
@@ -35,7 +40,8 @@ function ,cr --description 'Pick a Claude session to resume, with a transcript p
           ' \
         | fzf --ansi --reverse --prompt='session> ' \
             --delimiter=\t --with-nth=1 --nth=1 \
-            --preview=$preview --preview-window='right,60%,wrap')
+            --bind 'focus:preview-bottom' \
+            --preview=$preview --preview-window='right,60%,wrap,follow')
     test -z "$choice"; and return
 
     set -l file (string split -m1 \t -- $choice)[2]

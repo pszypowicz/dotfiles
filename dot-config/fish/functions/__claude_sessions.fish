@@ -2,12 +2,7 @@
 # sessions excluded. Default scope is the current project; pass --all for every
 # project. Backs the ,cr picker (list column + preview path).
 function __claude_sessions --description 'List resumable Claude sessions as title<TAB>date<TAB>path'
-    set -l dirs
-    if test "$argv[1]" = --all
-        set dirs (find ~/.config/claude/projects -mindepth 1 -maxdepth 1 -type d 2>/dev/null)
-    else
-        set dirs ~/.config/claude/projects/(string replace -ar '[^a-zA-Z0-9-]' - $PWD)
-    end
+    set -l dirs (__claude_project_dirs $argv[1])
 
     # Live session ids to exclude (can't safely resume a running session).
     set -l active_sids
@@ -29,6 +24,16 @@ function __claude_sessions --description 'List resumable Claude sessions as titl
     for f in (command ls -t $files 2>/dev/null | head -40)
         set -l sid (path change-extension '' $f | path basename)
         contains -- $sid $active_sids; and continue
+
+        # Skip sessions with no real conversation (bare startups, /clear-only):
+        # the preview renders nothing and there is nothing to meaningfully resume.
+        # A typed user prompt or any assistant turn means real history; cheap
+        # early-exit greps, no need to parse the whole transcript.
+        begin
+            grep -q -m1 '"promptSource":"typed"' $f 2>/dev/null
+            or grep -q -m1 '"type":"assistant"' $f 2>/dev/null
+        end
+        or continue
 
         # Title preference: user-set > model-generated > first real typed prompt
         # > slash-command name (for command-only sessions) > uuid. The typed
