@@ -84,13 +84,13 @@
     "microsoft-docs@claude-plugins-official": true,
     "pyright-lsp@claude-plugins-official": true,
     "swift-lsp@claude-plugins-official": true,
-    "frontend-design@claude-plugins-official": true,
-    "skill-creator@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": false,
+    "skill-creator@claude-plugins-official": false,
     "gopls-lsp@claude-plugins-official": true,
     "ado@claude-skills": true,
-    "go-dev@claude-skills": true,
-    "modern-swift@claude-skills": true,
-    "swift-concurrency@claude-skills": true,
+    "go-dev@claude-skills": false,
+    "modern-swift@claude-skills": false,
+    "swift-concurrency@claude-skills": false,
     "worktrees@claude-skills": true
   },
   "extraKnownMarketplaces": {
@@ -125,8 +125,8 @@
     }
   },
   "effortLevel": "xhigh",
+  "tui": "fullscreen",
   "theme": "auto",
   "editorMode": "vim",
-  "preferredNotifChannel": "notifications_disabled",
-  "tui": "fullscreen"
+  "preferredNotifChannel": "notifications_disabled"
 }
