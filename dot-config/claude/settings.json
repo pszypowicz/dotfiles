@@ -70,6 +70,11 @@
             "type": "command",
             "command": "jq -r '.tool_input.file_path' | { read -r f; if [[ \"$f\" == *.tf ]]; then d=$(dirname \"$f\"); while [[ \"$d\" != \"/\" ]]; do if [[ -f \"$d/.terraform-docs.yml\" ]]; then cd \"$d\" && terraform-docs .; break; fi; d=$(dirname \"$d\"); done; fi; } 2>/dev/null || true",
             "statusMessage": "Running terraform-docs..."
+          },
+          {
+            "type": "command",
+            "command": "~/.config/claude/hooks/lint-forbidden.sh",
+            "statusMessage": "Checking for forbidden characters..."
           }
         ]
       }

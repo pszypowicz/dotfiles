@@ -2,143 +2,99 @@
 
 ## Text and Encoding
 
-- **Never use em dashes** (U+2014) anywhere - in code, comments, markdown, commit messages, PR descriptions, or any other output. Use a single `-` instead.
-- **Do not use double dashes (`--`) as prose punctuation either.** Use a single `-` with spaces around it (like this). Double dashes are still fine where they have syntactic meaning (CLI flags like `--draft`, SQL comments, etc.), just not as a stand-in for em dashes in writing.
-- **No non-ASCII characters in PowerShell scripts** (`.ps1`, `.psm1`). Use only ASCII in code, comments, and string literals. This avoids BOM/encoding warnings from PSScriptAnalyzer.
+- **Never use em dashes** (U+2014) anywhere - code, comments, markdown, commit messages, PR descriptions, any output. Use a single `-`.
+- **Don't use double dashes (`--`) as prose punctuation.** Use a single `-` with spaces (like this). Double dashes are fine where they carry syntactic meaning - CLI flags (`--draft`), SQL comments, etc.
+- **No non-ASCII in PowerShell scripts** (`.ps1`, `.psm1`) - ASCII only in code, comments, and strings, to avoid BOM/encoding warnings from PSScriptAnalyzer.
 
 ## Privacy in Public Artifacts
 
-- **Be paranoid about leaking private information into publicly traceable artifacts.** This applies to commit messages, PR titles and descriptions, PR/issue comments, code review threads, work item text, wiki pages, changelogs, public repo code and comments, and anything else that ends up in a place other humans (teammates, auditors, the internet) can read now or later.
-- Treat as private by default, and do **not** include in public artifacts without explicit permission:
-  - Personal identifiers: real names, usernames, emails, phone numbers, employee IDs, physical addresses, photos.
-  - Internal-only identifiers and URLs: internal hostnames, private repo paths, internal wiki links, incident IDs, customer/tenant IDs, account numbers, ticket IDs from private trackers.
-  - Infra and config details: IP addresses, subscription/project IDs, resource group names, connection strings, bucket names, DB names, file paths on internal machines, environment names that reveal topology.
-  - Secrets-adjacent data: tokens, keys, hashes, partial credentials, fingerprints - even "redacted" or truncated versions.
-  - Business context: customer names, deal sizes, roadmap details, unreleased product names, pricing, internal org structure, vendor relationships, legal/compliance context, incident post-mortem details.
-  - Local environment context: contents of the user's home directory, clipboard, shell history, env vars, machine name, OS user, timestamps that reveal working hours.
-- **When in doubt, leave it out or ask.** If a piece of information _seems_ necessary for a public artifact but might be private, stop and ask the user explicitly whether to include it. Do not assume prior consent from earlier in the session or from other artifacts - permission for one artifact is not permission for another.
-- Prefer generic phrasing over specifics: "an internal service", "a downstream consumer", "a customer-reported issue" instead of naming them. Link to internal trackers by ID only if the tracker itself is not public; never paste internal ticket bodies into public PRs.
-- This rule **overrides** any instinct to be thorough or to "provide full context" in a commit/PR/comment. A terse, vague public artifact is strictly better than one that leaks information.
+Be paranoid about leaking private information into publicly traceable artifacts: commit messages, PR titles/descriptions, PR/issue comments, review threads, work item text, wiki pages, changelogs, public repo code and comments - anything other humans can read now or later.
+
+- Treat as private by default; don't include without explicit permission:
+  - **Personal identifiers**: real names, usernames, emails, phone numbers, employee IDs, addresses, photos.
+  - **Internal identifiers/URLs**: internal hostnames, private repo paths, wiki links, incident IDs, customer/tenant IDs, account numbers, private-tracker ticket IDs.
+  - **Infra/config**: IPs, subscription/project IDs, resource group names, connection strings, bucket/DB names, internal file paths, environment names revealing topology.
+  - **Secrets-adjacent**: tokens, keys, hashes, partial credentials, fingerprints - even redacted or truncated.
+  - **Business context**: customer names, deal sizes, roadmap, unreleased product names, pricing, org structure, vendor relationships, legal/compliance, post-mortem details.
+  - **Local environment**: home-dir contents, clipboard, shell history, env vars, machine name, OS user, timestamps that reveal working hours.
+- **When in doubt, leave it out or ask** - per artifact; permission for one is not permission for another.
+- Prefer generic phrasing ("an internal service", "a customer-reported issue") over specifics. Link to internal trackers by ID only if the tracker isn't public; never paste internal ticket bodies into public PRs.
+- This **overrides** any instinct to "provide full context". A terse, vague public artifact beats one that leaks.
 
 ## Voice in public artifacts drafted on my behalf
 
-Applies to any public artifact you draft in my voice - PR descriptions, PR/issue comments, code review replies, work item updates, Slack/email drafts, release notes - anywhere the text will appear as something _I_ said to another human.
+Applies to anything you draft in my voice - PR descriptions, PR/issue comments, review replies, work item updates, Slack/email, release notes - text that appears as something _I_ said to another human.
 
-- **First-person as me, second-person to the reader.** The audience reading the PR _is_ the maintainer / reviewer / teammate. Don't refer to them as "a maintainer", "the reviewers", "the team" as if they were a distant third party. Address them directly.
-- **Bad** (distancing, sounds like narrating about the reader to someone else):
-  - "Happy to follow up on either if a maintainer would like them."
-  - "A reviewer might prefer the alternative approach."
-  - "If the team wants X, I can do Y."
-- **Good** (direct, addresses the actual reader):
-  - "Happy to follow up on either in a separate PR if you'd like."
-  - "You might prefer the alternative approach."
-  - "If you want X, I can do Y."
-- The failure mode is AI-drafting tendency to reach for formal/hedged phrasings that each sound fine in isolation but collectively read as if someone else is writing _about_ me to _about_ the maintainers. The fix is almost always: replace "a/the \<role>" with "you", or drop the article entirely.
-- This does not mean stripping all hedging. "Happy to", "I can", "let me know if" are all fine - they're first-person and reader-directed. The thing to cut is the third-person reference to the audience.
+- **First-person as me, second-person to the reader.** The person reading _is_ the maintainer/reviewer/teammate - address them directly ("you"), not as "a maintainer" / "the reviewers" / "the team".
+  - Bad: "Happy to follow up if a maintainer would like." / "A reviewer might prefer X."
+  - Good: "Happy to follow up if you'd like." / "You might prefer X."
+- The fix is almost always: replace "a/the \<role>" with "you", or drop the article. Keep first-person reader-directed hedging ("Happy to", "I can", "let me know if"); cut only the third-person reference to the audience.
 
-## Don't duplicate tool-supplied metadata in prose
+## Comments, commit messages & docstrings
 
-Applies to commit messages, code comments, docstrings, PR descriptions, and any other prose artifact that sits next to content some tool already tracks. The rule is the same across all of them: prose captures the _why_ and the non-obvious context; it does not restate facts the surrounding tooling already supplies.
+Prose captures the _why_ and the non-obvious context. It never restates what the surrounding tooling already supplies, and it describes the current code, not how it got here.
 
-- **Commit messages** should not restate what the commit metadata or diff already shows:
-  - No dates, timestamps, author names, or branch names (git already stores these).
-  - No version numbers or release tags in the message body when a CHANGELOG entry is part of the same commit (the CHANGELOG diff is the source of truth; repeating `CHANGELOG: vX.Y.Z` in the message is noise).
-  - No file lists or line counts (the diff shows this).
-  - No "bumped from X to Y" restatements when the version bump is visible in a manifest file in the same commit.
-- **Code comments** should not cite snapshot-in-time state that tooling can produce on demand:
-  - No coverage percentages ("was 0% covered", "sits at 45%") - these rot every test run and the coverage tool is authoritative.
-  - No line-number references into other files (`parse.go:125`) - reference the function or symbol by name so grep stays useful when the file moves.
-  - No session-relative phrasing ("earlier this session", "after the fix we just landed", "recently") - a future reader has no session context.
-  - No "currently" claims about your own code's behavior - if the code changes, the comment drifts silently. State the invariant the code is supposed to hold, not the observation of what it does today.
-  - **No references to local filesystem paths** like `~/Downloads/...`, `/Users/...`, `C:\Users\...`, `$HOME/...`, `/tmp/...`, or other paths that only exist on the author's machine. These are neither durable nor shareable; a teammate reading the PR on another host has no such file, and the reference looks like a private leak anyway. If a piece of investigation evidence lives in a personal notes file, either paraphrase the relevant finding inline or omit it - never link to a path only you can open.
-  - **No references to specific pipeline build IDs, run numbers, or other ephemeral identifiers** inside code comments. Build `2548655` in a comment is noise to every future reader. Cite the durable artefact (commit, tag, issue #, PR #) or just state the invariant.
-- **Durable cross-references are fine** because they don't rot: issue numbers (`#27`), "before/after #N" markers on regression tests, named behaviors of pinned dependencies ("go-cty-yaml quotes object keys"), and links to external trackers a reviewer would need that aren't in the diff.
-- **What _does_ belong in prose**: the problem being solved, the reasoning behind the chosen approach, trade-offs considered, hidden invariants, and constraints a reader couldn't derive from the code or diff.
+- **Commit messages** - don't restate what metadata or the diff shows: no dates/timestamps/author/branch (git stores these); no version numbers or tags in the body when a CHANGELOG entry is in the same commit; no file lists or line counts; no "bumped X to Y" when the manifest bump is in the same commit.
+- **Comments** - don't cite snapshot state tooling can regenerate:
+  - No coverage percentages (they rot every test run; the coverage tool is authoritative).
+  - No cross-file line-number refs (`parse.go:125`) - name the function/symbol so grep survives moves.
+  - No session-relative phrasing ("earlier this session", "the fix we just landed", "recently") - a future reader has no session context.
+  - No "currently" claims about your own code - state the invariant it must hold, not today's observed behavior.
+  - No local filesystem paths (`~/Downloads/...`, `/Users/...`, `/tmp/...`) - not durable, not shareable, reads like a leak. Paraphrase the finding inline instead.
+  - No ephemeral IDs (pipeline build/run numbers) - cite a durable artifact (commit, tag, issue #, PR #) or just the invariant.
+- **Don't narrate edit history**: no "changed from X to Y", "was a loop, now a map", "tested and the old way failed", "removed the call to `foo()`". When you fix a mistake, just fix it; document the new code only if it needs explaining. Never memorialize the old version.
+- **Durable cross-references are fine** (they don't rot): issue numbers (`#27`), before/after #N markers on regression tests, named behaviors of pinned deps ("go-cty-yaml quotes object keys"), links to external trackers not in the diff.
+- **What belongs in prose**: the problem being solved, the reasoning behind the approach, trade-offs, hidden invariants, constraints a reader can't derive from the code or diff.
 
-Rule of thumb: if a comment would still be accurate a year from now without anyone updating it, it's durable. If it depends on current test counts, current coverage, current file layout, or current session context, it isn't - and it will become a lie faster than you'd expect.
-
-## Comments describe the code, not its edit history
-
-Write comments about what the code does and why it must be that way now - never about how it got here. The diff and git history already hold the before/after story; a comment that narrates a change outlives the change and turns into a lie.
-
-- **Don't** leave change-narration or self-justifying comments:
-  - "Changed from X to Y because X was wrong / caused a bug."
-  - "Was a loop here, switched to a map for speed."
-  - "Tested this and the old approach failed, so now we do Z."
-  - "Removed the earlier call to `foo()`."
-- **Do** document the current code on its own terms when it isn't self-evident: the invariant it upholds, a non-obvious constraint, or why this shape is required (e.g. "API returns unsorted, so sort before diffing").
-- When you spot a mistake, just fix it - and document the new code only if it needs explaining. Don't add a defensive comment memorializing the old version or the fact that it was ever wrong.
-
-Rule of thumb: if a comment only makes sense to someone who saw the previous version of the code, delete it.
+Rule of thumb: if the comment would still be accurate a year from now with nobody updating it, it's durable. If it depends on current counts/coverage/layout/session, it's a lie waiting to happen - and if it only makes sense to someone who saw the previous version, delete it.
 
 ## Respect repository and branch policy
 
-Applies to any repository with branch protection, required status checks, required reviews, protected tags, or equivalent policy rules configured on the remote (GitHub, Azure DevOps, GitLab, Bitbucket, etc.).
+Applies to any repo with branch protection, required status checks/reviews, or protected tags (GitHub, ADO, GitLab, Bitbucket).
 
-- **A policy-violation warning from the remote is a stop signal, not a confirmation to proceed.** When `git push` replies with text like `remote: Bypassed rule violations for refs/heads/...`, `Changes must be made through a pull request`, `Required status check "X" is expected`, or similar, stop immediately and report. Do not retry the push, do not re-push with different flags, and do not continue pushing related refs (tags, branches) that depend on the bypassed push. The push may succeed in the moment because the authenticated user has admin rights - the admin _bypass_ is the thing that requires permission, and the warning is the server telling you that's what just happened.
-- **Each of the following requires explicit, per-action approval from the user**:
-  - Pushing directly to a branch that requires PRs.
-  - Bypassing required status checks, review approvals, or signed-commit rules.
-  - Force-pushing to a protected branch or tag.
-  - Deleting a protected branch or tag on the remote.
-  - Merging a PR with failing required checks, missing required reviews, or unresolved review threads.
-  - Passing `--no-verify`, `--force`, or any `--admin-*` flag to git.
+- **A policy-violation warning from the remote is a stop signal, not confirmation to proceed.** On `git push` output like `Bypassed rule violations for refs/heads/...`, `Changes must be made through a pull request`, or `Required status check "X" is expected`: stop and report. Don't retry, don't re-push with different flags, don't push dependent refs (tags, branches). The push may succeed only because you hold admin rights - the admin _bypass_ is exactly what needs permission, and the warning is the server telling you that's what happened.
+- **Each of these needs explicit, per-action approval** (prior approval doesn't carry over; a general "commit and push" authorizes only the policy-respecting flow):
+  - Pushing directly to a PR-required branch; bypassing required checks/reviews/signed-commit rules; force-pushing a protected branch or tag; deleting a protected branch or tag; merging with failing checks, missing reviews, or unresolved threads; passing `--no-verify`, `--force`, or any `--admin-*` flag.
+- **Approval means the user names the specific action** ("push directly to main this once", "force-push the branch", "delete the release"). Anything vaguer = use the policy-respecting path.
+- **Default at a policy gate**: open a draft PR (per PR defaults). Even on solo repos the policy exists for a reason (CI coverage, reviewable history, reversibility) - follow it unless explicitly waived for the specific change.
 
-  Prior authorization earlier in the session does not carry over - each bypass is its own ask. A general directive like "commit and push" authorizes the normal policy-respecting flow, not a bypass.
+## Scripts & pipeline steps
 
-- **What approval looks like**: a user message that names the specific action ("push directly to main this one time", "force-push the branch", "delete the release"). Anything less specific should be treated as "use the policy-respecting path".
-- **Default when you hit a policy gate**: open a PR (draft, per the PR defaults). Even for solo repos where the user could self-approve, the policy was configured for a reason - usually CI coverage, reviewable history, or reversibility. Follow it unless explicitly waived for a specific change.
+### Reusable scripts
 
-Rule of thumb: if the remote server printed a warning about the action you just took, treat it as an error. Stop and ask before doing anything else.
+Any script written to a file to be run more than once - including WIP under `_scratch/` (treat as a project whose home is undecided, not a throwaway). Not one-off terminal commands.
 
-## Scripts meant to be reused
+- **Named flags over positional** (`--input-file foo --dry-run`, not `script.sh foo bar 1 2`). Positional is OK only for a single unambiguous argument whose meaning is clear from the script name.
+- **Expose `--help`/`-h`** whenever the script takes input: one-line purpose, usage synopsis, every flag + default, at least one example.
+- **Use the language's standard arg parser** (`argparse`; `getopts`/case; `param(...)`+`CmdletBinding`; `commander`/`yargs`; `cobra`/`flag`) - free `--help`, validation, consistent errors.
+- **Fail loudly** on unknown or missing required flags; never silently default a required input.
 
-Applies to any script written to a file that is intended to be invoked more than once or maintained over time (bash, zsh, fish, pwsh, python, node, etc.) - including work-in-progress under `_scratch/` that has not yet been routed to a public or private repo. Treat scratch scripts as proper projects whose destination is undecided, not as throwaways. Does **not** apply to one-off commands pasted directly into a terminal.
+### Pipeline steps
 
-- **Prefer named parameters over positional.** Flags like `--input-file foo --dry-run` self-document at the call site and survive argument reordering; `./script.sh foo bar 1 2` does not. Positional args are only acceptable when there is exactly one obvious argument (e.g. a single required path) and its meaning is unambiguous from the script's name.
-- **Expose `--help` (and `-h`) whenever the script takes any input.** The help text should cover: one-line purpose, usage synopsis, every flag with its default, and at least one example invocation. A reader should not need to open the source to learn how to call it.
-- **Use the language's standard argument parser** rather than hand-rolling flag handling: `argparse` (Python), `getopts` or a case-based parser (bash/zsh), `argparse` (fish), `param(...)` with `CmdletBinding` (PowerShell), `commander`/`yargs` (node), `cobra`/`flag` (Go). Standard parsers give you `--help`, type validation, and consistent error messages for free.
-- **Fail loudly on unknown or missing required flags.** Do not silently fall back to defaults for required inputs.
+CI/CD inline blocks (`run:`, `script:`) in GitHub Actions, ADO YAML, GitLab CI, Jenkinsfile. Keep inline tiny; push real logic to a file.
 
-Rule of thumb: if the script is saved to a file with the expectation that someone (including future-you) might run it again, it needs named flags and `--help`, regardless of whether its final home is decided yet.
-
-## Pipeline scripts: extract once they outgrow trivial
-
-Applies to CI/CD pipelines that embed shell (or Python / PowerShell) via `run:`, `script:`, or equivalent inline blocks - GitHub Actions, Azure DevOps YAML, GitLab CI, Jenkinsfile. The default is to keep the inline block tiny and push real logic into a file.
-
-- **Inline is fine** for a single command, or two or three commands with no branching, no loops, no heredocs, no argument parsing. Examples: `run: hugo --minify --gc`, `run: python -m pytest -q`, `script: npm run build`.
-- **Extract to a file** the moment any of these enter the picture:
-  - an `if`, `case`, or loop,
-  - a heredoc, `<<'EOF'` block, or multi-line string,
-  - parsing environment variables or arguments past a single `${{ inputs.x }}` pass-through,
-  - more than roughly 10 lines of logic.
-
-  Put it alongside the pipeline config (`.github/scripts/`, `ci/scripts/`, `pipelines/scripts/`), give it a shebang, name it after the verb (`backfill-releases.sh`, not `release-step-3.sh`), and invoke it from the pipeline step. Extracted scripts inherit the "Scripts meant to be reused" rules above (named flags, `--help`).
-
-- **Prefer the platform's native script-path task** when one exists - Azure DevOps `Bash@3` / `PowerShell@2` with `filePath:`, `PythonScript@0` with `scriptPath:`, `AzureCLI@2` with `scriptPath:`, `AzurePowerShell@5` with `ScriptPath:`; similar on Azure Pipelines and Jenkins declarative. These beat a generic inline step that shells out to the file because the native task handles env setup, error surfacing, and platform idioms (auth context, Python / PowerShell version pinning, tool-installer prereqs) that a generic shell step does not. GitHub Actions and GitLab CI mostly do not have equivalents; on those platforms, just run the extracted file directly.
-- **Let native-task availability nudge language choice.** When picking a language for a nontrivial pipeline task, weigh which languages the target platform has a first-class script-path task for. Azure DevOps has native file-path tasks for Bash, PowerShell, Python, and Azure CLI; GitHub Actions and GitLab CI run everything through a generic shell step. If the work will live in ADO, that is a gentle nudge toward Bash / PowerShell / Python over, say, Node or Go - the native task removes boilerplate and makes the step self-contained. The nudge is not a veto: pick the right tool for the actual job first, then tiebreak on native-task availability.
-- **Why the default matters** (so you can judge edge cases): `shellcheck` and friends lint files, not YAML-embedded blocks - extraction is how the code becomes reviewable. A real file can be run locally with the same flags the pipeline uses, so debugging doesn't require push-and-watch. YAML block-scalar indentation interacts subtly with heredocs, backticks, and `$` expansions; a `.sh` file is authoritative, a YAML embed is not.
-
-Rule of thumb: if you're adding a second `if` or a loop inside an inline pipeline block, stop and extract. A file buys shellcheck, local execution, and an authoritative shebang for free; an inline block buys none of those.
+- **Inline is fine** for one command, or 2-3 with no branching/loops/heredocs/arg-parsing (`run: hugo --minify --gc`).
+- **Extract to a file** the moment you hit an `if`/`case`/loop, a heredoc or multi-line string, arg/env parsing past a single `${{ inputs.x }}`, or ~10+ lines. Put it beside the pipeline (`.github/scripts/`, `ci/scripts/`), give it a shebang, name it after the verb (`backfill-releases.sh`), and invoke it. Extracted scripts follow the reusable-script rules above.
+- **Prefer the platform's native script-path task** when one exists - ADO `Bash@3`/`PowerShell@2` (`filePath:`), `PythonScript@0`, `AzureCLI@2`, `AzurePowerShell@5`: they handle env setup, error surfacing, and auth/version idioms a generic inline step doesn't. GitHub Actions and GitLab CI have no equivalent - run the file directly.
+- **Let native-task availability nudge language choice**: ADO has native file-path tasks for Bash/PowerShell/Python/Azure CLI; if the work lives in ADO that gently favors those over Node/Go. A tiebreak, not a veto - pick the right tool first.
+- **Why**: shellcheck lints files, not YAML-embedded blocks; a real file runs locally with the same flags; YAML block-scalar indentation breaks heredocs/backticks/`$` expansion subtly. Adding a second `if` or a loop inline = stop and extract.
 
 ## Python: pull missing packages with uv
 
-When running Python needs a package that isn't installed, use `uv` rather than `pip install` into the system or global environment. `uv` fetches into a cached, ephemeral environment, so nothing pollutes the machine and repeat runs stay fast.
+When running Python needs an uninstalled package, use `uv` (cached ephemeral env), not `pip install` into system/global.
 
-- **Code that needs a library**: `uv run --with <package> python -c "..."` or `uv run --with <package> script.py`. Repeat `--with` once per package.
-- **A CLI tool from a package**: `uvx <tool>` (alias for `uv tool run <tool>`), e.g. `uvx ruff check`.
-- Fall back to a manual `pip`/venv install only if `uv` isn't on `PATH`.
+- **Library**: `uv run --with <package> python -c "..."` or `uv run --with <package> script.py` (repeat `--with` per package).
+- **CLI tool**: `uvx <tool>` (e.g. `uvx ruff check`).
+- Fall back to `pip`/venv only if `uv` isn't on `PATH`.
 
 ## Local clone layout
 
-I keep all repository clones under `~/Developer/`, mirroring the remote URL one level deeper so the host, owner, and repo are all visible from `cd`. Use this layout whenever cloning on my behalf.
+Clone under `~/Developer/`, mirroring the remote URL so host/owner/repo are visible from `cd`. `mkdir -p` parents first; both `gh repo clone <owner>/<repo>` and `git clone` take the destination as the second arg.
 
-- **GitHub and other `<host>/<owner>/<repo>` remotes**: `~/Developer/<host>/<owner>/<repo>`. Examples: `~/Developer/github.com/hashicorp/terraform-provider-azurerm`, `~/Developer/github.com/pszypowicz/dotfiles`.
-- **Azure DevOps** (`dev.azure.com/<organization>/<project>/_git/<repo>`): `~/Developer/dev.azure.com/<organization>/<project>/<repo>`. Drop the `_git` segment; keep organization and project.
-- **Scratch / experiments not tied to a remote**: `~/Developer/_scratch/<name>`.
-- **Forks** live under my own owner directory (`github.com/pszypowicz/<repo>`); upstream lives under the upstream owner (`github.com/<upstream>/<repo>`). Both can coexist when I need to compare or cherry-pick.
-
-`mkdir -p` the parent directories before cloning; `gh repo clone <owner>/<repo>` and plain `git clone` both accept the destination path as the second argument.
+- **`<host>/<owner>/<repo>` remotes**: `~/Developer/<host>/<owner>/<repo>` (e.g. `~/Developer/github.com/pszypowicz/dotfiles`).
+- **Azure DevOps** (`dev.azure.com/<org>/<project>/_git/<repo>`): `~/Developer/dev.azure.com/<org>/<project>/<repo>` - drop `_git`, keep org and project.
+- **Scratch** (no remote): `~/Developer/_scratch/<name>`.
+- **Forks** under my owner (`github.com/pszypowicz/<repo>`); upstream under its owner - both can coexist for compare/cherry-pick.
 
 ## Private overlay
 
