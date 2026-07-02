@@ -57,6 +57,20 @@ Applies to commit messages, code comments, docstrings, PR descriptions, and any 
 
 Rule of thumb: if a comment would still be accurate a year from now without anyone updating it, it's durable. If it depends on current test counts, current coverage, current file layout, or current session context, it isn't - and it will become a lie faster than you'd expect.
 
+## Comments describe the code, not its edit history
+
+Write comments about what the code does and why it must be that way now - never about how it got here. The diff and git history already hold the before/after story; a comment that narrates a change outlives the change and turns into a lie.
+
+- **Don't** leave change-narration or self-justifying comments:
+  - "Changed from X to Y because X was wrong / caused a bug."
+  - "Was a loop here, switched to a map for speed."
+  - "Tested this and the old approach failed, so now we do Z."
+  - "Removed the earlier call to `foo()`."
+- **Do** document the current code on its own terms when it isn't self-evident: the invariant it upholds, a non-obvious constraint, or why this shape is required (e.g. "API returns unsorted, so sort before diffing").
+- When you spot a mistake, just fix it - and document the new code only if it needs explaining. Don't add a defensive comment memorializing the old version or the fact that it was ever wrong.
+
+Rule of thumb: if a comment only makes sense to someone who saw the previous version of the code, delete it.
+
 ## Respect repository and branch policy
 
 Applies to any repository with branch protection, required status checks, required reviews, protected tags, or equivalent policy rules configured on the remote (GitHub, Azure DevOps, GitLab, Bitbucket, etc.).
@@ -106,6 +120,14 @@ Applies to CI/CD pipelines that embed shell (or Python / PowerShell) via `run:`,
 - **Why the default matters** (so you can judge edge cases): `shellcheck` and friends lint files, not YAML-embedded blocks - extraction is how the code becomes reviewable. A real file can be run locally with the same flags the pipeline uses, so debugging doesn't require push-and-watch. YAML block-scalar indentation interacts subtly with heredocs, backticks, and `$` expansions; a `.sh` file is authoritative, a YAML embed is not.
 
 Rule of thumb: if you're adding a second `if` or a loop inside an inline pipeline block, stop and extract. A file buys shellcheck, local execution, and an authoritative shebang for free; an inline block buys none of those.
+
+## Python: pull missing packages with uv
+
+When running Python needs a package that isn't installed, use `uv` rather than `pip install` into the system or global environment. `uv` fetches into a cached, ephemeral environment, so nothing pollutes the machine and repeat runs stay fast.
+
+- **Code that needs a library**: `uv run --with <package> python -c "..."` or `uv run --with <package> script.py`. Repeat `--with` once per package.
+- **A CLI tool from a package**: `uvx <tool>` (alias for `uv tool run <tool>`), e.g. `uvx ruff check`.
+- Fall back to a manual `pip`/venv install only if `uv` isn't on `PATH`.
 
 ## Local clone layout
 
