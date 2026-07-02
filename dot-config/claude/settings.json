@@ -35,6 +35,15 @@
         ]
       },
       {
+        "matcher": "agent_needs_input",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.config/claude/hooks/bell.sh --event notification"
+          }
+        ]
+      },
+      {
         "matcher": "idle_prompt",
         "hooks": [
           {
