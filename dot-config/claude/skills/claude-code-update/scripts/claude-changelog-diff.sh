@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 #
 # claude-changelog-diff.sh - print the Claude Code CHANGELOG entries between the
-# installed CLI version and a target version, with a one-line context header.
+# last-analyzed version (the exact pin in the dotfiles bootstrap) and a target
+# version, with a context header that includes the installed CLI version.
+#
+# The bootstrap pin marks the last version whose changelog was reviewed against
+# the dotfiles; it is git-synced, so the diff range stays correct even when the
+# CLI was updated on another machine.
 #
 # Used by the claude-code-update skill, but safe to run on its own.
 
@@ -13,28 +18,35 @@ PACKAGE="@anthropic-ai/claude-code"
 from=""
 to=""
 url="$CHANGELOG_URL_DEFAULT"
+bootstrap=""
 
 usage() {
     cat <<EOF
 claude-changelog-diff.sh - show Claude Code CHANGELOG entries between two versions.
 
 Prints every "## X.Y.Z" section newer than --from up to and including --to,
-preceded by a header line with the resolved versions, install path, and which
-npm dist-tag --to matches. Exits 0 with an "Already up to date" line when the
-two versions are equal.
+preceded by header lines with the resolved versions (and where --from came
+from), the installed CLI version and path, and which npm dist-tag --to matches.
+Exits 0 with an "Already analyzed up to" line when the two versions are equal.
 
 Usage:
   claude-changelog-diff.sh [--from <version>] [--to <version>] [--url <url>]
+                           [--bootstrap <path>]
   claude-changelog-diff.sh -h | --help
 
 Options:
-  --from <version>  Lower bound, exclusive. Default: installed version,
-                    parsed from 'claude --version'.
-  --to <version>    Upper bound, inclusive. Default: latest published version,
-                    from 'npm view $PACKAGE version'.
-  --url <url>       CHANGELOG source. Default:
-                    $CHANGELOG_URL_DEFAULT
-  -h, --help        Show this help and exit.
+  --from <version>    Lower bound, exclusive. Default: the $PACKAGE@X.Y.Z
+                      pin in the dotfiles bootstrap (the last-analyzed
+                      version); falls back to the installed version from
+                      'claude --version' when no pin is found.
+  --to <version>      Upper bound, inclusive. Default: latest published
+                      version, from 'npm view $PACKAGE version'.
+  --url <url>         CHANGELOG source. Default:
+                      $CHANGELOG_URL_DEFAULT
+  --bootstrap <path>  Bootstrap file to read the pin from. Default: the
+                      'bootstrap' file at the root of the dotfiles repo this
+                      script lives in (resolved through symlinks).
+  -h, --help          Show this help and exit.
 
 Example:
   claude-changelog-diff.sh --from 2.1.165 --to 2.1.168
@@ -44,6 +56,10 @@ EOF
 die() {
     echo "claude-changelog-diff.sh: $*" >&2
     exit 1
+}
+
+note() {
+    echo "claude-changelog-diff.sh: $*" >&2
 }
 
 while [ $# -gt 0 ]; do
@@ -63,6 +79,11 @@ while [ $# -gt 0 ]; do
             url="$2"
             shift 2
             ;;
+        --bootstrap)
+            [ $# -ge 2 ] || die "--bootstrap requires a value"
+            bootstrap="$2"
+            shift 2
+            ;;
         -h | --help)
             usage
             exit 0
@@ -73,11 +94,40 @@ while [ $# -gt 0 ]; do
     esac
 done
 
-# Resolve --from from the installed CLI when not given.
+# Resolve the installed CLI version and path (best effort; never fatal).
+# Printed in the header so callers can spot machines whose install is behind
+# or ahead of the analyzed range.
+installed=""
+install_path="$(command -v claude 2>/dev/null || true)"
+if [ -n "$install_path" ]; then
+    installed="$(claude --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1 || true)"
+    install_path="$(readlink -f "$install_path" 2>/dev/null || echo "$install_path")"
+fi
+[ -n "$install_path" ] || install_path="unknown"
+
+# Resolve --from when not given: bootstrap pin first, installed version as
+# fallback. An explicit --bootstrap must exist; the default path may not
+# (e.g. the script was copied out of the repo).
+from_source="--from flag"
 if [ -z "$from" ]; then
-    command -v claude >/dev/null 2>&1 || die "claude not found on PATH; pass --from explicitly"
-    from="$(claude --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)"
-    [ -n "$from" ] || die "could not parse installed version from 'claude --version'; pass --from explicitly"
+    if [ -n "$bootstrap" ]; then
+        [ -r "$bootstrap" ] || die "cannot read bootstrap file: $bootstrap"
+    else
+        script_real="$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")"
+        repo_root="$(cd "$(dirname "$script_real")/../../../../.." 2>/dev/null && pwd || true)"
+        bootstrap="${repo_root:+$repo_root/bootstrap}"
+    fi
+    if [ -n "$bootstrap" ] && [ -r "$bootstrap" ]; then
+        from="$(grep -oE "$PACKAGE@[0-9]+\.[0-9]+\.[0-9]+" "$bootstrap" | head -1 | sed 's/.*@//' || true)"
+    fi
+    if [ -n "$from" ]; then
+        from_source="bootstrap pin ($bootstrap)"
+    else
+        note "no $PACKAGE@X.Y.Z pin found${bootstrap:+ in $bootstrap}; falling back to the installed version"
+        [ -n "$installed" ] || die "claude not found on PATH either; pass --from explicitly"
+        from="$installed"
+        from_source="installed version"
+    fi
 fi
 
 # Resolve --to from npm when not given.
@@ -86,11 +136,6 @@ if [ -z "$to" ]; then
     to="$(npm view "$PACKAGE" version 2>/dev/null)"
     [ -n "$to" ] || die "could not resolve latest version via 'npm view $PACKAGE version'; pass --to explicitly"
 fi
-
-# Resolve install location (best effort; never fatal).
-install_path="$(command -v claude 2>/dev/null || true)"
-[ -n "$install_path" ] && install_path="$(readlink -f "$install_path" 2>/dev/null || echo "$install_path")"
-[ -n "$install_path" ] || install_path="unknown"
 
 # Resolve the stable dist-tag so callers can see how far ahead --to is.
 stable=""
@@ -105,18 +150,21 @@ version_gt() { # version_gt A B -> true when A > B
 }
 
 if [ "$from" = "$to" ]; then
-    echo "Already up to date ($from)."
+    echo "Already analyzed up to $from; nothing new."
+    echo "Installed: ${installed:-unknown} ($install_path)"
     exit 0
 fi
 
 if version_gt "$from" "$to"; then
-    echo "Installed version ($from) is newer than target ($to); nothing to show."
+    echo "--from ($from) is newer than --to ($to); nothing to show."
+    echo "Installed: ${installed:-unknown} ($install_path)"
     exit 0
 fi
 
 # Header line(s).
 echo "Claude Code changelog: $from -> $to"
-echo "Install: $install_path"
+echo "From source: $from_source"
+echo "Installed: ${installed:-unknown} ($install_path)"
 if [ -n "$stable" ]; then
     if [ "$to" = "$stable" ]; then
         echo "Channel: --to matches the 'stable' dist-tag ($stable)"

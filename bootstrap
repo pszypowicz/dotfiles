@@ -42,10 +42,15 @@ echo "Stowing dotfiles..."
 stow -d "$STOW_DIR" -t ~ "$PACKAGE_NAME" --dotfiles --restow --no-folding
 
 # 4. npm globals - tools with no brew formula (or newer than the brew one)
+#
+# claude-code is pinned to the exact version whose changelog was last reviewed
+# against these dotfiles; the claude-code-update skill bumps the pin on each
+# update, so a fresh machine gets the reviewed version rather than blind
+# @latest.
 if command -v npm &>/dev/null; then
     echo "Installing npm globals..."
     npm install -g \
-        @anthropic-ai/claude-code \
+        @anthropic-ai/claude-code@2.1.204 \
         @lhci/cli \
         cf \
         lighthouse \
