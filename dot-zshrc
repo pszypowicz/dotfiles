@@ -31,3 +31,5 @@ export BICEP_CACHE_ROOT="$XDG_CACHE_HOME/bicep"
 export HOMEBREW_NO_ENV_HINTS=1
 
 export PATH="$GOPATH/bin:$PATH"
+# Prepended last so shims in ~/.local/bin shadow brew-installed binaries.
+export PATH="$HOME/.local/bin:$PATH"

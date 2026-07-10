@@ -1,7 +1,9 @@
 set fish_greeting
 
 /opt/homebrew/bin/brew shellenv | source
-fish_add_path ~/.local/bin
+# --move (after brew shellenv, which fronts homebrew) so that deliberate
+# shims in ~/.local/bin shadow brew-installed binaries.
+fish_add_path --move --path ~/.local/bin
 fish_add_path ~/go/bin
 
 if status is-interactive
