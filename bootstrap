@@ -50,7 +50,7 @@ stow -d "$STOW_DIR" -t ~ "$PACKAGE_NAME" --dotfiles --restow --no-folding
 if command -v npm &>/dev/null; then
     echo "Installing npm globals..."
     npm install -g \
-        @anthropic-ai/claude-code@2.1.204 \
+        @anthropic-ai/claude-code@2.1.206 \
         @lhci/cli \
         cf \
         lighthouse \
