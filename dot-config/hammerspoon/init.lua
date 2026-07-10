@@ -236,11 +236,12 @@ swipe:start(2, function(direction, distance, id)
     hs.eventtap.keyStroke({ "cmd", "shift" }, key, 30000)
 end)
 
--- Workspace navigation (Ctrl+Left/Right, 3-finger horizontal swipe) lives
--- natively in Cyclist (github.com/pszypowicz/cyclist): it walks aerospace
--- workspaces followed by native fullscreen Spaces with instant, animation-
--- free switching. Nothing to do here - Cyclist's own event tap consumes the
--- keys and reads the trackpad touches directly.
+-- Space navigation (Ctrl+Left/Right, 3-finger horizontal swipe) lives
+-- natively in Cyclist (github.com/pszypowicz/cyclist): it walks the native
+-- macOS Spaces (desktops and fullscreen) with instant, animation-free
+-- switching. Aerospace workspace switching stays with aerospace's own
+-- bindings. Nothing to do here - Cyclist's event tap consumes the keys and
+-- reads the trackpad touches directly.
 
 -- Trackpad swipe: 4-finger swipe up in Ghostty opens tmux's session/window
 -- tree (prefix + s). Sends Ctrl+b followed by s as two sequential keystrokes
