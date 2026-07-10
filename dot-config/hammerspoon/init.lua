@@ -244,6 +244,20 @@ end)
 -- Keyboard Shortcuts > Mission Control (macOS grabs them before Hammerspoon).
 
 local AEROSPACE = "/opt/homebrew/bin/aerospace"
+local CYCLIST = "/Applications/Cyclist.app/Contents/MacOS/Cyclist"
+
+-- Native Space switches route through Cyclist's synthetic dock-swipe
+-- gestures (instant, no animation) instead of hs.spaces.gotoSpace, which
+-- opens Mission Control and clicks the Space tile - slow and visually
+-- noisy, especially for fullscreen Spaces. Falls back to gotoSpace when
+-- Cyclist is not installed. Space ids are the same CGS ids hs.spaces uses.
+local function gotoSpaceFast(sid)
+    if hs.fs.attributes(CYCLIST) then
+        local _, status = hs.execute(CYCLIST .. " --goto-space " .. sid)
+        if status then return end
+    end
+    hs.spaces.gotoSpace(sid)
+end
 
 local function aerospaceExec(args)
     local output, status, _, rc = hs.execute(AEROSPACE .. " " .. args)
@@ -374,7 +388,7 @@ end
 
 local function navigateToChainEntry(entry, screen)
     if entry.kind == "fullscreen" or entry.kind == "user" then
-        hs.spaces.gotoSpace(entry.id)
+        gotoSpaceFast(entry.id)
         return
     end
     -- Aerospace's focus command cannot cross macOS Space boundaries. If we
@@ -384,7 +398,7 @@ local function navigateToChainEntry(entry, screen)
     if active and hs.spaces.spaceType(active) == "fullscreen" then
         for _, sid in ipairs(hs.spaces.spacesForScreen(screen) or {}) do
             if hs.spaces.spaceType(sid) == "user" then
-                hs.spaces.gotoSpace(sid)
+                gotoSpaceFast(sid)
                 break
             end
         end
