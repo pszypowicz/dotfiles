@@ -49,7 +49,12 @@ stow -d "$STOW_DIR" -t ~ "$PACKAGE_NAME" --dotfiles --restow --no-folding
 # @latest.
 if command -v npm &>/dev/null; then
     echo "Installing npm globals..."
+    # claude-code's postinstall places the native binary over a stub, and
+    # npm 12 blocks dependency install scripts unless allowlisted. The spec
+    # is name-only on purpose: pin bumps stay covered, and the changelog
+    # script's pin grep only matches the versioned entry below.
     npm install -g \
+        --allow-scripts=@anthropic-ai/claude-code \
         @anthropic-ai/claude-code@2.1.206 \
         @lhci/cli \
         cf \
