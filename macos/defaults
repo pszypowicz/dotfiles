@@ -25,7 +25,8 @@ Touches:
   - Keyboard: remap Caps Lock to Escape for all keyboards (the "All Keyboards"
     Modifier Keys entry; takes effect after logout)
   - Mission Control: bind Ctrl+Cmd+Option+Arrow as the only native space-switch
-    hotkey (macOS's smooth slide); leave plain Ctrl+Arrow free for Hammerspoon
+    hotkey (macOS's smooth slide); leave plain Ctrl+Left/Right free for
+    Hammerspoon; keep Ctrl+Up bound to the Mission Control overview
     (takes effect after logout).
 
 Options:
@@ -84,10 +85,10 @@ defaults -currentHost write -g com.apple.keyboard.modifiermapping.0-0-0 \
 
 # Mission Control: Ctrl+Cmd+Option+Arrow is the only enabled native space-switch
 # hotkey - it triggers macOS's own smooth slide animation between Spaces. Plain
-# Ctrl+Arrow is left unbound from any native action so Hammerspoon can own it
-# (it walks the aerospace workspace chain), so re-bind the two "Move left/right
-# a space" actions (79/81) onto the Ctrl+Cmd+Option chord instead of their
-# Ctrl+Arrow default; keep the +apps variants (80/82) disabled. IDs:
+# Ctrl+Left/Right is left unbound from any native action so Hammerspoon can own
+# it (it walks the aerospace workspace chain), so re-bind the two "Move
+# left/right a space" actions (79/81) onto the Ctrl+Cmd+Option chord instead of
+# their Ctrl+Arrow default; keep the +apps variants (80/82) disabled. IDs:
 #   79 = Move left a space          80 = Move left a space + apps
 #   81 = Move right a space         82 = Move right a space + apps
 # value parameters = (key char, key code, modifier mask):
@@ -103,6 +104,15 @@ for id in 80 82; do
     defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys \
         -dict-add "$id" "{enabled = 0;}"
 done
+
+# Mission Control overview (ID 32) stays on its Ctrl+Up default. Hammerspoon's
+# workspace eventtap only swallows Ctrl+Left/Right, so Ctrl+Up passes through
+# to the native action - but toggling the neighboring shortcuts can leave 32
+# disabled in the plist, so enable it explicitly. Parameters follow the same
+# (key char, key code, modifier mask) shape as above: 126 = Up; mask 8650752 =
+# Control(262144) + the function-key bit(8388608) macOS sets on arrow keys.
+defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys -dict-add 32 \
+    "{enabled = 1; value = {parameters = (65535, 126, 8650752); type = standard;};}"
 
 # Apply Dock changes immediately; flush cfprefsd so the symbolichotkeys
 # write lands on disk; the rest take effect on next login.
