@@ -5,7 +5,7 @@ tap "warrensbox/tap"
 brew "bat"
 brew "betterleaks"
 brew "cloudflare-wrangler"
-brew "colima"
+brew "colima", start_service: true
 brew "container"
 brew "coreutils"
 brew "curl"
