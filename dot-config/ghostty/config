@@ -1,6 +1,3 @@
-# Quick terminal (drop-down Quake-style)
-keybind = global:super+§=toggle_quick_terminal
-
 # Appearance
 theme = light:GitHub Light Default,dark:Catppuccin Mocha
 font-family = CaskaydiaCove Nerd Font
@@ -8,6 +5,20 @@ font-size = 14
 macos-option-as-alt = left
 window-padding-x = 8
 window-padding-y = 8
+
+# No confirmation prompt when closing a window/surface with a running process
+confirm-close-surface = false
+
+# Tabs are unused (tmux handles multiplexing): hide the tab bar and unbind
+# every tab-related shortcut so one can't be opened by accident.
+window-show-tab-bar = never
+keybind = super+t=unbind
+keybind = ctrl+tab=unbind
+keybind = ctrl+shift+tab=unbind
+keybind = super+alt+w=unbind
+
+# Command palette off
+keybind = super+shift+p=unbind
 
 # Switch tmux windows like Safari tabs (Cmd+Shift+[ and Cmd+Shift+])
 keybind = super+shift+left_bracket=text:\x02p
