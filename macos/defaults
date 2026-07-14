@@ -14,10 +14,11 @@ Apply macOS preference defaults. Idempotent and safe to re-run.
 
 Touches:
   - Hammerspoon config path
-  - Trackpad: disable 3- and 4-finger horizontal swipe between full-screen apps,
-    disable 4-finger vertical swipe (frees both up/down for Hammerspoon - the
-    4-finger up handler routes to tmux's session tree; 3-finger swipe up still
-    triggers macOS Mission Control), and disable Launchpad pinch / Show Desktop spread
+  - Trackpad: disable the 4-finger gestures - horizontal swipe, vertical swipe
+    (frees both up/down for Hammerspoon - the 4-finger up handler routes to
+    tmux's session tree), Launchpad pinch, Show Desktop spread. Explicitly
+    enable 3-finger vertical swipe (up opens Mission Control, down App
+    Expose); 3-finger horizontal keeps its macOS default (switches Spaces)
   - Menu bar: always autohide
   - Windows: Ctrl+Cmd+drag anywhere inside a window to move it
   - Dock: autohide, tile size 59
@@ -25,10 +26,10 @@ Touches:
     auto-period, spelling correction, smart-reply suggestions
   - Keyboard: remap Caps Lock to Escape for all keyboards (the "All Keyboards"
     Modifier Keys entry; takes effect after logout)
-  - Mission Control: bind Ctrl+Cmd+Option+Arrow as the only native space-switch
-    hotkey (macOS's smooth slide); leave plain Ctrl+Left/Right free for
-    Cyclist; keep Ctrl+Up bound to the Mission Control overview
-    (takes effect after logout).
+  - Mission Control: keep the overview enabled on its Ctrl+Up default (takes
+    effect after logout). Space-switch hotkeys stay on macOS defaults;
+    Cyclist consumes Ctrl+Left/Right while it runs, and the native binding
+    underneath is the fallback when it does not.
 
 Options:
   -h, --help    Show this help and exit.
@@ -44,13 +45,18 @@ done
 
 defaults write org.hammerspoon.Hammerspoon MJConfigFile "$HOME/.config/hammerspoon/init.lua"
 
-# Trackpad: disable horizontal swipe between full-screen apps (3- and 4-finger),
-# and disable 4-finger vertical swipe so Hammerspoon owns 4-finger up (it routes
-# to tmux's session tree) and 4-finger down stays inert. Three-finger swipe up
-# still triggers macOS Mission Control. Value 0 disables, 2 enables.
+# Trackpad: disable the 4-finger gestures - horizontal swipe (Space switching
+# is covered by the 3-finger swipe and Cyclist's Ctrl+Arrow), vertical swipe
+# so Hammerspoon owns 4-finger up (it routes to tmux's session tree) and
+# 4-finger down stays inert, and the Launchpad pinch / Show Desktop spread.
+# Explicitly enable 3-finger vertical swipe so Mission Control is guaranteed
+# reachable by gesture (up = Mission Control, down = App Expose) - with the
+# 4-finger variant disabled, this must not depend on the machine's prior
+# GUI state. 3-finger horizontal keeps its macOS default (switches Spaces).
+# Value 0 disables, 2 enables.
 # Both domains exist; built-in trackpad reads the first, Bluetooth the second.
 for domain in com.apple.AppleMultitouchTrackpad com.apple.driver.AppleBluetoothMultitouch.trackpad; do
-    defaults write "$domain" TrackpadThreeFingerHorizSwipeGesture -int 0
+    defaults write "$domain" TrackpadThreeFingerVertSwipeGesture  -int 2
     defaults write "$domain" TrackpadFourFingerHorizSwipeGesture  -int 0
     defaults write "$domain" TrackpadFourFingerVertSwipeGesture   -int 0
     defaults write "$domain" TrackpadFourFingerPinchGesture        -int 0
@@ -92,34 +98,18 @@ defaults write NSGlobalDomain NSSmartReplyEnabled                  -bool false
 defaults -currentHost write -g com.apple.keyboard.modifiermapping.0-0-0 \
     '<array><dict><key>HIDKeyboardModifierMappingSrc</key><integer>30064771129</integer><key>HIDKeyboardModifierMappingDst</key><integer>30064771113</integer></dict></array>'
 
-# Mission Control: Ctrl+Cmd+Option+Arrow is the only enabled native space-switch
-# hotkey - it triggers macOS's own smooth slide animation between Spaces. Plain
-# Ctrl+Left/Right is left unbound from any native action so Cyclist can own
-# it (it walks the native Spaces with instant switching), so re-bind the two "Move
-# left/right a space" actions (79/81) onto the Ctrl+Cmd+Option chord instead of
-# their Ctrl+Arrow default; keep the +apps variants (80/82) disabled. IDs:
-#   79 = Move left a space          80 = Move left a space + apps
-#   81 = Move right a space         82 = Move right a space + apps
-# value parameters = (key char, key code, modifier mask):
-#   65535 = non-printable (arrow); 123 = Left, 124 = Right
-#   mask 1835008 = Control(262144) + Option(524288) + Command(1048576)
-# These take effect after logout; cfprefsd is killed below to ensure the
-# write is flushed to disk before that.
-defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys -dict-add 79 \
-    "{enabled = 1; value = {parameters = (65535, 123, 1835008); type = standard;};}"
-defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys -dict-add 81 \
-    "{enabled = 1; value = {parameters = (65535, 124, 1835008); type = standard;};}"
-for id in 80 82; do
-    defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys \
-        -dict-add "$id" "{enabled = 0;}"
-done
-
-# Mission Control overview (ID 32) stays on its Ctrl+Up default. Cyclist's
-# event tap only swallows Ctrl+Left/Right, so Ctrl+Up passes through
-# to the native action - but toggling the neighboring shortcuts can leave 32
-# disabled in the plist, so enable it explicitly. Parameters follow the same
-# (key char, key code, modifier mask) shape as above: 126 = Up; mask 8650752 =
-# Control(262144) + the function-key bit(8388608) macOS sets on arrow keys.
+# Mission Control space-switch hotkeys (79-82) stay on their macOS defaults:
+# Cyclist's event tap consumes Ctrl+Left/Right before the system hotkey layer
+# sees it, so the native Ctrl+Arrow binding costs nothing while Cyclist runs
+# and serves as the fallback (macOS's animated slide) when it does not.
+#
+# Mission Control overview (ID 32) stays on its Ctrl+Up default. Cyclist only
+# swallows Ctrl+Left/Right, so Ctrl+Up passes through to the native action -
+# but GUI shortcut toggling can leave 32 disabled in the plist, so enable it
+# explicitly. value parameters = (key char, key code, modifier mask):
+# 65535 = non-printable, 126 = Up; mask 8650752 = Control(262144) + the
+# function-key bit(8388608) macOS sets on arrow keys. Takes effect after
+# logout; cfprefsd is killed below to ensure the write is flushed to disk.
 defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys -dict-add 32 \
     "{enabled = 1; value = {parameters = (65535, 126, 8650752); type = standard;};}"
 
