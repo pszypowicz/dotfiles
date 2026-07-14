@@ -72,6 +72,7 @@ cask "pszypowicz/tap/aerospace-bsp", trusted: true
 cask "anki"
 cask "calibre"
 cask "copilot-cli"
+cask "pszypowicz/tap/cyclist", trusted: true
 cask "font-caskaydia-cove-nerd-font"
 cask "pszypowicz/tap/mic-guard", trusted: true
 cask "ghostty"
