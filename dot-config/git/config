@@ -14,8 +14,6 @@
 	ff = only
 [init]
 	defaultBranch = main
-[sequence]
-	editor = code --wait
 
 [user]
 	name = Przemysław Szypowicz
