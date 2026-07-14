@@ -274,3 +274,144 @@ swipe:start(4, function(direction, distance, id)
     hs.timer.usleep(20000)
     hs.eventtap.keyStroke({}, "s", 30000)
 end)
+
+-- Pop-up application menu (Ctrl+Alt+Cmd+M, or `hs -c "popupAppMenu()"`):
+-- shows the frontmost app's entire menu bar as a contextual menu at the
+-- mouse pointer so any menu item can be invoked without traveling to the
+-- top of the screen (what the MenuWhere app does). The menu tree is read
+-- via accessibility with hs.application:getMenuItems, rebuilt as an
+-- hs.menubar menu table, and shown with popupMenu().
+--
+-- getMenuItems tree shape: the top level is a plain array of menu-bar-item
+-- dicts with the Apple menu already filtered out, and AXMenu wrapper
+-- elements are flattened to a single nested array, so a submenu's item list
+-- is item.AXChildren[1], not item.AXChildren. Attributes that fail to read
+-- come back as "" rather than nil, so AXEnabled must be compared to false
+-- explicitly.
+--
+-- Known limitations: menus an app populates on open (Open Recent, Services)
+-- can be stale or missing in the AX snapshot; large menu trees take seconds
+-- to read and Hammerspoon hitches during the read and while the popup is
+-- open (popupMenu blocks); selectMenuItem matches the first title per level,
+-- so a duplicate-named sibling is unselectable.
+
+-- Canonical macOS modifier display order.
+local MENU_MOD_GLYPHS = { ctrl = "⌃", alt = "⌥", shift = "⇧", cmd = "⌘" }
+local MENU_MOD_ORDER = { "ctrl", "alt", "shift", "cmd" }
+
+-- Shortcut display text ("⇧⌘S") for a menu item, or nil if it has none.
+-- Rendered into the item title rather than through the menu table's
+-- `shortcut` key: hs.menubar installs `shortcut` with an empty modifier
+-- mask, which draws no modifier symbol and lets the bare keypress fire the
+-- item while the popup is open. AXMenuItemCmdModifiers arrives pre-decoded
+-- as a list of modifier names; AXMenuItemCmdChar is empty for keys like
+-- ⌫ and ↩, which are exposed as a numeric glyph id instead.
+local function menuShortcutText(item)
+    local key = item.AXMenuItemCmdChar
+    if not key or key == "" then
+        local glyph = item.AXMenuItemCmdGlyph
+        key = type(glyph) == "number" and hs.application.menuGlyphs[glyph] or nil
+    end
+    if not key then return nil end
+    local mods = ""
+    if type(item.AXMenuItemCmdModifiers) == "table" then
+        local has = {}
+        for _, m in ipairs(item.AXMenuItemCmdModifiers) do has[m] = true end
+        for _, m in ipairs(MENU_MOD_ORDER) do
+            if has[m] then mods = mods .. MENU_MOD_GLYPHS[m] end
+        end
+    end
+    return mods .. key
+end
+
+-- Convert one flattened AXMenu item array into an hs.menubar menu table.
+-- `path` holds the ancestor titles starting at the top-level menu title;
+-- a clicked leaf replays it through selectMenuItem, which resolves the path
+-- against the live menu tree at click time and presses the item.
+local function axItemsToMenuTable(items, path, app)
+    local out = {}
+    for _, it in ipairs(items) do
+        local title = it.AXTitle
+        if title == nil or title == "" then
+            out[#out + 1] = { title = "-" }
+        else
+            local entry = { title = title }
+            if it.AXEnabled == false then entry.disabled = true end
+            local mark = it.AXMenuItemMarkChar
+            if mark ~= nil and mark ~= "" then
+                entry.state = (mark == "-") and "mixed" or "on"
+            end
+            -- Submenus of disabled items are unreachable in the popup, so
+            -- don't waste time building them.
+            local sub = not entry.disabled and type(it.AXChildren) == "table"
+                and it.AXChildren[1] or nil
+            if sub and #sub > 0 then
+                local subPath = { table.unpack(path) }
+                subPath[#subPath + 1] = title
+                entry.menu = axItemsToMenuTable(sub, subPath, app)
+            else
+                if not entry.disabled then
+                    local itemPath = { table.unpack(path) }
+                    itemPath[#itemPath + 1] = title
+                    entry.fn = function()
+                        if app:isRunning() then app:selectMenuItem(itemPath) end
+                    end
+                end
+                -- Em space between title and shortcut; itemPath keeps the raw
+                -- title so selectMenuItem still matches.
+                local sc = menuShortcutText(it)
+                if sc then entry.title = title .. "\u{2003}" .. sc end
+            end
+            out[#out + 1] = entry
+        end
+    end
+    return out
+end
+
+local function menuBarToMenuTable(menus, app)
+    local out = {}
+    for _, m in ipairs(menus) do
+        local items = type(m.AXChildren) == "table" and m.AXChildren[1] or nil
+        if m.AXTitle and m.AXTitle ~= "" and items and #items > 0 then
+            out[#out + 1] = {
+                title = m.AXTitle,
+                menu = axItemsToMenuTable(items, { m.AXTitle }, app),
+            }
+        end
+    end
+    return out
+end
+
+-- One hidden menubar item is reused for every popup. popupMenu() blocks
+-- until the menu is dismissed, and the timing of a clicked item's fn
+-- relative to popupMenu returning is undocumented, so a create-per-popup
+-- item could be deleted before the click lands. The module-level reference
+-- also protects the item from garbage collection.
+local menuPopup = hs.menubar.new(false)
+local menuPopupBusy = false
+
+function popupAppMenu()
+    if menuPopupBusy or not menuPopup then return end
+    local app = hs.application.frontmostApplication()
+    if not app then return end
+    -- Capture the pointer before the tree read so the menu opens where the
+    -- pointer was at trigger time, not wherever it drifted during a slow read.
+    local pos = hs.mouse.absolutePosition()
+    menuPopupBusy = true
+    -- Async form: the AX walk is deferred to the main queue rather than
+    -- backgrounded, but the trigger callback returns immediately instead of
+    -- stalling inside it. The busy flag stops a second trigger from starting
+    -- a parallel read.
+    app:getMenuItems(function(menus)
+        menuPopupBusy = false
+        if not menus or #menus == 0 then
+            -- nil also covers missing Accessibility permission.
+            hs.alert.show("No menus for " .. (app:name() or "app"))
+            return
+        end
+        menuPopup:setMenu(menuBarToMenuTable(menus, app))
+        menuPopup:popupMenu(pos)
+    end)
+end
+
+hs.hotkey.bind({ "ctrl", "alt", "cmd" }, "m", popupAppMenu)
