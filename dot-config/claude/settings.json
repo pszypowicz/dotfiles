@@ -133,5 +133,8 @@
   "tui": "fullscreen",
   "theme": "auto",
   "editorMode": "vim",
+  "vimInsertModeRemaps": {
+    "jj": "<Esc>"
+  },
   "preferredNotifChannel": "notifications_disabled"
 }
