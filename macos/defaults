@@ -22,6 +22,7 @@ Touches:
   - Menu bar: always autohide
   - Windows: Ctrl+Cmd+drag anywhere inside a window to move it
   - Dock: autohide, tile size 59
+  - Finder: enable the Quit menu item (Cmd+Q)
   - Text input: disable auto-capitalization, smart quotes/dashes,
     auto-period, spelling correction, smart-reply suggestions
   - Keyboard: remap Caps Lock to Escape for all keyboards (the "All Keyboards"
@@ -78,6 +79,9 @@ defaults write NSGlobalDomain NSWindowShouldDragOnGesture -bool true
 defaults write com.apple.dock autohide -bool true
 defaults write com.apple.dock tilesize -int 59
 
+# Finder: add a Quit menu item so Cmd+Q closes it like any other app.
+defaults write com.apple.finder QuitMenuItem -bool true
+
 # Text input: disable macOS auto-substitutions (capitalization, smart quotes/dashes,
 # auto-period, spelling correction, smart-reply suggestions).
 defaults write NSGlobalDomain NSAutomaticCapitalizationEnabled     -bool false
@@ -113,7 +117,8 @@ defaults -currentHost write -g com.apple.keyboard.modifiermapping.0-0-0 \
 defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys -dict-add 32 \
     "{enabled = 1; value = {parameters = (65535, 126, 8650752); type = standard;};}"
 
-# Apply Dock changes immediately; flush cfprefsd so the symbolichotkeys
-# write lands on disk; the rest take effect on next login.
+# Apply Dock and Finder changes immediately; flush cfprefsd so the
+# symbolichotkeys write lands on disk; the rest take effect on next login.
 killall cfprefsd 2>/dev/null || true
 killall Dock 2>/dev/null || true
+killall Finder 2>/dev/null || true
