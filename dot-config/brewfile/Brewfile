@@ -67,6 +67,7 @@ brew "yt-dlp"
 brew "zoxide"
 brew "felixkratz/formulae/sketchybar", trusted: true
 brew "pszypowicz/tap/afm-summarize", trusted: true
+brew "pszypowicz/tap/brightsync", start_service: true, trusted: true
 # cask "nikitabobko/tap/aerospace", trusted: true   # disabled while dogfooding the bsp fork build below
 cask "pszypowicz/tap/aerospace-bsp", trusted: true
 cask "anki"
