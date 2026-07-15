@@ -44,6 +44,16 @@ Fish sources fzf shell integration (`fzf --fish`), providing `Ctrl+T` (files), `
 
 Current config excludes macOS system directories: `/Library`, `/Applications`, `/Movies`, `/Music`, `/Pictures`, `/Public`.
 
+## Window drag gesture
+
+`macos/defaults` enables the hidden AppKit preference `NSWindowShouldDragOnGesture`: hold Ctrl+Cmd and click-drag anywhere inside a window to move it, not just the title bar (Linux-style Super+drag).
+
+```bash
+defaults write NSGlobalDomain NSWindowShouldDragOnGesture -bool true
+```
+
+Move-only, the modifier combo is fixed, and there is no System Settings UI for it. Apps pick it up on launch, so already-running apps need a relaunch. Non-AppKit windows can ignore it (some Electron apps; Ghostty with `window-decoration = false`).
+
 ## SketchyBar LaunchAgent
 
 `Library/LaunchAgents/com.felixkratz.sketchybar.plist` is a custom launchd plist that replaces `brew services start sketchybar`.
