@@ -1,0 +1,269 @@
+#!/usr/bin/env bash
+# cclaude - run Claude Code inside a Linux container on colima, sharing the
+# host's Claude config at identical paths so sessions, resume, memory, and
+# trust stay continuous across the host/container boundary.
+#
+# The container gets: the current repo (rw), ~/.config/claude, ~/.config/git,
+# the git repos that stow symlinks in those dirs resolve into (discovered at
+# run time, so each machine's active dotfiles-private-* overlay is picked up
+# without configuration), and a long-lived OAuth token minted by
+# `claude setup-token`. Nothing else crosses over - no SSH agent, no
+# keychain, no credential helper: commit inside, push/pull from the host.
+#
+# --locked hardens the same topology for yolo-style use: instruction and
+# execution surfaces (settings, CLAUDE.md, hooks, skills, plugins, ...)
+# become read-only, other projects' sessions become read-only, and a
+# deny-rule settings overlay blocks explicit tool edits under
+# ~/.config/claude. The config root itself must stay a writable dir mount
+# either way: .claude.json is saved via temp-file + rename, which breaks
+# across a file bind mount.
+set -euo pipefail
+
+SCRIPT_DIR=$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)
+CONFIG_DIR="$HOME/.config/claude"
+GIT_CONFIG_DIR="$HOME/.config/git"
+STATE_DIR="$HOME/.local/state/cclaude"
+ENV_FILE="$STATE_DIR/env"
+CONTAINER_SETTINGS="$STATE_DIR/container-settings.json"
+IMAGE_NAME="cclaude"
+DOCKER=(docker --context colima)
+
+usage() {
+    cat <<'EOF'
+Usage: cclaude [command] [options] [-- <claude args>]
+
+Run Claude Code in a colima container that shares the host Claude config.
+
+Commands:
+  run      Start an interactive session in the current directory (default
+           when no command is given).
+  build    Build the container image pinned to the host's claude version.
+  token    Mint a long-lived OAuth token (claude setup-token) and store it
+           for container use.
+
+Options (run):
+  --locked      Harden the mounts: read-only instruction surfaces and
+                read-only access to other projects' sessions, plus a
+                deny-rule settings overlay.
+  -h, --help    Show this help.
+
+Anything unrecognized (or everything after --) is passed through to claude
+inside the container.
+
+Examples:
+  cclaude                       # interactive session in the current repo
+  cclaude -- --resume
+  cclaude --locked -- --dangerously-skip-permissions
+  cclaude build                 # rebuild after a host claude upgrade
+EOF
+}
+
+die() {
+    echo "cclaude: $*" >&2
+    exit 1
+}
+
+claude_version() {
+    command -v claude >/dev/null || die "host claude CLI not found on PATH"
+    claude --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1
+}
+
+# Print the unique git repo roots that symlinks under the config dirs resolve
+# into. These must be mounted or the config is dangling in-container. Targets
+# inside the scanned dirs themselves (plugin caches, node_modules/.bin) are
+# already covered by the config mounts and skipped.
+#
+# No pipeline around the loop: die must fail the whole function so the
+# caller's command substitution aborts the run under set -e.
+discover_repo_roots() {
+    local link target root
+    local roots=()
+    while IFS= read -r -d '' link; do
+        { target=$(readlink -f "$link") && [ -e "$target" ]; } \
+            || die "dangling symlink: $link -> $(readlink "$link")"
+        case "$target" in
+            "$CONFIG_DIR"/* | "$GIT_CONFIG_DIR"/*) continue ;;
+        esac
+        root=$(git -C "$(dirname "$target")" rev-parse --show-toplevel 2>/dev/null) \
+            || die "symlink target is not in a git repo (cannot infer a mount): $link -> $target"
+        roots+=("$root")
+    done < <(find "$CONFIG_DIR" "$GIT_CONFIG_DIR" -type l -print0 2>/dev/null)
+    if ((${#roots[@]})); then
+        printf '%s\n' "${roots[@]}" | sort -u
+    fi
+}
+
+do_token() {
+    command -v claude >/dev/null || die "host claude CLI not found on PATH"
+    echo "Complete the setup-token flow; the token is shown at the end."
+    claude setup-token
+    echo
+    local token
+    read -rsp "Paste the token here (input hidden): " token
+    echo
+    token=$(printf '%s' "$token" | tr -d '[:space:]')
+    [[ "$token" == sk-ant-* && ${#token} -ge 60 ]] \
+        || die "that does not look like a token (expected sk-ant-* and 60+ chars, got ${#token}); nothing written"
+    mkdir -p "$STATE_DIR"
+    (umask 077 && printf 'CLAUDE_CODE_OAUTH_TOKEN=%s\n' "$token" > "$ENV_FILE")
+    echo "Token stored in $ENV_FILE"
+}
+
+do_build() {
+    (($#)) && die "build takes no arguments"
+    local version
+    version=$(claude_version)
+    [ -n "$version" ] || die "could not parse a version from 'claude --version'"
+    "${DOCKER[@]}" build \
+        --build-arg CLAUDE_VERSION="$version" \
+        --build-arg HOST_USER="$(id -un)" \
+        --build-arg HOST_UID="$(id -u)" \
+        --build-arg HOST_HOME="$HOME" \
+        -t "$IMAGE_NAME:$version" \
+        "$SCRIPT_DIR"
+}
+
+do_run() {
+    local locked=0
+    local claude_args=()
+    while (($#)); do
+        case "$1" in
+            --locked) locked=1 ;;
+            --)
+                shift
+                claude_args+=("$@")
+                break
+                ;;
+            *) claude_args+=("$1") ;;
+        esac
+        shift
+    done
+
+    local version
+    version=$(claude_version)
+
+    "${DOCKER[@]}" info >/dev/null 2>&1 \
+        || die "docker daemon on colima is unreachable - brew services start colima"
+    "${DOCKER[@]}" image inspect "$IMAGE_NAME:$version" >/dev/null 2>&1 \
+        || die "image $IMAGE_NAME:$version not built - run: cclaude build"
+    case "$PWD/" in
+        "$HOME/Developer/"*) ;;
+        *) die "refusing to run outside ~/Developer (cwd: $PWD)" ;;
+    esac
+    [ -f "$ENV_FILE" ] || die "no OAuth token stored - run: cclaude token"
+    [ -f "$CONFIG_DIR/.claude.json" ] \
+        || die "$CONFIG_DIR/.claude.json missing - run claude on the host once first"
+
+    local roots_output
+    roots_output=$(discover_repo_roots)
+    local roots=()
+    local line
+    while IFS= read -r line; do
+        [ -n "$line" ] && roots+=("$line")
+    done <<< "$roots_output"
+
+    mkdir -p "$HOME/.cache/claude"
+
+    local repo_ro=""
+    ((locked)) && repo_ro=":ro"
+
+    local mounts=(
+        -v "$PWD:$PWD"
+        -v "$CONFIG_DIR:$CONFIG_DIR"
+        -v "$GIT_CONFIG_DIR:$GIT_CONFIG_DIR$repo_ro"
+        -v "$HOME/.cache/claude:$HOME/.cache/claude"
+    )
+    local root
+    for root in ${roots[@]+"${roots[@]}"}; do
+        [ "$root" = "$PWD" ] && continue
+        mounts+=(-v "$root:$root$repo_ro")
+    done
+
+    if ((locked)); then
+        local slug=${PWD//\//-}
+        slug=${slug//./-}
+        mkdir -p "$CONFIG_DIR/agents" "$CONFIG_DIR/projects/$slug"
+
+        # Overlays on paths that are themselves stow symlinks land on the
+        # resolved repo file, which the ro repo mount already covers; real
+        # files and dirs get shadowed in place. Either way the surface is
+        # read-only in-container.
+        local surface
+        for surface in settings.json settings.local.json CLAUDE.md \
+            CLAUDE.private.md statusline.sh hooks scripts skills commands \
+            plugins agents; do
+            [ -e "$CONFIG_DIR/$surface" ] || continue
+            mounts+=(-v "$CONFIG_DIR/$surface:$CONFIG_DIR/$surface:ro")
+        done
+        mounts+=(-v "$CONFIG_DIR/projects:$CONFIG_DIR/projects:ro")
+        mounts+=(-v "$CONFIG_DIR/projects/$slug:$CONFIG_DIR/projects/$slug")
+    fi
+
+    # Settings overlay, layered above the shared settings.json via --settings.
+    # The env-scrub override must live here: the settings env block beats the
+    # process environment, so a docker -e alone cannot switch it off. It is
+    # off in-container because on Linux it hard-requires bubblewrap, and
+    # bwrap under docker needs seccomp/apparmor unconfined plus a VM sysctl
+    # change - weakening the container boundary to enable an inner sandbox.
+    # The known cost: subprocesses see CLAUDE_CODE_OAUTH_TOKEN.
+    #
+    # Locked mode adds deny rules as a guardrail against explicit tool edits
+    # of the shared config; the app's own state writes are not tool calls
+    # and are unaffected.
+    mkdir -p "$STATE_DIR"
+    local abs="//${HOME#/}/.config/claude"
+    local deny_block=""
+    ((locked)) && deny_block=",
+  \"permissions\": {
+    \"deny\": [
+      \"Edit($abs/**)\",
+      \"Write($abs/**)\",
+      \"Bash(*claude.json*)\"
+    ]
+  }"
+    cat > "$CONTAINER_SETTINGS" <<EOF
+{
+  "env": {
+    "CLAUDE_CODE_SUBPROCESS_ENV_SCRUB": "0"
+  }$deny_block
+}
+EOF
+    mounts+=(-v "$CONTAINER_SETTINGS:/cclaude-settings.json:ro")
+    local extra_args=(--settings /cclaude-settings.json)
+
+    # ctrl-],ctrl-] frees ctrl-p from docker's default detach chord, which
+    # would otherwise swallow it inside the TUI.
+    exec "${DOCKER[@]}" run --rm -it --init \
+        --hostname cclaude \
+        --detach-keys 'ctrl-],ctrl-]' \
+        -w "$PWD" \
+        -e TERM=xterm-256color \
+        --env-file "$ENV_FILE" \
+        "${mounts[@]}" \
+        "$IMAGE_NAME:$version" \
+        ${extra_args[@]+"${extra_args[@]}"} \
+        ${claude_args[@]+"${claude_args[@]}"}
+}
+
+main() {
+    local cmd="run"
+    if (($#)); then
+        case "$1" in
+            build | token | run)
+                cmd="$1"
+                shift
+                ;;
+            -h | --help)
+                usage
+                exit 0
+                ;;
+        esac
+    fi
+    case "$cmd" in
+        build) do_build "$@" ;;
+        token) do_token ;;
+        run) do_run "$@" ;;
+    esac
+}
+
+main "$@"
