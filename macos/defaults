@@ -14,11 +14,10 @@ Apply macOS preference defaults. Idempotent and safe to re-run.
 
 Touches:
   - Hammerspoon config path
-  - Trackpad: disable the 4-finger gestures - horizontal swipe, vertical swipe
-    (frees both up/down for Hammerspoon - the 4-finger up handler routes to
-    tmux's session tree), Launchpad pinch, Show Desktop spread. Explicitly
-    enable 3-finger vertical swipe (up opens Mission Control, down App
-    Expose); 3-finger horizontal keeps its macOS default (switches Spaces)
+  - Trackpad: disable the 4-finger gestures - horizontal swipe, vertical
+    swipe, Launchpad pinch, Show Desktop spread. Explicitly enable 3-finger
+    vertical swipe (up opens Mission Control, down App Expose); 3-finger
+    horizontal keeps its macOS default (switches Spaces)
   - Menu bar: always autohide
   - Windows: Ctrl+Cmd+drag anywhere inside a window to move it
   - Dock: autohide, tile size 59
@@ -48,8 +47,8 @@ defaults write org.hammerspoon.Hammerspoon MJConfigFile "$HOME/.config/hammerspo
 
 # Trackpad: disable the 4-finger gestures - horizontal swipe (Space switching
 # is covered by the 3-finger swipe and Cyclist's Ctrl+Arrow), vertical swipe
-# so Hammerspoon owns 4-finger up (it routes to tmux's session tree) and
-# 4-finger down stays inert, and the Launchpad pinch / Show Desktop spread.
+# (Mission Control and App Expose are covered by the 3-finger swipe), and
+# the Launchpad pinch / Show Desktop spread.
 # Explicitly enable 3-finger vertical swipe so Mission Control is guaranteed
 # reachable by gesture (up = Mission Control, down = App Expose) - with the
 # 4-finger variant disabled, this must not depend on the machine's prior
