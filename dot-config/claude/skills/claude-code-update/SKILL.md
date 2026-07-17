@@ -10,6 +10,12 @@ description: >-
   Claude Code changelog", "should I update claude", or mentions
   "npm install @anthropic-ai/claude-code". This is about the Claude Code CLI
   tool itself - NOT the Claude API, the Anthropic SDK, or model selection.
+allowed-tools:
+  - Bash(*claude-changelog-diff.sh*)
+  - Bash(ls *)
+  - Bash(claude --version)
+  - Bash(npm view *)
+  - Bash(npm install -g @anthropic-ai/claude-code@*)
 ---
 
 # Claude Code update review
