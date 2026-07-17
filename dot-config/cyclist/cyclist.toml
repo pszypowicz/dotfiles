@@ -1,7 +1,0 @@
-[aerospace]
-# The AeroSpace bridge (socket client). Default: false.
-integration = true
-
-# Keep chain stops for workspaces whose windows all went native-fullscreen.
-# Default: false.
-show-hollow-workspaces = false
