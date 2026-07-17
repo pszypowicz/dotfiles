@@ -1,22 +1,24 @@
 #!/usr/bin/env bash
-# Claude Code bell hook.
+# Claude Code page hook.
 #
-# Emits a terminal BEL via the terminalSequence hook field - tmux's
-# monitor-bell + alert-bell hook routes that BEL into a clickable macOS
-# notification (see tmux.conf and hammerspoon/init.lua). Before emitting,
-# it stashes the page kind and reason on the current tmux pane as options
-# @claude_bell_kind / @claude_bell_msg, so the notification can show *why*
-# Claude paged (permission prompt or idle wait) rather than a generic
-# "tmux: <session>" line.
+# Reads the hook JSON payload on stdin and pages the user via Hammerspoon's
+# claudePage (hammerspoon/init.lua), which posts a clickable macOS
+# notification that jumps to the tmux session/window where Claude is
+# waiting. Also emits a terminal BEL via the terminalSequence hook field,
+# purely so Ghostty bounces the Dock while unfocused (bell-features
+# `attention`); tmux forwards bells to attached clients out of the box
+# (monitor-bell on / bell-action any are the defaults), so the BEL needs no
+# tmux configuration and carries no information.
 set -euo pipefail
 
 usage() {
   cat <<'EOF'
 Usage: bell.sh --event <notification|idle>
 
-Claude Code hook script. Reads the hook JSON payload on stdin, records the
-page kind and reason on the current tmux pane (options @claude_bell_kind and
-@claude_bell_msg), and prints a terminalSequence BEL for Claude Code to emit.
+Claude Code hook script. Reads the hook JSON payload on stdin, pages the
+user via Hammerspoon's claudePage (a clickable macOS notification targeting
+the current tmux session/window), and prints a terminalSequence BEL for
+Claude Code to emit so Ghostty bounces the Dock.
 
 Options:
   --event <kind>   Hook event kind. One of: notification, idle. Required.
@@ -99,19 +101,23 @@ if [[ "$EVENT" == "idle" ]]; then
   fi
 fi
 
-# Both events render with the same Hammerspoon appearance ("Claude needs you"
-# plus sound) - they differ only in where MSG comes from - so the kind is
-# always "notification" here.
-KIND="notification"
-
-# Stash kind/reason on the belling pane for the tmux alert-bell hook to read.
-# The alert-bell hook unsets both options after consuming them (see
-# tmux.conf), so the metadata is one-shot and a later plain bell in the same
-# pane renders as a plain bell again. Failures here must not suppress the
-# BEL, hence `|| true`.
-if [[ -n "${TMUX:-}" && -n "${TMUX_PANE:-}" ]]; then
-  tmux set-option -p -t "$TMUX_PANE" @claude_bell_kind "$KIND" 2>/dev/null || true
-  tmux set-option -p -t "$TMUX_PANE" @claude_bell_msg "$MSG" 2>/dev/null || true
+# Page through Hammerspoon. Every failure path degrades to the bare BEL
+# (Dock bounce only): outside tmux, hs CLI absent, Hammerspoon down. Lua
+# long-brackets [==[...]==] absorb quotes/spaces/newlines in the values
+# without shell-level escaping; the one sequence that would close a bracket
+# early is stripped from the free-text message. The hs call runs in the
+# background so a busy Hammerspoon (e.g. a blocking popup menu) can't stall
+# the hook past its timeout or delay the BEL.
+if [[ -n "${TMUX:-}" && -n "${TMUX_PANE:-}" ]] && command -v hs >/dev/null; then
+  SESSION="$(tmux display-message -p -t "$TMUX_PANE" '#{session_name}' 2>/dev/null || true)"
+  WINDOW="$(tmux display-message -p -t "$TMUX_PANE" '#{window_index}' 2>/dev/null || true)"
+  if [[ -z "$MSG" ]]; then
+    MSG="$(tmux display-message -p -t "$TMUX_PANE" '#{pane_title}' 2>/dev/null || true)"
+  fi
+  if [[ -n "$SESSION" && -n "$WINDOW" ]]; then
+    MSG="${MSG//]==]/}"
+    hs -c "claudePage([==[$SESSION]==], [==[$WINDOW]==], [==[$MSG]==])" >/dev/null 2>&1 </dev/null &
+  fi
 fi
 
 # Print the terminalSequence payload: a single BEL. jq escapes the control

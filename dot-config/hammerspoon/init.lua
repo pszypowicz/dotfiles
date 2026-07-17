@@ -2,40 +2,41 @@ require("hs.ipc")
 
 local TMUX = "/opt/homebrew/bin/tmux"
 
--- tmux bell router: callable via `hs -c "tmuxBell(session, window, pane_title)"`
--- from the alert-bell hook in tmux.conf. Replaces Ghostty's default bell
--- notification (which has no session context and no useful click target)
--- with a clickable notification that switches the tmux client to the
--- session/window that belled. Notifications for the currently-focused
--- window are suppressed so only background sessions page the user.
-local tmuxBellNotifs = {}
+-- Claude Code pager: callable via `hs -c "claudePage(session, window, msg)"`
+-- from Claude Code's page hook (claude/hooks/bell.sh). Posts a clickable
+-- notification that switches the tmux client to the session/window where
+-- Claude is waiting - something a terminal-emitted notification can't do: a
+-- Ghostty surface maps to a whole tmux client rather than a tmux window,
+-- and escape sequences never reach the emulator while the session has no
+-- attached client. Pages for the currently-viewed window are suppressed so
+-- only background work pages the user.
+local claudePageNotifs = {}
 
--- Sound played for "notification" pages (Claude is waiting on the user).
+-- Sound played for pages (Claude is waiting on the user).
 -- hs.notify.defaultNotificationSound is the macOS default alert sound; any
 -- basename from /System/Library/Sounds also works, and nil means silent.
-local CLAUDE_NOTIFICATION_SOUND = hs.notify.defaultNotificationSound
+local CLAUDE_PAGE_SOUND = hs.notify.defaultNotificationSound
 
-function tmuxBell(session, window, paneTitle, kind, msg)
-    kind = kind or ""
+function claudePage(session, window, msg)
     msg = msg or ""
     local target = session .. ":" .. window
 
-    -- Suppress only when the user is literally staring at the belling window.
+    -- Suppress only when the user is literally staring at the paging window.
     -- Three conditions must hold: (a) Ghostty is the frontmost macOS app,
-    -- (b) the focused Ghostty window's title prefix matches the belling
+    -- (b) the focused Ghostty window's title prefix matches the paging
     -- session (one tmux client per Ghostty window, titles set via tmux's
     -- set-titles-string "#S / #W"), and (c) that session's client is on the
-    -- belling window. Anything else - different app focused, different
+    -- paging window. Anything else - different app focused, different
     -- Ghostty window focused, different tmux window within the right session
-    -- - means the user can't see the bell, so we should notify.
+    -- - means the user can't see Claude waiting, so we should notify.
     --
     -- hs.execute notes:
     --   * Omitting the second arg keeps it on /bin/sh; passing `true` switches
     --     to the user's $SHELL, and `fish -l -i -c` eats `#` as a comment even
     --     inside double quotes, silently truncating tmux format strings.
-    --   * `list-clients -t <session>` resolves against concrete attached state
-    --     and doesn't suffer the default-target race that `display-message -p`
-    --     hits during alert-bell hook context.
+    --   * `list-clients -t <session>` reads concrete attached state instead
+    --     of relying on `display-message -p` picking the right default
+    --     client.
     local frontApp = hs.application.frontmostApplication()
     if frontApp and frontApp:bundleID() == "com.mitchellh.ghostty" then
         local fw = frontApp:focusedWindow()
@@ -50,31 +51,9 @@ function tmuxBell(session, window, paneTitle, kind, msg)
         end
     end
 
-    -- Coalesce: if a prior notification for this target is still pending,
-    -- withdraw it so a burst of bells doesn't stack the notification center.
-    if tmuxBellNotifs[target] then tmuxBellNotifs[target]:withdraw() end
-
-    -- Appearance varies by who rang the bell. `kind` and `msg` come from the
-    -- @claude_bell_kind / @claude_bell_msg pane options set by Claude Code's
-    -- bell.sh hook (see tmux.conf).
-    --   "notification" - Claude Code is waiting on the user (permission
-    --                    prompt or idle). Plays a sound because it needs a
-    --                    response; msg carries the reason - for idle waits,
-    --                    an excerpt of Claude's last reply.
-    --   ""             - a plain terminal bell from any other program;
-    --                    rendered exactly as before.
-    local title, subTitle, infoText, sound
-    if kind == "notification" then
-        title = "Claude needs you"
-        subTitle = session .. " / window " .. window
-        infoText = (msg ~= "" and msg) or paneTitle or ""
-        sound = CLAUDE_NOTIFICATION_SOUND
-    else
-        title = "tmux: " .. session
-        subTitle = "window " .. window
-        infoText = paneTitle or ""
-        sound = nil
-    end
+    -- Coalesce: if a prior page for this target is still pending, withdraw
+    -- it so repeated pages don't stack up in Notification Center.
+    if claudePageNotifs[target] then claudePageNotifs[target]:withdraw() end
 
     local n = hs.notify.new(function()
         -- Multi-Ghostty-window setups have one tmux client per Ghostty window.
@@ -102,11 +81,11 @@ function tmuxBell(session, window, paneTitle, kind, msg)
             end
             sessionWin:focus()
         else
-            -- No Ghostty window is attached to the belling session - Ghostty
+            -- No Ghostty window is attached to the paging session - Ghostty
             -- is closed, or open on other sessions only. There is no client
             -- to switch-client, and a fresh Ghostty window would run the
             -- shell's MRU tmux-attach, which lands on whichever session was
-            -- last viewed - not necessarily the one that belled. So set the
+            -- last viewed - not necessarily the one that paged. So set the
             -- session's current window directly (select-window works with
             -- zero clients attached) and open a Ghostty window bound straight
             -- to that session with `-e`. `-n` is required: without it `open`
@@ -116,12 +95,15 @@ function tmuxBell(session, window, paneTitle, kind, msg)
             hs.execute(TMUX .. " select-window -t '=" .. target .. "'")
             hs.execute("open -na Ghostty --args -e " .. TMUX .. " attach -t '=" .. session .. "'")
         end
-        tmuxBellNotifs[target] = nil
+        claudePageNotifs[target] = nil
     end, {
-        title = title,
-        subTitle = subTitle,
-        informativeText = infoText,
-        soundName = sound,
+        title = "Claude needs you",
+        subTitle = session .. " / window " .. window,
+        -- msg carries the reason for the page - the permission prompt text,
+        -- or for idle waits an excerpt of Claude's last reply (bell.sh falls
+        -- back to the pane title when neither is available).
+        informativeText = msg,
+        soundName = CLAUDE_PAGE_SOUND,
         autoWithdraw = true,
         -- Hammerspoon's withdrawAfter only controls its own auto-withdraw
         -- timer; the on-screen persistence is governed by the macOS alert
@@ -131,39 +113,39 @@ function tmuxBell(session, window, paneTitle, kind, msg)
         withdrawAfter = 0,
     })
     n:send()
-    tmuxBellNotifs[target] = n
+    claudePageNotifs[target] = n
 end
 
--- Withdraw any pending bell notification for the given session/window when
--- the user visits it. Called from tmux's after-select-window and
+-- Withdraw any pending page for the given session/window when the user
+-- visits it. Called from tmux's after-select-window and
 -- client-session-changed hooks so notifications self-clean instead of
 -- piling up in Notification Center after the user has already seen the
 -- relevant tmux window.
-function tmuxClearBell(session, window)
+function claudeClearPage(session, window)
     local target = session .. ":" .. window
-    if tmuxBellNotifs[target] then
-        tmuxBellNotifs[target]:withdraw()
-        tmuxBellNotifs[target] = nil
+    if claudePageNotifs[target] then
+        claudePageNotifs[target]:withdraw()
+        claudePageNotifs[target] = nil
     end
 end
 
 -- The tmux-side self-clean hooks can't see macOS-level focus changes: when
 -- the user Cmd-Tabs back to a Ghostty window that is already sitting on the
--- belled tmux window, no tmux hook fires and the notification would linger
+-- paged tmux window, no tmux hook fires and the notification would linger
 -- in Notification Center. Watch Ghostty window focus and withdraw any
--- pending notification for the focused session's current window. The
--- pending-notification guard keeps the common case (no bells outstanding)
--- free of tmux subprocess calls.
-local ghosttyBellWf = hs.window.filter.new(function(w)
+-- pending page for the focused session's current window. The pending-page
+-- guard keeps the common case (no pages outstanding) free of tmux
+-- subprocess calls.
+local ghosttyPageWf = hs.window.filter.new(function(w)
     local app = w:application()
     return app ~= nil and app:bundleID() == "com.mitchellh.ghostty"
 end)
-ghosttyBellWf:subscribe(hs.window.filter.windowFocused, function(w)
+ghosttyPageWf:subscribe(hs.window.filter.windowFocused, function(w)
     -- set-titles-string is "#S / #W"; session names can't contain " / ".
     local session = (w:title() or ""):match("^(.-) / ")
     if not session or session == "" then return end
     local pending = false
-    for target in pairs(tmuxBellNotifs) do
+    for target in pairs(claudePageNotifs) do
         if target:sub(1, #session + 1) == session .. ":" then
             pending = true
             break
@@ -173,7 +155,7 @@ ghosttyBellWf:subscribe(hs.window.filter.windowFocused, function(w)
     local view = (hs.execute(TMUX .. " list-clients -t '=" .. session .. "' -F '#{session_name}:#{window_index}'") or "")
         :match("([^\r\n]+)") or ""
     local window = view:match(":(%d+)%s*$")
-    if window then tmuxClearBell(session, window) end
+    if window then claudeClearPage(session, window) end
 end)
 
 -- Keyboard Viewer: callable via `hs -c "toggleKeyboardViewer()"` (e.g. from sketchybar)
