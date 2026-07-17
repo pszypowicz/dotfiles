@@ -21,6 +21,12 @@ stow -d ~/Developer/github.com/pszypowicz -t ~ dotfiles --dotfiles --restow --no
 - `--no-folding` - create package subdirs as real dirs in the target and only symlink individual files, instead of collapsing subtrees into one dir-symlink. Prevents tools that write live state inside a config dir (e.g. Claude Code writing `history.jsonl`, `projects/`, caches into `~/.config/claude`) from accidentally writing into the git repo through a folded dir-symlink.
 - `-d ~/Developer/github.com/pszypowicz` - shared stow directory, lets overlay packages coexist with the base package
 
+Stow creates **relative** symlinks, resolved from the link's parent directory. To link a single new file without re-running stow, one `ln -s` with the same relative form is enough:
+
+```bash
+ln -s ../../Developer/github.com/pszypowicz/dotfiles/dot-config/claude/statusline.sh ~/.config/claude/statusline.sh
+```
+
 ## What's included
 
 **Shells:** Fish (primary, vi keybindings), Bash, Zsh
