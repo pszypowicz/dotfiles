@@ -53,7 +53,7 @@ complete -c claude -f
 # Subcommands
 complete -c claude -n __fish_use_subcommand -a agents -d 'Manage background agents'
 complete -c claude -n __fish_use_subcommand -a auth -d 'Manage authentication'
-complete -c claude -n __fish_use_subcommand -a auto-mode -d 'Inspect auto mode classifier configuration'
+complete -c claude -n __fish_use_subcommand -a auto-mode -d 'Inspect or reset auto mode configuration'
 complete -c claude -n __fish_use_subcommand -a doctor -d 'Check the health of the installation'
 complete -c claude -n __fish_use_subcommand -a gateway -d 'Run the enterprise auth/telemetry gateway'
 complete -c claude -n __fish_use_subcommand -a install -d 'Install Claude Code native build'
@@ -93,6 +93,7 @@ complete -c claude -n __claude_no_subcommand -l strict-mcp-config -d 'Only use M
 complete -c claude -n __claude_no_subcommand -l no-session-persistence -d 'Do not save the session to disk (print mode)'
 complete -c claude -n __claude_no_subcommand -l include-partial-messages -d 'Stream partial message chunks (stream-json)'
 complete -c claude -n __claude_no_subcommand -l include-hook-events -d 'Include hook lifecycle events (stream-json)'
+complete -c claude -n __claude_no_subcommand -l forward-subagent-text -d 'Include subagent text and thinking (stream-json)'
 complete -c claude -n __claude_no_subcommand -l replay-user-messages -d 'Re-emit stdin user messages on stdout'
 complete -c claude -n __claude_no_subcommand -l exclude-dynamic-system-prompt-sections -d 'Move per-machine sections out of the system prompt'
 
@@ -133,6 +134,10 @@ set -l auth_cmds login logout status
 complete -c claude -n "__fish_seen_subcommand_from auth; and not __fish_seen_subcommand_from $auth_cmds" -a login -d 'Sign in to your Anthropic account'
 complete -c claude -n "__fish_seen_subcommand_from auth; and not __fish_seen_subcommand_from $auth_cmds" -a logout -d 'Log out from your Anthropic account'
 complete -c claude -n "__fish_seen_subcommand_from auth; and not __fish_seen_subcommand_from $auth_cmds" -a status -d 'Show authentication status'
+
+# auto-mode
+complete -c claude -n '__fish_seen_subcommand_from auto-mode; and not __fish_seen_subcommand_from reset' -a reset -d 'Restore the default auto-mode configuration'
+complete -c claude -n '__fish_seen_subcommand_from auto-mode; and __fish_seen_subcommand_from reset' -l yes -d 'Skip the confirmation prompt'
 
 # mcp
 set -l mcp_cmds add add-from-claude-desktop add-json get list login logout remove reset-project-choices serve
