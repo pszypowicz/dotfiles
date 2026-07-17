@@ -23,8 +23,14 @@ args=()
 # AeroSpace down: show the always-present aerospace.status carrier (its
 # warning visuals are pre-configured in items/aerospace.sh) and hide
 # whatever workspace icons are still cached from a prior healthy render.
-# pgrep is cheaper than the CLI and survives a wedged daemon.
-if ! pgrep -xq AeroSpace; then
+# pgrep short-circuits the dead-process case cheaply and survives a
+# wedged daemon, but the process can also be up while its server is
+# unusable (`aerospace enable off`, connection refused during restart),
+# so the workspace query itself is the real health probe - any CLI
+# failure gets the same degraded render.
+if ! pgrep -xq AeroSpace \
+   || ! workspaces=$(aerospace list-workspaces --monitor all --visible \
+          --format '%{workspace}:%{monitor-appkit-nsscreen-screens-id}' 2>/dev/null); then
   args+=( --set aerospace.status drawing=on )
   for item in "${monitor_items[@]}"; do
     args+=( --set "$item" drawing=off )
@@ -75,7 +81,6 @@ while IFS=: read -r workspace monitor_id; do
       icon.font.size="$AEROSPACE_FONT_SIZE"
     --move "$item_name" after aerospace.status
   )
-done <<<"$(aerospace list-workspaces --monitor all --visible \
-            --format '%{workspace}:%{monitor-appkit-nsscreen-screens-id}')"
+done <<<"$workspaces"
 
 sketchybar "${args[@]}"
