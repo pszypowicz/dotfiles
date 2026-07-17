@@ -60,7 +60,7 @@ source "$ITEMS_DIR/chevron.sh"
 
 # -- Right side items (first sourced sits at the right edge) --
 # Visual L->R after the center:
-#   claude ┃ input_source ┃ mic.shield mic ┃ volume ┃ battery ┃ clock
+#   claude ┃ input_source ┃ mic ┃ volume ┃ battery ┃ clock
 
 source "$ITEMS_DIR/status.sh"
 source "$ITEMS_DIR/mic.sh"
@@ -71,9 +71,3 @@ source "$ITEMS_DIR/claude.sh"
 SBAR_ARGS+=(--hotload off --update)
 
 sketchybar "${SBAR_ARGS[@]}"
-
-# Post-init: ask MicGuard to publish current status now that mic items
-# exist. The aerospace cluster doesn't need a kickoff trigger here - the
-# `--update` in SBAR_ARGS above already fires aerospace.status's script
-# once items are added.
-mic-guard -q ping 2>/dev/null &

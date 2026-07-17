@@ -20,8 +20,6 @@ export AEROSPACE_DOWN=󰀦
 export CHECK=󰄬
 export QUIT=󰅙
 
-export SHIELD_CHECK=󰕥
-export SHIELD_OFF=󰦞
 export MIC_ON=󰍬
 export MIC_OFF=󰍭
 

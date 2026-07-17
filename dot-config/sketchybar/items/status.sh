@@ -2,7 +2,6 @@
 
 # Right-side items added in order; first added sits at the right edge.
 # Order here: clock (rightmost), separator, battery, separator, volume, separator.
-# mic.sh adds mic.shield + mic immediately to the left, then a separator.
 
 SBAR_ARGS+=(
   --add item clock right
