@@ -4,7 +4,10 @@ source "$CONFIG_DIR/colors.sh"
 source "$CONFIG_DIR/icons.sh"
 
 CACHE_FILE="$HOME/.cache/claude/rate-limits.json"
-STALE_THRESHOLD=300 # 5 minutes
+STATE_FILE="$HOME/.cache/claude/usage-poll.json"
+FETCHER="$HOME/.config/claude/fetch-usage.sh"
+FRESH_THRESHOLD=120 # statusline refreshes every 60s; older means no live session
+AGE_WARN=900        # background polls run every ~5 min; older means polling is failing
 
 # Close popup when the mouse leaves the bar.
 if [[ "$SENDER" == "mouse.exited.global" ]]; then
@@ -12,33 +15,122 @@ if [[ "$SENDER" == "mouse.exited.global" ]]; then
   exit 0
 fi
 
-inactive() {
+NOW=$(date +%s)
+
+# Keep the cache and token state fresh; the fetcher throttles itself
+# (60s credential checks, 5-min network polls, error backoff), so firing
+# it on every tick is fine.
+[[ -x "$FETCHER" ]] && "$FETCHER" >/dev/null 2>&1 &
+
+# ── Row formatters ─────────────────────────────────────────────────
+
+format_remaining() {
+  local secs="$1"
+  if (( secs <= 0 )); then
+    echo "now"
+    return
+  fi
+  local d=$((secs / 86400))
+  local h=$(( (secs % 86400) / 3600 ))
+  local m=$(( (secs % 3600) / 60 ))
+  if (( d > 0 )); then
+    echo "${d}d ${h}h"
+  elif (( h > 0 )); then
+    echo "${h}h ${m}m"
+  else
+    echo "${m}m"
+  fi
+}
+
+# Format a timestamp as a short "when" string.
+# Today → "today HH:MM"; tomorrow → "tom   HH:MM" (padded so it aligns
+# with "today"); within a week → "Mon   HH:MM"; beyond → "Apr 29 HH:MM".
+format_reset_at() {
+  local ts="$1"
+  [[ -z "$ts" ]] && { echo "?"; return; }
+  local reset_day today tomorrow
+  reset_day=$(date -r "$ts" +%Y-%m-%d)
+  today=$(date +%Y-%m-%d)
+  tomorrow=$(date -v+1d +%Y-%m-%d)
+  if [[ "$reset_day" == "$today" ]]; then
+    date -r "$ts" "+today %H:%M"
+  elif [[ "$reset_day" == "$tomorrow" ]]; then
+    date -r "$ts" "+tom   %H:%M"
+  else
+    local days_away=$(( (ts - NOW) / 86400 ))
+    if (( days_away < 7 && days_away > -7 )); then
+      date -r "$ts" "+%a   %H:%M"
+    else
+      date -r "$ts" "+%b %d %H:%M"
+    fi
+  fi
+}
+
+format_age() {
+  local secs="$1"
+  if (( secs < 60 )); then
+    echo "${secs}s ago"
+  elif (( secs < 3600 )); then
+    echo "$(( secs / 60 ))m ago"
+  else
+    echo "$(( secs / 3600 ))h $(( (secs % 3600) / 60 ))m ago"
+  fi
+}
+
+# ── OAuth token row (from the poller's state file) ─────────────────
+
+TOKEN_EXP=0
+[[ -f "$STATE_FILE" ]] && TOKEN_EXP=$(jq -r '.token_expires_at // 0' "$STATE_FILE" 2>/dev/null)
+TOKEN_EXP=${TOKEN_EXP%.*}
+
+TOKEN_EXPIRED=0
+if (( TOKEN_EXP == 0 )); then
+  TOKEN_ROW="unknown"
+  TOKEN_COLOR="$DIM_WHITE"
+elif (( TOKEN_EXP < NOW )); then
+  TOKEN_EXPIRED=1
+  TOKEN_ROW=$(printf "%-10s %-9s %s" \
+    "expired" \
+    "$(format_age $(( NOW - TOKEN_EXP )))" \
+    "$(format_reset_at "$TOKEN_EXP")")
+  TOKEN_COLOR="$ORANGE"
+else
+  TOKEN_ROW=$(printf "%-10s %-9s %s" \
+    "valid" \
+    "$(format_remaining $(( TOKEN_EXP - NOW )))" \
+    "$(format_reset_at "$TOKEN_EXP")")
+  TOKEN_COLOR="$WHITE"
+fi
+
+# ── Cache ───────────────────────────────────────────────────────────
+
+no_data() { # <age-row message>
   sketchybar --set "$NAME" icon="$CLAUDE" icon.color="$DIM_WHITE" \
     label="--" label.color="$DIM_WHITE" \
     --set claude.fivehour label="no data" label.color="$DIM_WHITE" \
     --set claude.sevenday label="no data" label.color="$DIM_WHITE" \
-    --set claude.effort label="no data" label.color="$DIM_WHITE" \
-    --set claude.age label="statusline has not written a cache yet" label.color="$DIM_WHITE"
+    --set claude.token label="$TOKEN_ROW" label.color="$TOKEN_COLOR" \
+    --set claude.age label="$1" label.color="$DIM_WHITE"
   exit 0
 }
 
-[[ ! -f "$CACHE_FILE" ]] && inactive
+if (( TOKEN_EXPIRED )); then
+  AUTH_MSG="token expired - start claude code to refresh"
+fi
+
+[[ ! -f "$CACHE_FILE" ]] && no_data "${AUTH_MSG:-waiting for first poll}"
 
 CACHE=$(cat "$CACHE_FILE")
 CACHE_TS=$(echo "$CACHE" | jq -r '.timestamp // 0')
-NOW=$(date +%s)
 AGE=$(( NOW - ${CACHE_TS%.*} ))
-
-(( AGE > STALE_THRESHOLD )) && inactive
+SOURCE=$(echo "$CACHE" | jq -r '.source // "session"')
 
 FIVE_PCT=$(echo "$CACHE" | jq -r '.five_hour.used_percentage // empty')
 SEVEN_PCT=$(echo "$CACHE" | jq -r '.seven_day.used_percentage // empty')
 FIVE_RESETS=$(echo "$CACHE" | jq -r '.five_hour.resets_at // empty')
 SEVEN_RESETS=$(echo "$CACHE" | jq -r '.seven_day.resets_at // empty')
-EFFORT=$(echo "$CACHE" | jq -r '.effort // empty')
 
-# No rate limit data
-[[ -z "$FIVE_PCT" && -z "$SEVEN_PCT" ]] && inactive
+[[ -z "$FIVE_PCT" && -z "$SEVEN_PCT" ]] && no_data "${AUTH_MSG:-cache has no rate limit data}"
 
 # Color based on percentage
 color_for_pct() {
@@ -96,61 +188,6 @@ else
   LABEL="$CLOCK ${FIVE_INT}% $CALENDAR ${SEVEN_INT}%"
 fi
 
-# ── Popup row formatters ───────────────────────────────────────────
-
-format_remaining() {
-  local secs="$1"
-  if (( secs <= 0 )); then
-    echo "now"
-    return
-  fi
-  local d=$((secs / 86400))
-  local h=$(( (secs % 86400) / 3600 ))
-  local m=$(( (secs % 3600) / 60 ))
-  if (( d > 0 )); then
-    echo "${d}d ${h}h"
-  elif (( h > 0 )); then
-    echo "${h}h ${m}m"
-  else
-    echo "${m}m"
-  fi
-}
-
-# Format a reset timestamp as a short "when" string.
-# Today → "today HH:MM"; tomorrow → "tom   HH:MM" (padded so it aligns
-# with "today"); within a week → "Mon   HH:MM"; beyond → "Apr 29 HH:MM".
-format_reset_at() {
-  local ts="$1"
-  [[ -z "$ts" ]] && { echo "?"; return; }
-  local reset_day today tomorrow
-  reset_day=$(date -r "$ts" +%Y-%m-%d)
-  today=$(date +%Y-%m-%d)
-  tomorrow=$(date -v+1d +%Y-%m-%d)
-  if [[ "$reset_day" == "$today" ]]; then
-    date -r "$ts" "+today %H:%M"
-  elif [[ "$reset_day" == "$tomorrow" ]]; then
-    date -r "$ts" "+tom   %H:%M"
-  else
-    local days_away=$(( (ts - NOW) / 86400 ))
-    if (( days_away < 7 )); then
-      date -r "$ts" "+%a   %H:%M"
-    else
-      date -r "$ts" "+%b %d %H:%M"
-    fi
-  fi
-}
-
-format_age() {
-  local secs="$1"
-  if (( secs < 60 )); then
-    echo "${secs}s ago"
-  elif (( secs < 3600 )); then
-    echo "$(( secs / 60 ))m ago"
-  else
-    echo "$(( secs / 3600 ))h $(( (secs % 3600) / 60 ))m ago"
-  fi
-}
-
 FIVE_RESETS_I="${FIVE_RESETS%.*}"
 SEVEN_RESETS_I="${SEVEN_RESETS%.*}"
 
@@ -173,16 +210,28 @@ SEVEN_ROW=$(printf "%-10s %-9s %s" \
   "$(format_remaining "$SEVEN_REMAIN")" \
   "$(format_reset_at "$SEVEN_RESETS_I")")
 
-AGE_LABEL="updated $(format_age "$AGE")"
+AGE_LABEL="updated $(format_age "$AGE") ($SOURCE)"
 AGE_COLOR="$DIM_WHITE"
-(( AGE > 120 )) && AGE_COLOR="$YELLOW"
+(( AGE > AGE_WARN )) && AGE_COLOR="$YELLOW"
+
+LABEL_COLOR="$ICON_COLOR"
+
+# Stale data stays on the bar; "--" is reserved for a dead token, which
+# only a Claude Code start on this machine can refresh.
+if (( TOKEN_EXPIRED )) && (( AGE > FRESH_THRESHOLD )); then
+  LABEL="--"
+  ICON_COLOR="$DIM_WHITE"
+  LABEL_COLOR="$DIM_WHITE"
+  AGE_LABEL="$AUTH_MSG"
+  AGE_COLOR="$ORANGE"
+fi
 
 sketchybar --set "$NAME" \
   icon="$CLAUDE" \
   icon.color="$ICON_COLOR" \
   label="$LABEL" \
-  label.color="$ICON_COLOR" \
+  label.color="$LABEL_COLOR" \
   --set claude.fivehour label="$FIVE_ROW" label.color="$FIVE_COLOR" \
   --set claude.sevenday label="$SEVEN_ROW" label.color="$SEVEN_COLOR" \
-  --set claude.effort label="${EFFORT:-unset}" label.color="$WHITE" \
+  --set claude.token label="$TOKEN_ROW" label.color="$TOKEN_COLOR" \
   --set claude.age label="$AGE_LABEL" label.color="$AGE_COLOR"

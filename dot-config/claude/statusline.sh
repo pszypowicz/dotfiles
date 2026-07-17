@@ -15,9 +15,8 @@ if [[ -n "$RATE_LIMITS" ]]; then
   TMPFILE=$(mktemp "$CACHE_DIR/.rate-limits.XXXXXX")
   echo "$INPUT" | jq -c '{
     timestamp: now,
+    source: "session",
     five_hour: .rate_limits.five_hour,
-    seven_day: .rate_limits.seven_day,
-    effort: .effort.level,
-    thinking: .thinking.enabled
+    seven_day: .rate_limits.seven_day
   }' > "$TMPFILE" && mv "$TMPFILE" "$CACHE_FILE"
 fi

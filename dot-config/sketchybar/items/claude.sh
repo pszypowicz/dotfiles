@@ -36,8 +36,8 @@ SBAR_ARGS+=(
   --add item claude.sevenday popup.claude
   --set claude.sevenday "${claude_popup_row[@]}" icon="$CALENDAR"
 
-  --add item claude.effort popup.claude
-  --set claude.effort "${claude_popup_row[@]}" icon="$GAUGE"
+  --add item claude.token popup.claude
+  --set claude.token "${claude_popup_row[@]}" icon="$LOCK"
 
   --add item claude.age popup.claude
   --set claude.age "${claude_popup_row[@]}" icon.drawing=off
