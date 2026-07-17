@@ -22,6 +22,7 @@ Touches:
   - Windows: Ctrl+Cmd+drag anywhere inside a window to move it
   - Dock: autohide, tile size 59
   - Finder: enable the Quit menu item (Cmd+Q)
+  - Cyclist: enable the AeroSpace integration
   - Text input: disable auto-capitalization, smart quotes/dashes,
     auto-period, spelling correction, smart-reply suggestions
   - Keyboard: remap Caps Lock to Escape for all keyboards (the "All Keyboards"
@@ -80,6 +81,11 @@ defaults write com.apple.dock tilesize -int 59
 
 # Finder: add a Quit menu item so Cmd+Q closes it like any other app.
 defaults write com.apple.finder QuitMenuItem -bool true
+
+# Cyclist: every setting is a user default (the Cyclist README documents
+# the full key table); writes apply to a running Cyclist immediately.
+# Only non-default values belong here.
+defaults write io.github.pszypowicz.Cyclist aerospaceIntegration -bool true
 
 # Text input: disable macOS auto-substitutions (capitalization, smart quotes/dashes,
 # auto-period, spelling correction, smart-reply suggestions).
