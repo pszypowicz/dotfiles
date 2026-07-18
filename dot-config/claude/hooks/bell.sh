@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Claude Code page hook.
 #
-# Reads the hook JSON payload on stdin and pages the user via Hammerspoon's
-# claudePage (hammerspoon/init.lua), which posts a clickable macOS
-# notification that jumps to the tmux session/window where Claude is
-# waiting. Also emits a terminal BEL via the terminalSequence hook field,
-# purely so Ghostty bounces the Dock while unfocused (bell-features
+# Reads the hook JSON payload on stdin and pages the user with a macOS
+# notification (osascript) naming the tmux session/window where Claude is
+# waiting, suppressed when that window is already the current window of an
+# attached session. Also emits a terminal BEL via the terminalSequence hook
+# field, purely so Ghostty bounces the Dock while unfocused (bell-features
 # `attention`); tmux forwards bells to attached clients out of the box
 # (monitor-bell on / bell-action any are the defaults), so the BEL needs no
 # tmux configuration and carries no information.
@@ -16,9 +16,9 @@ usage() {
 Usage: bell.sh --event <notification|idle>
 
 Claude Code hook script. Reads the hook JSON payload on stdin, pages the
-user via Hammerspoon's claudePage (a clickable macOS notification targeting
-the current tmux session/window), and prints a terminalSequence BEL for
-Claude Code to emit so Ghostty bounces the Dock.
+user with a macOS notification naming the current tmux session/window, and
+prints a terminalSequence BEL for Claude Code to emit so Ghostty bounces
+the Dock.
 
 Options:
   --event <kind>   Hook event kind. One of: notification, idle. Required.
@@ -101,22 +101,35 @@ if [[ "$EVENT" == "idle" ]]; then
   fi
 fi
 
-# Page through Hammerspoon. Every failure path degrades to the bare BEL
-# (Dock bounce only): outside tmux, hs CLI absent, Hammerspoon down. Lua
-# long-brackets [==[...]==] absorb quotes/spaces/newlines in the values
-# without shell-level escaping; the one sequence that would close a bracket
-# early is stripped from the free-text message. The hs call runs in the
-# background so a busy Hammerspoon (e.g. a blocking popup menu) can't stall
-# the hook past its timeout or delay the BEL.
-if [[ -n "${TMUX:-}" && -n "${TMUX_PANE:-}" ]] && command -v hs >/dev/null; then
-  SESSION="$(tmux display-message -p -t "$TMUX_PANE" '#{session_name}' 2>/dev/null || true)"
-  WINDOW="$(tmux display-message -p -t "$TMUX_PANE" '#{window_index}' 2>/dev/null || true)"
-  if [[ -z "$MSG" ]]; then
-    MSG="$(tmux display-message -p -t "$TMUX_PANE" '#{pane_title}' 2>/dev/null || true)"
-  fi
-  if [[ -n "$SESSION" && -n "$WINDOW" ]]; then
-    MSG="${MSG//]==]/}"
-    hs -c "claudePage([==[$SESSION]==], [==[$WINDOW]==], [==[$MSG]==])" >/dev/null 2>&1 </dev/null &
+# Post the page as a macOS notification via osascript (attributed to Script
+# Editor, which must be allowed in System Settings > Notifications).
+# Suppress it when the pane's window is the current window of an attached
+# session: the user then sees Claude waiting whenever they look at the
+# terminal, and the BEL below bounces the Dock while Ghostty is unfocused.
+# macOS-level focus is invisible to a shell hook, so attached+active-window
+# is the closest available approximation of "the user is looking at it" -
+# only background tmux windows and detached sessions page. Values reach
+# AppleScript as argv, so quotes/spaces/newlines in them need no escaping.
+# Every failure path degrades to the bare BEL, and osascript runs in the
+# background so a slow post can't stall the hook past its timeout or delay
+# the BEL.
+#
+# PAGE_SOUND must be a basename from /System/Library/Sounds (or
+# ~/Library/Sounds); Funk.aiff is the system's default alert sound (shown
+# as "Boop" in Sound settings). Empty means silent.
+PAGE_SOUND="Funk"
+if [[ -n "${TMUX:-}" && -n "${TMUX_PANE:-}" ]]; then
+  INFO="$(tmux display-message -p -t "$TMUX_PANE" '#{window_active} #{session_attached} #{window_index} #{session_name}' 2>/dev/null || true)"
+  read -r ACTIVE ATTACHED WINDOW SESSION <<<"$INFO"
+  if [[ -n "$SESSION" && -n "$WINDOW" ]] && ! [[ "$ACTIVE" == "1" && "$ATTACHED" != "0" ]]; then
+    if [[ -z "$MSG" ]]; then
+      MSG="$(tmux display-message -p -t "$TMUX_PANE" '#{pane_title}' 2>/dev/null || true)"
+    fi
+    osascript - "$SESSION / window $WINDOW" "$MSG" "$PAGE_SOUND" >/dev/null 2>&1 <<'EOF' &
+on run argv
+    display notification (item 2 of argv) with title "Claude needs you" subtitle (item 1 of argv) sound name (item 3 of argv)
+end run
+EOF
   fi
 fi
 
