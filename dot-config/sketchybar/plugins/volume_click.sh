@@ -51,11 +51,8 @@ show_devices() {
   removes=$(popup_toggle_args volume) || return 0
 
   local devices current
-  devices=$(hs -c '
-    local devs = hs.audiodevice.allOutputDevices()
-    for _, d in ipairs(devs) do print(d:name()) end
-  ' 2>/dev/null)
-  current=$(hs -c 'print(hs.audiodevice.defaultOutputDevice():name())' 2>/dev/null)
+  devices=$(SwitchAudioSource -a -t output 2>/dev/null)
+  current=$(SwitchAudioSource -c -t output 2>/dev/null)
 
   local args=( $removes )
   while IFS= read -r name; do
@@ -83,7 +80,7 @@ show_devices() {
         background.color="$TRANSPARENT"
         background.height=30
         background.drawing=on
-        click_script="hs -c \"hs.audiodevice.findOutputByName('$escaped'):setDefaultOutputDevice()\"; sketchybar --set volume popup.drawing=off"
+        click_script="SwitchAudioSource -t output -s '$escaped'; sketchybar --set volume popup.drawing=off"
     )
   done <<< "$devices"
 

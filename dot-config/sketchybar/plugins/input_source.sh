@@ -1,10 +1,5 @@
 #!/usr/bin/env bash
 
-if [[ "$SENDER" == "mouse.exited.global" ]]; then
-  sketchybar --set input_source popup.drawing=off
-  exit 0
-fi
-
 keyboard_layout=$(defaults read ~/Library/Preferences/com.apple.HIToolbox.plist AppleSelectedInputSources | grep -Ew 'KeyboardLayout Name' | awk -F\" '{print $4}')
 
 declare -A keyboard_layout_icons

@@ -2,7 +2,7 @@
 
 # Called when user clicks/drags the volume slider
 if [[ "$SENDER" == "mouse.clicked" ]]; then
-  hs -c "hs.audiodevice.defaultOutputDevice():setOutputVolume($PERCENTAGE)"
+  osascript -e "set volume output volume $PERCENTAGE"
 
   source "$CONFIG_DIR/colors.sh"
   source "$CONFIG_DIR/icons.sh"
