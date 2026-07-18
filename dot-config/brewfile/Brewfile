@@ -78,7 +78,6 @@ cask "font-caskaydia-cove-nerd-font"
 cask "pszypowicz/tap/mic-guard", trusted: true
 cask "ghostty"
 cask "google-chrome"
-cask "hammerspoon"
 cask "microsoft-teams"
 cask "obsidian"
 cask "secretive"

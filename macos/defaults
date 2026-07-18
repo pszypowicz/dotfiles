@@ -13,7 +13,6 @@ Usage: macos/defaults [--help]
 Apply macOS preference defaults. Idempotent and safe to re-run.
 
 Touches:
-  - Hammerspoon config path
   - Trackpad: disable the 4-finger gestures - horizontal swipe, vertical
     swipe, Launchpad pinch, Show Desktop spread. Explicitly enable 3-finger
     vertical swipe (up opens Mission Control, down App Expose); 3-finger
@@ -43,8 +42,6 @@ while [[ $# -gt 0 ]]; do
         *) echo "unknown argument: $1" >&2; usage >&2; exit 2 ;;
     esac
 done
-
-defaults write org.hammerspoon.Hammerspoon MJConfigFile "$HOME/.config/hammerspoon/init.lua"
 
 # Trackpad: disable the 4-finger gestures - horizontal swipe (Space switching
 # is covered by the 3-finger swipe and Cyclist's Ctrl+Arrow), vertical swipe

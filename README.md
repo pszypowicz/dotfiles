@@ -31,7 +31,7 @@ ln -s ../../Developer/github.com/pszypowicz/dotfiles/dot-config/claude/statuslin
 
 **Shells:** Fish (primary, vi keybindings), Bash, Zsh
 **Terminal:** Tmux, Starship prompt
-**Window management:** AeroSpace (tiling), Borders, Hammerspoon
+**Window management:** AeroSpace (tiling)
 **Status bar:** SketchyBar
 **Dev tools:** Git, GitHub CLI, Vim, fd, fzf, Claude Code
 **Other:** npm, Homebrew
