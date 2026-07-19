@@ -10,8 +10,14 @@
 # own popup via --tmux from FZF_DEFAULT_OPTS; an outer display-popup would
 # nest and break fzf's self-spawned popup. Also runnable outside tmux.
 function __tmux_sessionizer
-    set -l choice (__fzf_jump_targets | fzf --reverse --prompt='session> ')
+    # Abbreviate $HOME to ~ for the fzf display only. Every candidate is an
+    # absolute path sharing the /Users/<me> prefix, so the home-dir username
+    # appears in every line and typing it matches everything; with ~ it only
+    # survives where it's a real path segment (a repo owner). Re-expand the
+    # pick before tmux uses it: -c takes a literal path and won't expand ~.
+    set -l choice (__fzf_jump_targets | string replace -- "$HOME" '~' | fzf --reverse --prompt='session> ')
     test -z "$choice"; and return
+    set choice (string replace -- '~' "$HOME" $choice)
 
     set -l name (basename $choice | string replace -ra '[.: ]' '_')
 
