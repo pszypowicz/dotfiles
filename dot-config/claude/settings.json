@@ -22,7 +22,7 @@
       "Bash(*devops invoke*approvals*)"
     ]
   },
-  "model": "claude-fable-5",
+  "model": "opus[1m]",
   "hooks": {
     "Notification": [
       {
@@ -131,11 +131,11 @@
   },
   "effortLevel": "xhigh",
   "tui": "fullscreen",
+  "skipWorkflowUsageWarning": true,
   "theme": "auto",
   "editorMode": "vim",
   "vimInsertModeRemaps": {
     "jj": "<Esc>"
   },
-  "preferredNotifChannel": "notifications_disabled",
-  "skipWorkflowUsageWarning": true
+  "preferredNotifChannel": "notifications_disabled"
 }
