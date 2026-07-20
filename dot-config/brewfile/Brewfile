@@ -70,7 +70,7 @@ brew "pszypowicz/tap/afm-summarize", trusted: true
 # cask "nikitabobko/tap/aerospace", trusted: true   # disabled while dogfooding the bsp fork build below
 cask "pszypowicz/tap/aerospace-bsp", trusted: true
 cask "anki"
-cask "pszypowicz/tap/brightsync", trusted: true
+cask "pszypowicz/tap/bright-sync", trusted: true
 cask "calibre"
 cask "copilot-cli"
 cask "pszypowicz/tap/cyclist", trusted: true
