@@ -15,7 +15,7 @@ allowed-tools:
   - Bash(ls *)
   - Bash(claude --version)
   - Bash(npm view *)
-  - Bash(npm install -g @anthropic-ai/claude-code@*)
+  - Bash(npm install -g --allow-scripts=@anthropic-ai/claude-code @anthropic-ai/claude-code@*)
 ---
 
 # Claude Code update review
@@ -144,10 +144,13 @@ place. Propose and, on confirmation, do both:
 
 1. Install the exact version the analysis covered (the `--to` from step 1), not
    `@latest` - a release published mid-session would otherwise install
-   unanalyzed:
+   unanalyzed. Pass `--allow-scripts=@anthropic-ai/claude-code`, the same flag
+   `bootstrap` uses, so npm runs the package's postinstall that places the native
+   binary over its stub; without it npm skips the postinstall and prints an
+   allow-scripts warning:
 
    ```bash
-   npm install -g @anthropic-ai/claude-code@<to>
+   npm install -g --allow-scripts=@anthropic-ai/claude-code @anthropic-ai/claude-code@<to>
    claude --version
    ```
 
