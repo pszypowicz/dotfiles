@@ -83,7 +83,7 @@ defaults write com.apple.finder QuitMenuItem -bool true
 # Cyclist: every setting is a user default (the Cyclist README documents
 # the full key table); writes apply to a running Cyclist immediately.
 # Only non-default values belong here.
-defaults write io.github.pszypowicz.Cyclist aerospaceIntegration -bool true
+defaults write cz.szypowi.cyclist aerospaceIntegration -bool true
 
 # Text input: disable macOS auto-substitutions (capitalization, smart quotes/dashes,
 # auto-period, spelling correction, smart-reply suggestions).
