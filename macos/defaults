@@ -26,8 +26,9 @@ Touches:
     auto-period, spelling correction, smart-reply suggestions
   - Keyboard: remap Caps Lock to Escape for all keyboards (the "All Keyboards"
     Modifier Keys entry; takes effect after logout)
-  - Mission Control: keep the overview enabled on its Ctrl+Up default (takes
-    effect after logout). Space-switch hotkeys stay on macOS defaults;
+  - Mission Control: keep the overview enabled on its Ctrl+Up default, and
+    bind Ctrl+1 through Ctrl+9 to "Switch to Desktop 1-9" (both take effect
+    after logout). Relative space-switch hotkeys stay on macOS defaults;
     Cyclist consumes Ctrl+Left/Right while it runs, and the native binding
     underneath is the fallback when it does not.
 
@@ -118,6 +119,23 @@ defaults -currentHost write -g com.apple.keyboard.modifiermapping.0-0-0 \
 # logout; cfprefsd is killed below to ensure the write is flushed to disk.
 defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys -dict-add 32 \
     "{enabled = 1; value = {parameters = (65535, 126, 8650752); type = standard;};}"
+
+# Mission Control: bind Ctrl+1 through Ctrl+9 to "Switch to Desktop 1-9"
+# (symbolic hotkey IDs 118-126 = 117 + desktop number). macOS ships these
+# disabled; enabling them adds stable positional jumps to a specific desktop
+# alongside the relative Ctrl+Left/Right slide. Cyclist only swallows
+# Ctrl+Left/Right, so these number bindings pass straight through to the
+# native action. value parameters = (key char, key code, modifier mask): the
+# digit's ASCII code (49-57), its ANSI virtual key code, and 262144 = Control.
+# Number keys carry no function-key bit, so the mask is plain Control - unlike
+# the arrow-key entry above (8650752). The ANSI number keys are not contiguous
+# in key-code order, so the codes are listed explicitly. Takes effect after
+# logout.
+number_keycodes=(18 19 20 21 23 22 26 28 25)   # ANSI key codes for 1..9
+for n in 1 2 3 4 5 6 7 8 9; do
+    defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys -dict-add "$((117 + n))" \
+        "{enabled = 1; value = {parameters = ($((48 + n)), ${number_keycodes[$((n - 1))]}, 262144); type = standard;};}"
+done
 
 # Apply Dock and Finder changes immediately; flush cfprefsd so the
 # symbolichotkeys write lands on disk; the rest take effect on next login.
