@@ -2,9 +2,9 @@
 # Claude Code page hook.
 #
 # Reads the hook JSON payload on stdin and pages the user with a macOS
-# notification (osascript) naming the tmux session/window where Claude is
-# waiting, suppressed when that window is already the current window of an
-# attached session. Also emits a terminal BEL via the terminalSequence hook
+# notification (via the Pager agent) naming the tmux session/window where
+# Claude is waiting, suppressed when that window is already the current window
+# of an attached session. Also emits a terminal BEL via the terminalSequence hook
 # field, purely so Ghostty bounces the Dock while unfocused (bell-features
 # `attention`); tmux forwards bells to attached clients out of the box
 # (monitor-bell on / bell-action any are the defaults), so the BEL needs no
@@ -101,35 +101,43 @@ if [[ "$EVENT" == "idle" ]]; then
   fi
 fi
 
-# Post the page as a macOS notification via osascript (attributed to Script
-# Editor, which must be allowed in System Settings > Notifications).
+# Post the page through the Pager agent (github.com/pszypowicz/pager): a
+# notification owned by Pager (not Script Editor) whose click focuses the tmux
+# window that paged, and which the tmux focus hooks clear with
+# `pager remove --key <window_id>` when the user returns to that window.
 # Suppress it when the pane's window is the current window of an attached
 # session: the user then sees Claude waiting whenever they look at the
 # terminal, and the BEL below bounces the Dock while Ghostty is unfocused.
 # macOS-level focus is invisible to a shell hook, so attached+active-window
 # is the closest available approximation of "the user is looking at it" -
-# only background tmux windows and detached sessions page. Values reach
-# AppleScript as argv, so quotes/spaces/newlines in them need no escaping.
-# Every failure path degrades to the bare BEL, and osascript runs in the
-# background so a slow post can't stall the hook past its timeout or delay
-# the BEL.
+# only background tmux windows and detached sessions page. `pager post` runs
+# in the background so a slow post can't stall the hook past its timeout or
+# delay the BEL.
+#
+# --key is #{window_id}: server-unique and stable across renumber-windows, so
+# the dismiss hook still matches the page after indices reshuffle. The subtitle
+# carries the human-readable #{session_name} / window #{window_index}.
+# #{session_name} can contain spaces, so it is read last.
 #
 # PAGE_SOUND must be a basename from /System/Library/Sounds (or
 # ~/Library/Sounds); Funk.aiff is the system's default alert sound (shown
 # as "Boop" in Sound settings). Empty means silent.
 PAGE_SOUND="Funk"
 if [[ -n "${TMUX:-}" && -n "${TMUX_PANE:-}" ]]; then
-  INFO="$(tmux display-message -p -t "$TMUX_PANE" '#{window_active} #{session_attached} #{window_index} #{session_name}' 2>/dev/null || true)"
-  read -r ACTIVE ATTACHED WINDOW SESSION <<<"$INFO"
+  INFO="$(tmux display-message -p -t "$TMUX_PANE" '#{window_active} #{session_attached} #{window_index} #{window_id} #{session_id} #{session_name}' 2>/dev/null || true)"
+  read -r ACTIVE ATTACHED WINDOW WINDOW_ID SESSION_ID SESSION <<<"$INFO"
   if [[ -n "$SESSION" && -n "$WINDOW" ]] && ! [[ "$ACTIVE" == "1" && "$ATTACHED" != "0" ]]; then
     if [[ -z "$MSG" ]]; then
       MSG="$(tmux display-message -p -t "$TMUX_PANE" '#{pane_title}' 2>/dev/null || true)"
     fi
-    osascript - "$SESSION / window $WINDOW" "$MSG" "$PAGE_SOUND" >/dev/null 2>&1 <<'EOF' &
-on run argv
-    display notification (item 2 of argv) with title "Claude needs you" subtitle (item 1 of argv) sound name (item 3 of argv)
-end run
-EOF
+    pager post \
+      --key "$WINDOW_ID" \
+      --title "Claude needs you" \
+      --subtitle "$SESSION / window $WINDOW" \
+      --body "$MSG" \
+      --sound "$PAGE_SOUND" \
+      --session-id "$SESSION_ID" \
+      --window-id "$WINDOW_ID" &
   fi
 fi
 
