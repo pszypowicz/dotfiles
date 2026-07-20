@@ -54,7 +54,7 @@ exec-on-workspace-change = ['/bin/bash', '-c',
 # You can effectively turn off macOS "Hide application" (cmd-h) feature by toggling this flag
 # Useful if you don't use this macOS feature, but accidentally hit cmd-h or cmd-alt-h key
 # Also see: https://nikitabobko.github.io/AeroSpace/goodies#disable-hide-app
-automatically-unhide-macos-hidden-apps = true
+automatically-unhide-macos-hidden-apps = false
 
 # Possible values: (qwerty|dvorak|colemak)
 # See https://nikitabobko.github.io/AeroSpace/guide#key-mapping
@@ -194,6 +194,10 @@ run = 'move-node-to-workspace 1'
 
 [[on-window-detected]]
 if.app-id = 'com.apple.Safari'
+# The titleless fullscreen-video companion window shares Safari's app-id. Requiring a non-empty title
+# keeps this rule matching only real Safari windows, so the companion stays with its parent workspace
+# instead of being relocated here on its own.
+if.window-title-regex-substring = '.'
 run = 'move-node-to-workspace 2'
 
 [[on-window-detected]]
