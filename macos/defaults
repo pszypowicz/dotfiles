@@ -20,6 +20,7 @@ Touches:
   - Menu bar: always autohide
   - Windows: Ctrl+Cmd+drag anywhere inside a window to move it
   - Dock: autohide, tile size 59
+  - Desktop: disable "click wallpaper to reveal desktop" outside Stage Manager
   - Finder: enable the Quit menu item (Cmd+Q)
   - Cyclist: enable the AeroSpace integration
   - Text input: disable auto-capitalization, smart quotes/dashes,
@@ -76,6 +77,13 @@ defaults write NSGlobalDomain NSWindowShouldDragOnGesture -bool true
 # Dock: autohide and a small but legible tile size.
 defaults write com.apple.dock autohide -bool true
 defaults write com.apple.dock tilesize -int 59
+
+# Desktop: disable "click wallpaper to reveal desktop" outside Stage Manager
+# (added in macOS Sequoia, enabled by default). While on, a stray click on any
+# exposed patch of wallpaper shoves every window aside to bare the desktop.
+# false = reveal only while Stage Manager is active; true = always. Applied by
+# the WindowManager restart below.
+defaults write com.apple.WindowManager EnableStandardClickToShowDesktop -bool false
 
 # Finder: add a Quit menu item so Cmd+Q closes it like any other app.
 defaults write com.apple.finder QuitMenuItem -bool true
@@ -137,8 +145,9 @@ for n in 1 2 3 4 5 6 7 8 9; do
         "{enabled = 1; value = {parameters = ($((48 + n)), ${number_keycodes[$((n - 1))]}, 262144); type = standard;};}"
 done
 
-# Apply Dock and Finder changes immediately; flush cfprefsd so the
-# symbolichotkeys write lands on disk; the rest take effect on next login.
+# Apply Dock, Finder, and WindowManager changes immediately; flush cfprefsd so
+# the symbolichotkeys write lands on disk; the rest take effect on next login.
 killall cfprefsd 2>/dev/null || true
 killall Dock 2>/dev/null || true
 killall Finder 2>/dev/null || true
+killall WindowManager 2>/dev/null || true
