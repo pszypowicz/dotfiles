@@ -9,6 +9,11 @@ window-padding-y = 8
 # No confirmation prompt when closing a window/surface with a running process
 confirm-close-surface = false
 
+# This is a self-built fork (the ghostty-gestures cask) that shares the
+# com.mitchellh.ghostty bundle id. Disable Sparkle auto-update so an official
+# release can't silently replace the fork build.
+auto-update = off
+
 # Tabs are unused (tmux handles multiplexing): hide the tab bar and unbind
 # every tab-related shortcut so one can't be opened by accident.
 window-show-tab-bar = never
@@ -37,6 +42,10 @@ keybind = super+digit_6=text:\x026
 keybind = super+digit_7=text:\x027
 keybind = super+digit_8=text:\x028
 keybind = super+digit_9=text:\x029
+
+# Two-finger double-tap (trackpad "smart zoom") -> tmux session list
+# (prefix + s). Pinch in/out keep their default font-size zoom.
+gesture = smart-magnify = text:\x02s
 
 # Bell features: keep `attention` (Dock bounce on bell while unfocused) but
 # disable `title` so the macOS window title isn't decorated with "🔔 " on a
