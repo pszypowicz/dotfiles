@@ -43,9 +43,12 @@ keybind = super+digit_7=text:\x027
 keybind = super+digit_8=text:\x028
 keybind = super+digit_9=text:\x029
 
-# Two-finger double-tap (trackpad "smart zoom") -> tmux session list
-# (prefix + s). Pinch in/out keep their default font-size zoom.
+# Two-finger double-tap (trackpad "smart zoom") -> tmux session list (prefix + s).
 gesture = smart-magnify = text:\x02s
+
+# Disable pinch-to-zoom (font size); pinch is unused - only the double-tap above.
+gesture = pinch-in =
+gesture = pinch-out =
 
 # Bell features: keep `attention` (Dock bounce on bell while unfocused) but
 # disable `title` so the macOS window title isn't decorated with "🔔 " on a
