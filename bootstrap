@@ -55,7 +55,7 @@ if command -v npm &>/dev/null; then
     # script's pin grep only matches the versioned entry below.
     npm install -g \
         --allow-scripts=@anthropic-ai/claude-code \
-        @anthropic-ai/claude-code@2.1.215 \
+        @anthropic-ai/claude-code@2.1.216 \
         @lhci/cli \
         cf \
         lighthouse \

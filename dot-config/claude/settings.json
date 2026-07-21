@@ -96,13 +96,20 @@
     "go-dev@claude-skills": false,
     "modern-swift@claude-skills": false,
     "swift-concurrency@claude-skills": false,
-    "worktrees@claude-skills": true
+    "worktrees@claude-skills": true,
+    "cloudflare@cloudflare": true
   },
   "extraKnownMarketplaces": {
     "claude-skills": {
       "source": {
         "source": "github",
         "repo": "pszypowicz/claude-skills"
+      }
+    },
+    "cloudflare": {
+      "source": {
+        "source": "github",
+        "repo": "cloudflare/skills"
       }
     }
   },
