@@ -5,49 +5,76 @@ set -euo pipefail
 # Handles the public dotfiles only. Private overlays (work, personal)
 # live in sibling dotfiles-private-* repos and each ship their own
 # self-contained ./bootstrap.
+#
+# With no arguments every step runs in order. Pass step names to run only
+# those - e.g. `./bootstrap stow` after editing a config, or
+# `./bootstrap macos` after changing a default - without redoing the rest.
 
 # Resolve this repo's parent directory so bootstrap works from any clone path.
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 PACKAGE_NAME=$(basename "$SCRIPT_DIR")
 STOW_DIR=$(dirname "$SCRIPT_DIR")
 
-# 1. Homebrew
-if ! command -v brew &>/dev/null; then
-    echo "Installing Homebrew..."
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    eval "$(/opt/homebrew/bin/brew shellenv)"
-fi
+usage() {
+    cat <<'EOF'
+Usage: bootstrap [STEP ...]
 
-# 2. Packages
-#
-# Tap trust is declared in the Brewfile itself: tap-qualified entries carry
-# `trusted: true` (Homebrew >= 6.0), and brew bundle trusts each such entry
-# before installing it. Trust stays scoped to the exact formulae and casks we
-# install rather than blanket-trusting whole taps.
-BREWFILE="$SCRIPT_DIR/dot-config/brewfile/Brewfile"
-echo "Installing packages..."
-brew bundle --file "$BREWFILE"
+Set up or refresh this machine from the public dotfiles. Idempotent and safe
+to re-run. With no STEP, runs every step. Pass one or more STEP names to run
+just those - useful when you only need part of the setup (e.g. `bootstrap
+stow` after editing a config, `bootstrap macos` after changing a default).
+Steps always run in the order below regardless of how they are listed, so
+`brew` precedes the tools it installs.
 
-# 3. Dotfiles
-#
-# --no-folding forces stow to create every package subdirectory as a real
-# directory in the target and symlink individual files, instead of collapsing
-# whole subtrees into a single dir-symlink. This matters for any config
-# directory where the tool writes live runtime state next to tracked files
-# (Claude Code's ~/.config/claude is the obvious case: history.jsonl,
-# projects/, sessions/, caches, etc.). With folding, those writes would
-# pass through a dir-symlink and land inside the git repo; without folding,
-# the target dir is real and the runtime writes stay local.
-echo "Stowing dotfiles..."
-stow -d "$STOW_DIR" -t ~ "$PACKAGE_NAME" --dotfiles --restow --no-folding
+Steps:
+  brew    Install Homebrew if missing, then install packages from the Brewfile.
+  stow    Symlink the dotfiles into the home directory with stow.
+  npm     Install the global npm tools (including the pinned claude-code).
+  macos   Write the macOS preference defaults.
 
-# 4. npm globals - tools with no brew formula (or newer than the brew one)
-#
-# claude-code is pinned to the exact version whose changelog was last reviewed
-# against these dotfiles; the claude-code-update skill bumps the pin on each
-# update, so a fresh machine gets the reviewed version rather than blind
-# @latest.
-if command -v npm &>/dev/null; then
+Options:
+  -h, --help   Show this help and exit.
+EOF
+}
+
+step_brew() {
+    if ! command -v brew &>/dev/null; then
+        echo "Installing Homebrew..."
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        eval "$(/opt/homebrew/bin/brew shellenv)"
+    fi
+
+    # Tap trust is declared in the Brewfile itself: tap-qualified entries carry
+    # `trusted: true` (Homebrew >= 6.0), and brew bundle trusts each such entry
+    # before installing it. Trust stays scoped to the exact formulae and casks we
+    # install rather than blanket-trusting whole taps.
+    local brewfile="$SCRIPT_DIR/dot-config/brewfile/Brewfile"
+    echo "Installing packages..."
+    brew bundle --file "$brewfile"
+}
+
+step_stow() {
+    # --no-folding forces stow to create every package subdirectory as a real
+    # directory in the target and symlink individual files, instead of collapsing
+    # whole subtrees into a single dir-symlink. This matters for any config
+    # directory where the tool writes live runtime state next to tracked files
+    # (Claude Code's ~/.config/claude is the obvious case: history.jsonl,
+    # projects/, sessions/, caches, etc.). With folding, those writes would
+    # pass through a dir-symlink and land inside the git repo; without folding,
+    # the target dir is real and the runtime writes stay local.
+    echo "Stowing dotfiles..."
+    stow -d "$STOW_DIR" -t ~ "$PACKAGE_NAME" --dotfiles --restow --no-folding
+}
+
+step_npm() {
+    # claude-code is pinned to the exact version whose changelog was last reviewed
+    # against these dotfiles; the claude-code-update skill bumps the pin on each
+    # update, so a fresh machine gets the reviewed version rather than blind
+    # @latest.
+    if ! command -v npm &>/dev/null; then
+        echo "Skipping npm globals: npm not found."
+        return
+    fi
     echo "Installing npm globals..."
     # claude-code's postinstall places the native binary over a stub, and
     # npm 12 blocks dependency install scripts unless allowlisted. The spec
@@ -60,9 +87,38 @@ if command -v npm &>/dev/null; then
         cf \
         lighthouse \
         yarn
+}
+
+step_macos() {
+    echo "Writing macOS defaults..."
+    "$SCRIPT_DIR/macos/defaults"
+}
+
+# Parse arguments into the set of steps to run. No step names -> run all.
+run_brew=false run_stow=false run_npm=false run_macos=false
+any_step=false
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -h|--help) usage; exit 0 ;;
+        brew)  run_brew=true;  any_step=true ;;
+        stow)  run_stow=true;  any_step=true ;;
+        npm)   run_npm=true;   any_step=true ;;
+        macos) run_macos=true; any_step=true ;;
+        *) echo "unknown step: $1" >&2; usage >&2; exit 2 ;;
+    esac
+    shift
+done
+
+if [[ $any_step == false ]]; then
+    run_brew=true run_stow=true run_npm=true run_macos=true
 fi
 
-# 5. Defaults
-echo "Writing macOS defaults..."
-"$SCRIPT_DIR/macos/defaults"
+# Run selected steps in dependency order: brew provides the tools the later
+# steps rely on (stow, node/npm), so it always goes first.
+if $run_brew;  then step_brew;  fi
+if $run_stow;  then step_stow;  fi
+if $run_npm;   then step_npm;   fi
+if $run_macos; then step_macos; fi
+
 echo "Done."

@@ -10,7 +10,21 @@ Installs Homebrew (if missing), packages, stows dotfiles, installs Go and npm gl
 
 Private overlays (work, personal) live in sibling `dotfiles-private-*` repos, each with its own self-contained `./bootstrap`. Run those separately on machines that need them - they complement this bootstrap rather than replacing it.
 
+### Running individual steps
+
+`./bootstrap` with no arguments runs everything. To re-apply just one part, pass step names - they always run in dependency order regardless of the order given:
+
+```bash
+./bootstrap stow          # re-link dotfiles after editing a config
+./bootstrap macos         # re-write macOS defaults after a tweak
+./bootstrap brew npm      # refresh packages and npm globals
+```
+
+Steps are `brew`, `stow`, `npm`, and `macos`; `./bootstrap --help` lists them.
+
 ### Stow only
+
+`./bootstrap stow` wraps the invocation below; the raw command stays here for reference and for stowing from a different checkout:
 
 ```bash
 stow -d ~/Developer/github.com/pszypowicz -t ~ dotfiles --dotfiles --restow --no-folding
