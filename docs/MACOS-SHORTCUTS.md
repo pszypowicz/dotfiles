@@ -2,8 +2,7 @@
 
 Cheat sheet for the window, desktop, and app-management shortcuts worth
 keeping in muscle memory. Defaults unless noted; the remapped Mission
-Control bindings live in `macos/defaults`. AeroSpace bindings have their
-own sheet: `AEROSPACE-SHORTCUTS.md`.
+Control bindings live in `macos/defaults`.
 
 ## Desktop and windows
 
