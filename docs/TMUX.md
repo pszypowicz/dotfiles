@@ -12,8 +12,8 @@ or you explicitly kill the session.
   (`dotfiles`, `journal-agent`, ...) or `scratch` for ad-hoc work.
 - **Window** = a tab inside a session. Cmd+1..9 jumps directly; Cmd+Shift+[
   / Cmd+Shift+] cycles like Safari tabs (configured in Ghostty).
-- **Pane** = a split inside a window. `prefix + |` / `prefix + -` (defaults
-  vary - see your bindings).
+- **Pane** = a split inside a window. `prefix + "` splits below,
+  `prefix + %` splits to the right (tmux defaults).
 
 The titlebar shows `session / window` - workspace plus what's currently
 running in the focused pane (`nvim`, `fish`, etc.). The status-left
