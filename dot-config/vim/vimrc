@@ -10,6 +10,8 @@ noremap <Left> <NOP>
 noremap <Right> <NOP>
 
 set shiftwidth=2
+set mouse=a
+set sidescroll=1
 let &viminfofile = expand('~/.local/state/vim/viminfo')
 
 nnoremap <silent> <C-l> :nohl<CR><C-l>
