@@ -97,7 +97,8 @@
     "modern-swift@claude-skills": false,
     "swift-concurrency@claude-skills": false,
     "worktrees@claude-skills": true,
-    "cloudflare@cloudflare": true
+    "cloudflare@cloudflare": true,
+    "clangd-lsp@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "claude-skills": {
