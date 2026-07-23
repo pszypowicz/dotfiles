@@ -48,5 +48,3 @@ always does.
 | `F`                 | Toggle the focused window floating / tiling.        |
 | `Backspace`         | Close every window except the current one.          |
 | `Opt+Shift+H/J/K/L` | Join with the window in that direction.             |
-| `Up` / `Down`       | Volume up / down (stays in service mode).           |
-| `Shift+Down`        | Mute (volume to 0).                                 |
