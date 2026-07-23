@@ -50,6 +50,14 @@ ln -s ../../Developer/github.com/pszypowicz/dotfiles/dot-config/claude/statuslin
 **Dev tools:** Git, GitHub CLI, Vim, fd, fzf, Claude Code
 **Other:** npm, Homebrew
 
+## Docs
+
+Cheat sheets and usage notes live in [`docs/`](docs/) (stow-ignored):
+
+- [TMUX.md](docs/TMUX.md) - tmux session flow: sessions, windows, panes, and the Ghostty viewport model
+- [MACOS-SHORTCUTS.md](docs/MACOS-SHORTCUTS.md) - native window, desktop, and app-management shortcuts
+- [AEROSPACE-SHORTCUTS.md](docs/AEROSPACE-SHORTCUTS.md) - AeroSpace tiling bindings and service mode
+
 ## XDG
 
 Configs live under `~/.config` via XDG env vars set in `env.fish` (and equivalents in bash/zsh). `env.fish` also relocates tool state directories (Gradle, npm, Android, bundler, etc.) out of `~/`.

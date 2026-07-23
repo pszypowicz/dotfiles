@@ -12,7 +12,6 @@
 \.gitmodules
 
 ^/README.md
-^/TMUX.md
-^/MACOS-SHORTCUTS.md
+^/docs
 ^/bootstrap
 ^/macos
