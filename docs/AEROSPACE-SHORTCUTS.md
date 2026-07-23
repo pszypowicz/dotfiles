@@ -1,9 +1,7 @@
 # AeroSpace keyboard shortcuts
 
 Cheat sheet for the bindings in `dot-config/aerospace/aerospace.toml`.
-All main-mode bindings use `Opt` (aerospace's `alt`). macOS-native
-fullscreen stays on the system default `Ctrl+Cmd+F` - see
-`MACOS-SHORTCUTS.md`.
+All main-mode bindings use `Opt` (aerospace's `alt`).
 
 ## Layout
 
