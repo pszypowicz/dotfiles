@@ -36,8 +36,7 @@ monitor, 9 to the secondary.
 ## Service mode
 
 `Opt+Shift+;` enters service mode (workspace icons tint orange in
-sketchybar); most commands drop back to main mode on their own, `Esc`
-always does.
+sketchybar); every command drops back to main mode on its own.
 
 | Shortcut            | What it does                                        |
 | ------------------- | --------------------------------------------------- |

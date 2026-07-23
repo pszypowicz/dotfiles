@@ -1,17 +1,18 @@
 # Tmux session flow
 
-Single Ghostty window, many tmux sessions. Sessions are persistent named
-workspaces; the Ghostty window is just the current viewport. Closing
-Ghostty detaches; reopening reattaches to whichever session was last
-attended. Nothing is lost between Ghostty restarts unless the Mac reboots
-or you explicitly kill the session.
+Ghostty windows are viewports onto persistent named tmux sessions. Each
+new Ghostty window attaches to the most recently used session that no
+other window is showing, so windows never mirror each other. Closing a
+window detaches its session; nothing is lost between Ghostty restarts
+unless the Mac reboots or you explicitly kill the session.
 
 ## Mental model
 
 - **Session** = a long-lived workspace. Named after a project directory
   (`dotfiles`, `journal-agent`, ...) or `scratch` for ad-hoc work.
 - **Window** = a tab inside a session. Cmd+1..9 jumps directly; Cmd+Shift+[
-  / Cmd+Shift+] cycles like Safari tabs (configured in Ghostty).
+  / Cmd+Shift+] steps like Safari tabs, no wrap-around (configured in
+  Ghostty).
 - **Pane** = a split inside a window. `prefix + "` splits below,
   `prefix + %` splits to the right (tmux defaults).
 
@@ -39,16 +40,17 @@ shows just the session name as a redundant anchor.
 ### Cold start
 
 1. Boot Mac, open Ghostty.
-2. Fish runs, sees no `$TMUX`, ensures a `scratch` session exists, attaches
-   to the most-recently-attended session (or `scratch` on a fresh server).
-3. You're in. Titlebar reads `scratch` (or your last project).
+2. Fish runs, sees no `$TMUX` and a fresh tmux server, creates a `scratch`
+   session at `~` and attaches.
+3. You're in. Titlebar reads `scratch`.
 
 ### Switch to a project
 
 1. `prefix + f`.
-2. fzf popup shows all dirs from `__fzf_alt_c_source`: every git repo
+2. fzf popup shows all dirs from `__fzf_jump_targets`: every git repo
    under `~/Developer`, `_scratch` playgrounds, host containers, plus `~/`
-   and its visible direct children (Downloads, Documents, ...).
+   and its visible direct children (Downloads, Documents, ...) - visited
+   dirs first, in zoxide frecency order.
 3. Type `dot`, hit enter on `dotfiles`.
 4. If `dotfiles` session doesn't exist, it's created at the repo root.
 5. Either way, `switch-client` moves you there. Titlebar updates.
@@ -107,19 +109,18 @@ tmux kill-server           # nuke everything (last resort - loses all state)
 
 In `prefix + s`, `x` on a session kills it after confirmation. Same effect.
 
-### Two Ghostty windows (if you ever do)
+### Two Ghostty windows
 
-This setup is tuned for a single Ghostty. If you open a second one, it
-attaches to the same session and _mirrors_ the first one - both clients
-see the same active window. Annoying, not destructive. Close the second
-window; the first is unaffected. (The previous setup forcibly detached the
-first, which is why second windows used to feel broken.)
+A second Ghostty window attaches to the most recently used session that
+no other window is showing - never a mirror of the first. If every
+session is already visible in some window, it starts a fresh session at
+`~` instead. Two windows, two sessions, side by side.
 
 ## Where this lives
 
 - `dot-config/fish/config.fish` - the attach logic on Ghostty start.
 - `dot-config/fish/functions/__tmux_sessionizer.fish` - the fzf picker.
-- `dot-config/fish/functions/__fzf_alt_c_source.fish` - the candidate list,
+- `dot-config/fish/functions/__fzf_jump_targets.fish` - the candidate list,
   shared with `Alt+C` directory jump.
 - `dot-config/tmux/tmux.conf` - the `prefix + f` binding, titlebar format,
   status-left.

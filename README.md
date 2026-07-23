@@ -6,7 +6,7 @@
 ./bootstrap
 ```
 
-Installs Homebrew (if missing), packages, stows dotfiles, installs Go and npm globals, and writes macOS defaults. Safe to re-run.
+Installs Homebrew (if missing), packages, stows dotfiles, installs npm globals, and writes macOS defaults. Safe to re-run.
 
 Private overlays (work, personal) live in sibling `dotfiles-private-*` repos, each with its own self-contained `./bootstrap`. Run those separately on machines that need them - they complement this bootstrap rather than replacing it.
 
@@ -44,7 +44,7 @@ ln -s ../../Developer/github.com/pszypowicz/dotfiles/dot-config/claude/statuslin
 ## What's included
 
 **Shells:** Fish (primary, vi keybindings), Bash, Zsh
-**Terminal:** Tmux, Starship prompt
+**Terminal:** Ghostty, Tmux, Starship prompt
 **Window management:** AeroSpace (tiling)
 **Status bar:** SketchyBar
 **Dev tools:** Git, GitHub CLI, Vim, fd, fzf, Claude Code
