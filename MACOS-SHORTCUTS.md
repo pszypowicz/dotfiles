@@ -2,7 +2,8 @@
 
 Cheat sheet for the window, desktop, and app-management shortcuts worth
 keeping in muscle memory. Defaults unless noted; the remapped Mission
-Control bindings live in `macos/defaults`.
+Control bindings live in `macos/defaults`. AeroSpace bindings have their
+own sheet: `AEROSPACE-SHORTCUTS.md`.
 
 ## Desktop and windows
 
@@ -16,10 +17,9 @@ Control bindings live in `macos/defaults`.
 
 ## Fullscreen
 
-| Shortcut     | What it does                                                                                      |
-| ------------ | ------------------------------------------------------------------------------------------------- |
-| `Ctrl+Cmd+F` | **macOS-native fullscreen** - moves the app to its own Space. Also `Fn+F`.                        |
-| `Opt+F`      | AeroSpace tiling fullscreen - window fills the workspace in place, no new Space (aerospace.toml). |
+| Shortcut     | What it does                                                               |
+| ------------ | -------------------------------------------------------------------------- |
+| `Ctrl+Cmd+F` | **macOS-native fullscreen** - moves the app to its own Space. Also `Fn+F`. |
 
 ## Hiding apps
 
