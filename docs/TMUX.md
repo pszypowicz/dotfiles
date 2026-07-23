@@ -24,16 +24,19 @@ shows just the session name as a redundant anchor.
 
 `prefix` is `Ctrl-b` (tmux default).
 
-| Binding      | What it does                                                                           |
-| ------------ | -------------------------------------------------------------------------------------- |
-| `prefix + f` | **Sessionizer.** fzf popup of project dirs, pick one to switch-or-create.              |
-| `prefix + s` | Tree view of all sessions and their windows. Navigate with hjkl, enter to switch.      |
-| `prefix + L` | Jump to the _previous_ session - tmux's `cd -`.                                        |
-| `prefix + d` | Detach. With `exec tmux` in fish, this also closes Ghostty. The session keeps running. |
-| `prefix + $` | Rename the current session.                                                            |
-| `prefix + ,` | Rename the current window.                                                             |
-| `prefix + S` | Stash current window into a `bg` session (background tunnels etc).                     |
-| `prefix + r` | Reload `tmux.conf`.                                                                    |
+| Binding            | What it does                                                                                                                               |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `prefix + f`       | **Sessionizer.** fzf popup of project dirs, pick one to switch-or-create.                                                                  |
+| `prefix + s`       | Tree view of all sessions and their windows. Navigate with hjkl, enter to switch. Also on a two-finger double-tap (smart zoom) in Ghostty. |
+| `prefix + L`       | Jump to the _previous_ session - tmux's `cd -`.                                                                                            |
+| `prefix + d`       | Detach. With `exec tmux` in fish, this also closes Ghostty. The session keeps running.                                                     |
+| `prefix + $`       | Rename the current session.                                                                                                                |
+| `prefix + ,`       | Rename the current window.                                                                                                                 |
+| `prefix + S`       | Stash current window into a `bg` session (background tunnels etc).                                                                         |
+| `prefix + r`       | Reload `tmux.conf`.                                                                                                                        |
+| `prefix + ^`       | Toggle between the two most recent windows.                                                                                                |
+| `prefix + h/j/k/l` | Jump between panes. Repeatable - keep tapping after one prefix.                                                                            |
+| `Ctrl+H/J/K/L`     | Resize the current pane by 5 cells. No prefix.                                                                                             |
 
 ## Scenarios
 
