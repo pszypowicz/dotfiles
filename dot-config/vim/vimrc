@@ -12,6 +12,16 @@ noremap <Right> <NOP>
 set shiftwidth=2
 set mouse=a
 set sidescroll=1
+
+" Shift+wheel scrolls normally; only Ctrl+wheel page-jumps
+noremap  <S-ScrollWheelUp>    <ScrollWheelUp>
+noremap  <S-ScrollWheelDown>  <ScrollWheelDown>
+noremap  <S-ScrollWheelLeft>  <ScrollWheelLeft>
+noremap  <S-ScrollWheelRight> <ScrollWheelRight>
+inoremap <S-ScrollWheelUp>    <ScrollWheelUp>
+inoremap <S-ScrollWheelDown>  <ScrollWheelDown>
+inoremap <S-ScrollWheelLeft>  <ScrollWheelLeft>
+inoremap <S-ScrollWheelRight> <ScrollWheelRight>
 let &viminfofile = expand('~/.local/state/vim/viminfo')
 
 nnoremap <silent> <C-l> :nohl<CR><C-l>
