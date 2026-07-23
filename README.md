@@ -57,6 +57,7 @@ Cheat sheets and usage notes live in [`docs/`](docs/) (stow-ignored):
 - [TMUX.md](docs/TMUX.md) - tmux session flow: sessions, windows, panes, and the Ghostty viewport model
 - [MACOS-SHORTCUTS.md](docs/MACOS-SHORTCUTS.md) - native window, desktop, and app-management shortcuts
 - [AEROSPACE-SHORTCUTS.md](docs/AEROSPACE-SHORTCUTS.md) - AeroSpace tiling bindings and service mode
+- [FISH-SHORTCUTS.md](docs/FISH-SHORTCUTS.md) - fzf pickers and vi mode at the fish prompt
 
 ## XDG
 
@@ -64,7 +65,7 @@ Configs live under `~/.config` via XDG env vars set in `env.fish` (and equivalen
 
 ## fzf
 
-Fish sources fzf shell integration (`fzf --fish`), providing `Ctrl+T` (files), `Ctrl+R` (history), and `Alt+C` (directories). `env.fish` customizes these to use `fd` for file/directory discovery, `zoxide` results in `Alt+C`, and a tmux popup for the UI.
+Fish sources fzf shell integration (`fzf --fish`). `env.fish` customizes it to use `fd` for file/directory discovery, `zoxide` results in `Alt+C`, and a tmux popup for the UI. The bindings are in [FISH-SHORTCUTS.md](docs/FISH-SHORTCUTS.md).
 
 ## fd ignore
 
