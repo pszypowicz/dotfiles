@@ -50,6 +50,22 @@ gesture = smart-magnify = text:\x02s
 gesture = pinch-in =
 gesture = pinch-out =
 
+# Two-finger horizontal swipes drive tmux window switching (prefix + p/n).
+# `force:` fires inside tmux's mouse reporting, and the gesture claim
+# swallows the swipe's scroll copy including its momentum tail, so tmux
+# receives exactly one command per physical swipe - no wheel recognition,
+# no inertia. Swipe left = next window, the content metaphor. Like the
+# super+digit keybinds above, the prefix sequence is sent regardless of
+# what runs in the surface - this setup assumes tmux everywhere.
+gesture = swipe-left:2 = force:text:\x02n
+gesture = swipe-right:2 = force:text:\x02p
+
+# Cmd + two-finger swipe stays with Ghostty's own tabs. Explicit bindings
+# are required: modified triggers fire only when bound - there is no
+# fallback to the unmodified binding.
+gesture = cmd+swipe-left:2 = next_tab
+gesture = cmd+swipe-right:2 = previous_tab
+
 # Bell features: keep `attention` (Dock bounce on bell while unfocused) but
 # disable `title` so the macOS window title isn't decorated with "🔔 " on a
 # pending bell - the title stays a clean "session / window" readout, and the
