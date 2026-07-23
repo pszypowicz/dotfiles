@@ -14,6 +14,13 @@ Control bindings live in `macos/defaults`.
 | `Cmd+M`          | Minimize the front window to the Dock.                                                                                                      |
 | `Cmd+Opt+M`      | Minimize all windows of the front app.                                                                                                      |
 
+## Fullscreen
+
+| Shortcut     | What it does                                                                                      |
+| ------------ | ------------------------------------------------------------------------------------------------- |
+| `Ctrl+Cmd+F` | **macOS-native fullscreen** - moves the app to its own Space. Also `Fn+F`.                        |
+| `Opt+F`      | AeroSpace tiling fullscreen - window fills the workspace in place, no new Space (aerospace.toml). |
+
 ## Hiding apps
 
 | Shortcut    | What it does                                                                     |
