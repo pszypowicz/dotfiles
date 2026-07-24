@@ -22,14 +22,30 @@ keybind = super+t=unbind
 keybind = ctrl+tab=unbind
 keybind = ctrl+shift+tab=unbind
 keybind = super+alt+w=unbind
+# Cmd+1..9 have TWO default bindings each: the physical digit_ keys
+# (rebound to tmux below) and these translated-key variants, which
+# default to goto_tab/last_tab and must be unbound separately.
+keybind = super+1=unbind
+keybind = super+2=unbind
+keybind = super+3=unbind
+keybind = super+4=unbind
+keybind = super+5=unbind
+keybind = super+6=unbind
+keybind = super+7=unbind
+keybind = super+8=unbind
+keybind = super+9=unbind
 
 # Command palette off
 keybind = super+shift+p=unbind
 
 # Switch tmux windows like Safari tabs (Cmd+Shift+[ and Cmd+Shift+]);
-# no-ops when no tmux client is attached to this surface.
+# no-ops when no tmux client is attached to this surface. The translated
+# [ / ] variants carry the previous/next_tab defaults and are unbound so
+# only the physical-key tmux bindings remain.
 keybind = super+shift+left_bracket=tmux_command:previous-window
 keybind = super+shift+right_bracket=tmux_command:next-window
+keybind = super+shift+[=unbind
+keybind = super+shift+]=unbind
 
 # Paste tmux buffer (Cmd+Shift+V -> tmux prefix + ] -> paste-buffer)
 keybind = super+shift+v=text:\x02]
@@ -65,12 +81,6 @@ gesture = pinch-out =
 # tmux the gesture is a no-op and the shell never sees stray prefix keys.
 gesture = swipe-left:2 = force:tmux_command:next-window
 gesture = swipe-right:2 = force:tmux_command:previous-window
-
-# Cmd + two-finger swipe stays with Ghostty's own tabs. Explicit bindings
-# are required: modified triggers fire only when bound - there is no
-# fallback to the unmodified binding.
-gesture = cmd+swipe-left:2 = next_tab
-gesture = cmd+swipe-right:2 = previous_tab
 
 # Bell features: keep `attention` (Dock bounce on bell while unfocused) but
 # disable `title` so the macOS window title isn't decorated with "🔔 " on a
