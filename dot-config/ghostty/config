@@ -9,9 +9,10 @@ window-padding-y = 8
 # No confirmation prompt when closing a window/surface with a running process
 confirm-close-surface = false
 
-# This is a self-built fork (the ghostty-gestures cask) that shares the
-# com.mitchellh.ghostty bundle id. Disable Sparkle auto-update so an official
-# release can't silently replace the fork build.
+# This is a self-built fork (the ghostty-personal cask) that shares the
+# com.mitchellh.ghostty bundle id. The Sparkle updater is compiled out of
+# this build; auto-update stays off as a guard for any stock build that
+# ever reads this config.
 auto-update = off
 
 # Tabs are unused (tmux handles multiplexing): hide the tab bar and unbind
@@ -25,14 +26,17 @@ keybind = super+alt+w=unbind
 # Command palette off
 keybind = super+shift+p=unbind
 
-# Switch tmux windows like Safari tabs (Cmd+Shift+[ and Cmd+Shift+])
-keybind = super+shift+left_bracket=text:\x02p
-keybind = super+shift+right_bracket=text:\x02n
+# Switch tmux windows like Safari tabs (Cmd+Shift+[ and Cmd+Shift+]);
+# no-ops when no tmux client is attached to this surface.
+keybind = super+shift+left_bracket=tmux_command:previous-window
+keybind = super+shift+right_bracket=tmux_command:next-window
 
 # Paste tmux buffer (Cmd+Shift+V -> tmux prefix + ] -> paste-buffer)
 keybind = super+shift+v=text:\x02]
 
-# Jump directly to tmux windows 1-9 (Cmd+1..9)
+# Jump directly to tmux windows 1-9 (Cmd+1..9). Still raw prefix sends:
+# select-window needs a "<session>:<index>" target that a static config
+# cannot express, so these assume tmux is running.
 keybind = super+digit_1=text:\x021
 keybind = super+digit_2=text:\x022
 keybind = super+digit_3=text:\x023
@@ -43,22 +47,24 @@ keybind = super+digit_7=text:\x027
 keybind = super+digit_8=text:\x028
 keybind = super+digit_9=text:\x029
 
-# Two-finger double-tap (trackpad "smart zoom") -> tmux session list (prefix + s).
-gesture = smart-magnify = text:\x02s
+# Two-finger double-tap (trackpad "smart zoom") -> tmux session list.
+# tmux_command resolves the session attached to this surface over the
+# server socket, so nothing is sent when tmux isn't running.
+gesture = smart-magnify = tmux_command:choose-tree -Zs
 
 # Disable pinch-to-zoom (font size); pinch is unused - only the double-tap above.
 gesture = pinch-in =
 gesture = pinch-out =
 
-# Two-finger horizontal swipes drive tmux window switching (prefix + p/n).
-# `force:` fires inside tmux's mouse reporting, and the gesture claim
-# swallows the swipe's scroll copy including its momentum tail, so tmux
-# receives exactly one command per physical swipe - no wheel recognition,
-# no inertia. Swipe left = next window, the content metaphor. Like the
-# super+digit keybinds above, the prefix sequence is sent regardless of
-# what runs in the surface - this setup assumes tmux everywhere.
-gesture = swipe-left:2 = force:text:\x02n
-gesture = swipe-right:2 = force:text:\x02p
+# Two-finger horizontal swipes drive tmux window switching. `force:` fires
+# inside tmux's mouse reporting, and the gesture claim swallows the swipe's
+# scroll copy including its momentum tail, so tmux receives exactly one
+# command per physical swipe - no wheel recognition, no inertia. Swipe
+# left = next window, the content metaphor. tmux_command targets the tmux
+# client attached to this surface's tty over the server socket - without
+# tmux the gesture is a no-op and the shell never sees stray prefix keys.
+gesture = swipe-left:2 = force:tmux_command:next-window
+gesture = swipe-right:2 = force:tmux_command:previous-window
 
 # Cmd + two-finger swipe stays with Ghostty's own tabs. Explicit bindings
 # are required: modified triggers fire only when bound - there is no

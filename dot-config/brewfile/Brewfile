@@ -77,8 +77,8 @@ cask "pszypowicz/tap/cyclist", trusted: true
 cask "font-caskaydia-cove-nerd-font"
 cask "pszypowicz/tap/mic-guard", trusted: true
 cask "pszypowicz/tap/pager", trusted: true
-# cask "ghostty"   # disabled while dogfooding the ghostty-gestures fork build below
-cask "pszypowicz/tap/ghostty-gestures", trusted: true
+# cask "ghostty"   # disabled while dogfooding the ghostty-personal fork build below
+cask "pszypowicz/tap/ghostty-personal", trusted: true
 cask "google-chrome"
 cask "microsoft-teams"
 cask "obsidian"
