@@ -10,9 +10,8 @@ unless the Mac reboots or you explicitly kill the session.
 
 - **Session** = a long-lived workspace. Named after a project directory
   (`dotfiles`, `journal-agent`, ...) or `scratch` for ad-hoc work.
-- **Window** = a tab inside a session. Cmd+1..9 jumps directly; Cmd+Shift+[
-  / Cmd+Shift+] steps like Safari tabs, no wrap-around (configured in
-  Ghostty).
+- **Window** = a tab inside a session. Cmd+Shift+[ / Cmd+Shift+] steps
+  like Safari tabs, no wrap-around (configured in Ghostty).
 - **Pane** = a split inside a window. `prefix + "` splits below,
   `prefix + %` splits to the right (tmux defaults).
 
