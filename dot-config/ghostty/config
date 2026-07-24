@@ -15,6 +15,12 @@ confirm-close-surface = false
 # ever reads this config.
 auto-update = off
 
+# tmux handles multiplexing: unbind only the shortcuts that create a
+# Ghostty tab or split by accident. Everything else keeps its defaults.
+keybind = super+t=unbind
+keybind = super+d=unbind
+keybind = super+shift+d=unbind
+
 # Command palette off
 keybind = super+shift+p=unbind
 
