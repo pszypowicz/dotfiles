@@ -140,6 +140,7 @@
   "effortLevel": "xhigh",
   "tui": "fullscreen",
   "skipWorkflowUsageWarning": true,
+  "emojiCompletionEnabled": false,
   "theme": "auto",
   "editorMode": "vim",
   "vimInsertModeRemaps": {
