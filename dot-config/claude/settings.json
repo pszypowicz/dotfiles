@@ -140,6 +140,7 @@
   "effortLevel": "xhigh",
   "tui": "fullscreen",
   "skipWorkflowUsageWarning": true,
+  "workflowSizeGuideline": "unrestricted",
   "emojiCompletionEnabled": false,
   "theme": "auto",
   "editorMode": "vim",
