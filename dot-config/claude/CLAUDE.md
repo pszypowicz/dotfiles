@@ -30,6 +30,21 @@ Applies to anything you draft in my voice - PR descriptions, PR/issue comments, 
   - Good: "Happy to follow up if you'd like." / "You might prefer X."
 - The fix is almost always: replace "a/the \<role>" with "you", or drop the article. Keep first-person reader-directed hedging ("Happy to", "I can", "let me know if"); cut only the third-person reference to the audience.
 
+## Prose style in my voice
+
+Applies to any prose drafted as something I wrote - blog posts, PR descriptions, docs, README text, release notes, comments addressed to other humans. It appears under my name and must not read as AI-generated. Avoid these patterns:
+
+- **Counter-factual contrast constructions**: "It's not x, it's y", "x, not y".
+- **"The [goal/ambition/idea] is larger: statement"** constructions.
+- **Dramatic-pause constructions**: "x exists in y; in practice z".
+- **Colons and semicolons** where a human would write "and", "but", "because", "although", "so".
+- **Punchy fragments** ("keep the signal, govern the response", "Nothing stale, nothing to swipe away") - write full sentences joined by ordinary conjunctions.
+- **Buzzwords**: "load-bearing", "smoking gun", "stated fairly", and similar reach-for-effect vocabulary.
+- **Clever section headers** - use plain descriptive ones ("What I measured", "Root cause").
+- Em dashes (already banned in Text and Encoding).
+
+Before presenting a draft, audit it specifically for these patterns and rewrite any hits.
+
 ## Comments, commit messages & docstrings
 
 Prose captures the _why_ and the non-obvious context. It never restates what the surrounding tooling already supplies, and it describes the current code, not how it got here.
