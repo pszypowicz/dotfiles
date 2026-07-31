@@ -58,7 +58,7 @@ brew "starship"
 brew "stow"
 brew "swiftly"
 brew "switchaudio-osx"
-brew "tmux"
+# brew "tmux"   # disabled while dogfooding the tmux-personal fork build below
 brew "uv"
 brew "watch"
 brew "wget"
@@ -68,6 +68,7 @@ brew "yt-dlp"
 brew "zoxide"
 brew "felixkratz/formulae/sketchybar", trusted: true
 brew "pszypowicz/tap/afm-summarize", trusted: true
+brew "pszypowicz/tap/tmux-personal", trusted: true
 # cask "nikitabobko/tap/aerospace", trusted: true   # disabled while dogfooding the bsp fork build below
 cask "pszypowicz/tap/aerospace-bsp", trusted: true
 cask "anki"
