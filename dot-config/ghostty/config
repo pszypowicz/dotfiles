@@ -24,41 +24,27 @@ keybind = super+shift+d=unbind
 # Command palette off
 keybind = super+shift+p=unbind
 
-# Switch tmux windows like Safari tabs (Cmd+Shift+[ and Cmd+Shift+]);
-# no-ops when no tmux client is attached to this surface. The translated
-# [ / ] variants carry the previous/next_tab defaults and are unbound so
-# only the physical-key tmux bindings remain.
-keybind = super+shift+left_bracket=tmux_command:previous-window
-keybind = super+shift+right_bracket=tmux_command:next-window
+# Switch tmux windows like Safari tabs (Cmd+Shift+[ and Cmd+Shift+])
+# by sending tmux prefix + p / n, the no-wrap window step bindings in
+# tmux.conf. The translated [ / ] variants carry the previous/next_tab
+# defaults and are unbound so only the physical-key bindings remain.
+keybind = super+shift+left_bracket=text:\x02p
+keybind = super+shift+right_bracket=text:\x02n
 keybind = super+shift+[=unbind
 keybind = super+shift+]=unbind
 
 # Paste tmux buffer (Cmd+Shift+V -> tmux prefix + ] -> paste-buffer)
 keybind = super+shift+v=text:\x02]
 
-# Two-finger double-tap (trackpad "smart zoom") toggles the tmux session
-# tree: opens the `peek` alias (tmux.conf) with its bell badges, or commits
-# the highlighted row when the tree is already up - an immediate second tap
-# lands back on the current session. The explicit switch-client template is
-# required because a socket-delivered Enter has no attached client for
-# choose-tree's default template to act on. tmux_command replaces
-# %session%/%client% with this surface's session id and client tty, and
-# sends nothing when tmux isn't running.
-gesture = smart-magnify = tmux_command:if -t %session% -F '#{==:#{pane_mode},tree-mode}' 'send-keys -t %session% Enter' 'peek -t %session% "switch-client -c %client% -t \"%%\""'
-
-# Disable pinch-to-zoom (font size); pinch is unused - only the double-tap above.
+# Trackpad gestures inside tmux are tmux's business: the tmux-personal
+# fork enables gesture reporting (DEC 2035), swipes and smart-magnify
+# arrive there as bindable keys, and the bindings live in tmux.conf.
+# Reported gestures still claim their scroll copy and momentum tail, so
+# tmux sees exactly one key per physical swipe. Outside tmux the
+# defaults apply (swipes switch tabs, smart-magnify toggles font zoom).
+# Pinch stays unbound - no font zoom from pinch.
 gesture = pinch-in =
 gesture = pinch-out =
-
-# Two-finger horizontal swipes drive tmux window switching, or walk the
-# rows while the session tree is open. `force:` fires inside tmux's mouse
-# reporting, and the gesture claim swallows the swipe's scroll copy
-# including its momentum tail, so tmux receives exactly one command per
-# physical swipe - no wheel recognition, no inertia. Swipe left = next
-# window/row, the content metaphor. Without tmux the gestures are no-ops
-# and the shell never sees stray keys.
-gesture = swipe-left:2 = force:tmux_command:if -t %session% -F '#{==:#{pane_mode},tree-mode}' 'send-keys -t %session% Down' 'next-window -t %session%'
-gesture = swipe-right:2 = force:tmux_command:if -t %session% -F '#{==:#{pane_mode},tree-mode}' 'send-keys -t %session% Up' 'previous-window -t %session%'
 
 # Bell features: keep `attention` (Dock bounce on bell while unfocused) but
 # disable `title` so the macOS window title isn't decorated with "🔔 " on a
