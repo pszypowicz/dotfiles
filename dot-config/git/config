@@ -1,5 +1,8 @@
 [credential]
 	helper = osxkeychain
+	helper = 
+	helper = /usr/local/share/gcm-core/git-credential-manager
+	azreposCredentialType = oauth
 [push]
 	default = current
 [pager]
@@ -22,3 +25,5 @@
 	path = ~/.config/git/github.config
 [include]
 	path = ~/.config/git/config.local
+[credential "https://dev.azure.com"]
+	useHttpPath = true
