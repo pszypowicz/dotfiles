@@ -83,7 +83,6 @@ cask "pszypowicz/tap/pager", trusted: true
 cask "pszypowicz/tap/ghostty-personal", trusted: true
 cask "google-chrome"
 cask "microsoft-teams"
-cask "obsidian"
 cask "secretive"
 cask "pszypowicz/tap/sequester", trusted: true
 cask "sf-symbols"
