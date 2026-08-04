@@ -20,6 +20,7 @@ Touches:
   - Menu bar: always autohide
   - Windows: Ctrl+Cmd+drag anywhere inside a window to move it
   - Dock: autohide, tile size 59
+  - Hot corners: disable the bottom-right Quick Note corner
   - Desktop: disable "click wallpaper to reveal desktop" outside Stage Manager
   - Finder: enable the Quit menu item (Cmd+Q)
   - Cyclist: enable the AeroSpace integration
@@ -77,6 +78,13 @@ defaults write NSGlobalDomain NSWindowShouldDragOnGesture -bool true
 # Dock: autohide and a small but legible tile size.
 defaults write com.apple.dock autohide -bool true
 defaults write com.apple.dock tilesize -int 59
+
+# Hot corners: disable the bottom-right Quick Note corner (macOS enables it
+# by default, so dragging the pointer into that corner pops open a Notes
+# window). 1 = no action; the modifier key must be written alongside the
+# corner action. Applied by the Dock restart below.
+defaults write com.apple.dock wvous-br-corner -int 1
+defaults write com.apple.dock wvous-br-modifier -int 0
 
 # Desktop: disable "click wallpaper to reveal desktop" outside Stage Manager
 # (added in macOS Sequoia, enabled by default). While on, a stray click on any
