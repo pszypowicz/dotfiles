@@ -37,8 +37,9 @@ keybind = super+shift+]=unbind
 keybind = super+shift+v=text:\x02]
 
 # Trackpad gestures inside tmux are tmux's business: the tmux-personal
-# fork enables gesture reporting (DEC 2035), swipes and smart-magnify
-# arrive there as bindable keys, and the bindings live in tmux.conf.
+# fork enables gesture reporting (DEC 2035), swipes, pinches and
+# smart-magnify arrive there as bindable keys, and the bindings live in
+# tmux.conf.
 # Reported gestures still claim their scroll copy and momentum tail, so
 # tmux sees exactly one key per physical swipe. Outside tmux the
 # defaults apply (swipes switch tabs, smart-magnify toggles font zoom).
