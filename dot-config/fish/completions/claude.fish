@@ -153,7 +153,7 @@ complete -c claude -n "__fish_seen_subcommand_from mcp; and not __fish_seen_subc
 complete -c claude -n "__fish_seen_subcommand_from mcp; and not __fish_seen_subcommand_from $mcp_cmds" -a serve -d 'Start the Claude Code MCP server'
 
 # plugin
-set -l plugin_cmds details disable enable eval init new install i list marketplace prune autoremove tag uninstall remove update
+set -l plugin_cmds details disable enable eval init new install i list marketplace prune autoremove tag uninstall remove update validate
 complete -c claude -n "__fish_seen_subcommand_from plugin plugins; and not __fish_seen_subcommand_from $plugin_cmds" -a details -d "Show a plugin's components and token cost"
 complete -c claude -n "__fish_seen_subcommand_from plugin plugins; and not __fish_seen_subcommand_from $plugin_cmds" -a disable -d 'Disable an enabled plugin'
 complete -c claude -n "__fish_seen_subcommand_from plugin plugins; and not __fish_seen_subcommand_from $plugin_cmds" -a enable -d 'Enable a disabled plugin'
@@ -166,6 +166,7 @@ complete -c claude -n "__fish_seen_subcommand_from plugin plugins; and not __fis
 complete -c claude -n "__fish_seen_subcommand_from plugin plugins; and not __fish_seen_subcommand_from $plugin_cmds" -a tag -d 'Create a release git tag for a plugin'
 complete -c claude -n "__fish_seen_subcommand_from plugin plugins; and not __fish_seen_subcommand_from $plugin_cmds" -a uninstall -d 'Uninstall an installed plugin'
 complete -c claude -n "__fish_seen_subcommand_from plugin plugins; and not __fish_seen_subcommand_from $plugin_cmds" -a update -d 'Update a plugin to the latest version'
+complete -c claude -n "__fish_seen_subcommand_from plugin plugins; and not __fish_seen_subcommand_from $plugin_cmds" -a validate -d 'Validate a plugin or marketplace manifest'
 
 # plugin marketplace
 set -l marketplace_cmds add list remove rm update
