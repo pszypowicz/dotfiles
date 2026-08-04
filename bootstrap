@@ -2,9 +2,10 @@
 set -euo pipefail
 
 # Bootstrap - run once on a fresh machine, safe to re-run.
-# Handles the public dotfiles only. Private overlays (work, personal)
-# live in sibling dotfiles-private-* repos and each ship their own
-# self-contained ./bootstrap.
+# Handles the public dotfiles and, with --overlay, one private overlay from
+# a sibling dotfiles-private-<name> repo. Overlays are plain stow packages
+# carrying at most a Brewfile.<name> and an npm-globals list; all setup
+# logic lives here.
 #
 # With no arguments every step runs in order. Pass step names to run only
 # those - e.g. `./bootstrap stow` after editing a config, or
@@ -17,7 +18,7 @@ STOW_DIR=$(dirname "$SCRIPT_DIR")
 
 usage() {
     cat <<'EOF'
-Usage: bootstrap [STEP ...]
+Usage: bootstrap [--overlay NAME] [STEP ...]
 
 Set up or refresh this machine from the public dotfiles. Idempotent and safe
 to re-run. With no STEP, runs every step. Pass one or more STEP names to run
@@ -26,14 +27,31 @@ stow` after editing a config, `bootstrap macos` after changing a default).
 Steps always run in the order below regardless of how they are listed, so
 `brew` precedes the tools it installs.
 
+With --overlay NAME, the brew, stow, and npm steps also apply the private
+overlay cloned at ../dotfiles-private-NAME: its Brewfile.NAME is bundled,
+its stow package is linked, and the npm packages listed in its npm-globals
+file (one per line, # comments allowed) are installed. Overlay parts that
+do not exist are skipped with a notice.
+
 Steps:
-  brew    Install Homebrew if missing, then install packages from the Brewfile.
-  stow    Symlink the dotfiles into the home directory with stow.
-  npm     Install the global npm tools (including the pinned claude-code).
+  brew    Install Homebrew if missing, then install packages from the
+          Brewfile (plus the overlay Brewfile).
+  stow    Symlink the dotfiles into the home directory with stow (plus the
+          overlay package).
+  npm     Install the global npm tools, including the pinned claude-code
+          (plus the overlay npm-globals).
   macos   Write the macOS preference defaults.
 
 Options:
-  -h, --help   Show this help and exit.
+  --overlay NAME   Apply the dotfiles-private-NAME overlay on top of the
+                   public dotfiles (e.g. --overlay personal, --overlay work).
+                   No default; without it only the public dotfiles are set up.
+  -h, --help       Show this help and exit.
+
+Examples:
+  bootstrap --overlay personal      # full setup including the personal overlay
+  bootstrap --overlay work stow     # re-link public and work config
+  bootstrap macos                   # re-write macOS defaults only
 EOF
 }
 
@@ -51,6 +69,16 @@ step_brew() {
     local brewfile="$SCRIPT_DIR/dot-config/brewfile/Brewfile"
     echo "Installing packages..."
     brew bundle --file "$brewfile"
+
+    if [[ -n $OVERLAY ]]; then
+        local overlay_brewfile="$OVERLAY_DIR/dot-config/brewfile/Brewfile.$OVERLAY"
+        if [[ ! -f $overlay_brewfile ]]; then
+            echo "No $OVERLAY overlay Brewfile, skipping."
+            return
+        fi
+        echo "Installing $OVERLAY overlay packages..."
+        brew bundle --file "$overlay_brewfile"
+    fi
 }
 
 step_stow() {
@@ -64,6 +92,11 @@ step_stow() {
     # the target dir is real and the runtime writes stay local.
     echo "Stowing dotfiles..."
     stow -d "$STOW_DIR" -t ~ "$PACKAGE_NAME" --dotfiles --restow --no-folding
+
+    if [[ -n $OVERLAY ]]; then
+        echo "Stowing $OVERLAY overlay..."
+        stow -d "$STOW_DIR" -t ~ "dotfiles-private-$OVERLAY" --dotfiles --restow --no-folding
+    fi
 }
 
 step_npm() {
@@ -87,6 +120,25 @@ step_npm() {
         cf \
         lighthouse \
         yarn
+
+    if [[ -n $OVERLAY ]]; then
+        local globals_file="$OVERLAY_DIR/npm-globals"
+        if [[ ! -f $globals_file ]]; then
+            echo "No $OVERLAY overlay npm-globals file, skipping."
+            return
+        fi
+        local -a overlay_globals=()
+        local pkg
+        while IFS= read -r pkg; do
+            overlay_globals+=("$pkg")
+        done < <(grep -vE '^[[:space:]]*(#|$)' "$globals_file")
+        if [[ ${#overlay_globals[@]} -eq 0 ]]; then
+            echo "No packages listed in $globals_file, skipping."
+            return
+        fi
+        echo "Installing $OVERLAY overlay npm globals..."
+        npm install -g "${overlay_globals[@]}"
+    fi
 }
 
 step_macos() {
@@ -95,12 +147,18 @@ step_macos() {
 }
 
 # Parse arguments into the set of steps to run. No step names -> run all.
+OVERLAY=""
 run_brew=false run_stow=false run_npm=false run_macos=false
 any_step=false
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -h|--help) usage; exit 0 ;;
+        --overlay)
+            [[ $# -ge 2 ]] || { echo "--overlay requires a value" >&2; usage >&2; exit 2; }
+            OVERLAY="$2"
+            shift
+            ;;
         brew)  run_brew=true;  any_step=true ;;
         stow)  run_stow=true;  any_step=true ;;
         npm)   run_npm=true;   any_step=true ;;
@@ -109,6 +167,17 @@ while [[ $# -gt 0 ]]; do
     esac
     shift
 done
+
+# The overlay is a sibling checkout; resolving it up front makes a typo in
+# the name fail before any step has run.
+OVERLAY_DIR=""
+if [[ -n $OVERLAY ]]; then
+    OVERLAY_DIR="$STOW_DIR/dotfiles-private-$OVERLAY"
+    if [[ ! -d $OVERLAY_DIR ]]; then
+        echo "overlay '$OVERLAY' not found: expected a checkout at $OVERLAY_DIR" >&2
+        exit 2
+    fi
+fi
 
 if [[ $any_step == false ]]; then
     run_brew=true run_stow=true run_npm=true run_macos=true

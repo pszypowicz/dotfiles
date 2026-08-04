@@ -8,7 +8,13 @@
 
 Installs Homebrew (if missing), packages, stows dotfiles, installs npm globals, and writes macOS defaults. Safe to re-run.
 
-Private overlays (work, personal) live in sibling `dotfiles-private-*` repos, each with its own self-contained `./bootstrap`. Run those separately on machines that need them - they complement this bootstrap rather than replacing it.
+Private overlays (work, personal) live in sibling `dotfiles-private-*` repos as plain stow packages with a `Brewfile.<name>` and an optional `npm-globals` list - all setup logic lives in this bootstrap. On a machine that needs an overlay, pass it by name:
+
+```bash
+./bootstrap --overlay personal
+```
+
+The brew, stow, and npm steps then cover the overlay too: its Brewfile is bundled, its package is stowed, and its npm globals are installed. `--overlay` combines with step names, so `./bootstrap --overlay work stow` re-links public and work config in one go.
 
 ### Running individual steps
 
