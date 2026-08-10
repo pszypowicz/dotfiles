@@ -3,8 +3,11 @@
 #
 # The candidate set is:
 #   - Every git repository under ~/Developer, discovered by presence of
-#     .git, so any host layout works (github.com/owner/repo,
-#     dev.azure.com/org/project/repo, ...).
+#     .git down to depth 5, which covers the deepest clone-layout shape
+#     (dev.azure.com/<org>/<project>/<repo>). The depth cap keeps the
+#     scan out of repo contents (the walk would otherwise visit every
+#     non-ignored file in every repo), so a repo nested deeper than the
+#     clone layout allows needs the cap raised before it shows up.
 #   - Top-level directories inside ~/Developer/_scratch (non-repo
 #     playgrounds).
 #   - Container dirs: ~/Developer's immediate children (host dirs,
@@ -31,7 +34,7 @@
 function __fzf_jump_targets
     awk '
         # Normalize: strip trailing slash so fd (emits with slash on
-        # --type d) and zoxide / fd --exec dirname (emit without)
+        # --type d) and zoxide / fd --format {//} (emit without)
         # compare as the same set.
         { sub(/\/$/, "") }
 
@@ -63,7 +66,7 @@ function __fzf_jump_targets
         }
     ' \
     (begin
-        fd --type d --hidden --prune '^\.git$' "$HOME/Developer" --exec dirname
+        fd --type d --hidden --prune --max-depth 5 '^\.git$' "$HOME/Developer" --format '{//}'
         fd --type d --max-depth 1 . "$HOME/Developer/_scratch"
         fd --type d --max-depth 1 . "$HOME/Developer"
         fd --type d --min-depth 2 --max-depth 3 --exclude _scratch . "$HOME/Developer"
