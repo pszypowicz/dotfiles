@@ -41,10 +41,10 @@ function __claude_resume_sessions
     end
 end
 
-set -l subcommands agents auth auto-mode doctor gateway install mcp plugin project setup-token ultrareview update
+set -l subcommands agents auth auto-mode doctor gateway import install mcp plugin project self-hosted-runner setup-token ultrareview update
 
 function __claude_no_subcommand
-    not __fish_seen_subcommand_from agents auth auto-mode doctor gateway install mcp plugin project setup-token ultrareview update
+    not __fish_seen_subcommand_from agents auth auto-mode doctor gateway import install mcp plugin project self-hosted-runner setup-token ultrareview update
 end
 
 # Suppress default file completion; path-taking flags re-enable it with -F
@@ -56,10 +56,12 @@ complete -c claude -n __fish_use_subcommand -a auth -d 'Manage authentication'
 complete -c claude -n __fish_use_subcommand -a auto-mode -d 'Inspect or reset auto mode configuration'
 complete -c claude -n __fish_use_subcommand -a doctor -d 'Check the health of the installation'
 complete -c claude -n __fish_use_subcommand -a gateway -d 'Run the enterprise auth/telemetry gateway'
+complete -c claude -n __fish_use_subcommand -a import -d 'Import config from another AI coding agent'
 complete -c claude -n __fish_use_subcommand -a install -d 'Install Claude Code native build'
 complete -c claude -n __fish_use_subcommand -a mcp -d 'Configure and manage MCP servers'
 complete -c claude -n __fish_use_subcommand -a plugin -d 'Manage plugins'
 complete -c claude -n __fish_use_subcommand -a project -d 'Manage project state'
+complete -c claude -n __fish_use_subcommand -a self-hosted-runner -d 'Run cloud sessions on this machine (Team/Enterprise)'
 complete -c claude -n __fish_use_subcommand -a setup-token -d 'Set up a long-lived authentication token'
 complete -c claude -n __fish_use_subcommand -a ultrareview -d 'Cloud-hosted multi-agent code review'
 complete -c claude -n __fish_use_subcommand -a update -d 'Check for updates and install'
@@ -138,6 +140,11 @@ complete -c claude -n "__fish_seen_subcommand_from auth; and not __fish_seen_sub
 # auto-mode
 complete -c claude -n '__fish_seen_subcommand_from auto-mode; and not __fish_seen_subcommand_from reset' -a reset -d 'Restore the default auto-mode configuration'
 complete -c claude -n '__fish_seen_subcommand_from auto-mode; and __fish_seen_subcommand_from reset' -l yes -d 'Skip the confirmation prompt'
+
+# import
+complete -c claude -n '__fish_seen_subcommand_from import; and not __fish_seen_subcommand_from codex gemini' -a 'codex gemini' -d 'Agent to import from'
+complete -c claude -n '__fish_seen_subcommand_from import' -l dry-run -d 'Show what would be imported without writing'
+complete -c claude -n '__fish_seen_subcommand_from import' -l yes -d 'Skip the interactive picker'
 
 # mcp
 set -l mcp_cmds add add-from-claude-desktop add-json get list login logout remove reset-project-choices serve
