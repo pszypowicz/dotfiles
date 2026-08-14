@@ -41,10 +41,10 @@ function __claude_resume_sessions
     end
 end
 
-set -l subcommands agents auth auto-mode doctor gateway import install mcp plugin project self-hosted-runner setup-token ultrareview update
+set -l subcommands agents auth auto-mode doctor gateway import install mcp plugin project remote-control self-hosted-runner setup-token ultrareview update
 
 function __claude_no_subcommand
-    not __fish_seen_subcommand_from agents auth auto-mode doctor gateway import install mcp plugin project self-hosted-runner setup-token ultrareview update
+    not __fish_seen_subcommand_from agents auth auto-mode doctor gateway import install mcp plugin project remote-control self-hosted-runner setup-token ultrareview update
 end
 
 # Suppress default file completion; path-taking flags re-enable it with -F
@@ -61,6 +61,7 @@ complete -c claude -n __fish_use_subcommand -a install -d 'Install Claude Code n
 complete -c claude -n __fish_use_subcommand -a mcp -d 'Configure and manage MCP servers'
 complete -c claude -n __fish_use_subcommand -a plugin -d 'Manage plugins'
 complete -c claude -n __fish_use_subcommand -a project -d 'Manage project state'
+complete -c claude -n __fish_use_subcommand -a remote-control -d 'Start a Remote Control session'
 complete -c claude -n __fish_use_subcommand -a self-hosted-runner -d 'Run cloud sessions on this machine (Team/Enterprise)'
 complete -c claude -n __fish_use_subcommand -a setup-token -d 'Set up a long-lived authentication token'
 complete -c claude -n __fish_use_subcommand -a ultrareview -d 'Cloud-hosted multi-agent code review'
@@ -184,6 +185,9 @@ complete -c claude -n "__fish_seen_subcommand_from marketplace; and not __fish_s
 
 # project
 complete -c claude -n '__fish_seen_subcommand_from project; and not __fish_seen_subcommand_from purge' -a purge -d 'Delete all Claude Code state for a project'
+
+# remote-control
+complete -c claude -n '__fish_seen_subcommand_from remote-control' -l continue -d 'Resume the most recent Remote Control session'
 
 # install targets
 complete -c claude -n '__fish_seen_subcommand_from install' -a 'stable latest' -d 'Version to install'
