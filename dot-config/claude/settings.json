@@ -23,6 +23,7 @@
     ]
   },
   "model": "claude-fable-5",
+  "switchModelsOnFlag": false,
   "hooks": {
     "Notification": [
       {
@@ -80,6 +81,7 @@
       }
     ]
   },
+  "workflowSizeGuideline": "unrestricted",
   "statusLine": {
     "type": "command",
     "command": "~/.config/claude/statusline.sh",
@@ -138,10 +140,9 @@
     }
   },
   "effortLevel": "xhigh",
+  "emojiCompletionEnabled": false,
   "tui": "fullscreen",
   "skipWorkflowUsageWarning": true,
-  "workflowSizeGuideline": "unrestricted",
-  "emojiCompletionEnabled": false,
   "theme": "auto",
   "editorMode": "vim",
   "vimInsertModeRemaps": {
