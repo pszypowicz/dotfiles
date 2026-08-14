@@ -28,11 +28,13 @@ Touches:
     auto-period, spelling correction, smart-reply suggestions
   - Keyboard: remap Caps Lock to Escape for all keyboards (the "All Keyboards"
     Modifier Keys entry; takes effect after logout)
-  - Mission Control: keep the overview enabled on its Ctrl+Up default, and
-    bind Ctrl+1 through Ctrl+9 to "Switch to Desktop 1-9" (both take effect
-    after logout). Relative space-switch hotkeys stay on macOS defaults;
-    Cyclist consumes Ctrl+Left/Right while it runs, and the native binding
-    underneath is the fallback when it does not.
+  - Mission Control: keep the overview enabled on its Ctrl+Up default,
+    enable the Ctrl+Arrow space-switch hotkeys on their default chords, and
+    bind Ctrl+1 through Ctrl+9 to "Switch to Desktop 1-9" (all take effect
+    after logout). Cyclist consumes Ctrl+Left/Right while it runs, and the
+    native binding underneath handles every chord it passes through: all of
+    them when Cyclist is not running, and Ctrl+Left/Right inside the
+    Mission Control overview.
 
 Options:
   -h, --help    Show this help and exit.
@@ -121,20 +123,33 @@ defaults write NSGlobalDomain NSSmartReplyEnabled                  -bool false
 defaults -currentHost write -g com.apple.keyboard.modifiermapping.0-0-0 \
     '<array><dict><key>HIDKeyboardModifierMappingSrc</key><integer>30064771129</integer><key>HIDKeyboardModifierMappingDst</key><integer>30064771113</integer></dict></array>'
 
-# Mission Control space-switch hotkeys (79-82) stay on their macOS defaults:
-# Cyclist's event tap consumes Ctrl+Left/Right before the system hotkey layer
-# sees it, so the native Ctrl+Arrow binding costs nothing while Cyclist runs
-# and serves as the fallback (macOS's animated slide) when it does not.
+# Mission Control overview (ID 32) and the space-switch hotkeys (79-82) sit
+# on their macOS default chords, written with enabled = 1 rather than left
+# alone: an entry a past setup or a GUI toggle left disabled in the plist
+# stays disabled forever, because not writing it restores nothing. Cyclist's
+# event tap consumes Ctrl+Left/Right before the system hotkey layer sees
+# it, so the enabled native binding costs nothing while Cyclist runs - and
+# it must be enabled for every chord that reaches the system: all of them
+# when Cyclist is not running, Ctrl+Up always, and Ctrl+Left/Right inside
+# the Mission Control overview, which Cyclist passes through and which only
+# works as this symbolic hotkey (the Dock reads no raw arrow keyDowns).
 #
-# Mission Control overview (ID 32) stays on its Ctrl+Up default. Cyclist only
-# swallows Ctrl+Left/Right, so Ctrl+Up passes through to the native action -
-# but GUI shortcut toggling can leave 32 disabled in the plist, so enable it
-# explicitly. value parameters = (key char, key code, modifier mask):
-# 65535 = non-printable, 126 = Up; mask 8650752 = Control(262144) + the
-# function-key bit(8388608) macOS sets on arrow keys. Takes effect after
-# logout; cfprefsd is killed below to ensure the write is flushed to disk.
+# value parameters = (key char, key code, modifier mask): 65535 =
+# non-printable, 123/124/126 = Left/Right/Up; mask 8650752 = Control(262144)
+# + the function-key bit(8388608) macOS sets on arrow keys, and 8781824 adds
+# Shift(131072) for the shifted companions macOS registers alongside 79/81.
+# Take effect after logout; cfprefsd is killed below to ensure the writes
+# are flushed to disk.
 defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys -dict-add 32 \
     "{enabled = 1; value = {parameters = (65535, 126, 8650752); type = standard;};}"
+defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys -dict-add 79 \
+    "{enabled = 1; value = {parameters = (65535, 123, 8650752); type = standard;};}"
+defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys -dict-add 80 \
+    "{enabled = 1; value = {parameters = (65535, 123, 8781824); type = standard;};}"
+defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys -dict-add 81 \
+    "{enabled = 1; value = {parameters = (65535, 124, 8650752); type = standard;};}"
+defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys -dict-add 82 \
+    "{enabled = 1; value = {parameters = (65535, 124, 8781824); type = standard;};}"
 
 # Mission Control: bind Ctrl+1 through Ctrl+9 to "Switch to Desktop 1-9"
 # (symbolic hotkey IDs 118-126 = 117 + desktop number). macOS ships these
