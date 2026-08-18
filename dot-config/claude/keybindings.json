@@ -6,7 +6,7 @@
       "context": "Task",
       "bindings": {
         "ctrl+b": null,
-        "ctrl+x ctrl+b": "task:background"
+        "ctrl+x b": "task:background"
       }
     }
   ]
