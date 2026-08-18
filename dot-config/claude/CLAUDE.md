@@ -73,6 +73,16 @@ Applies to any repo with branch protection, required status checks/reviews, or p
 - **Approval means the user names the specific action** ("push directly to main this once", "force-push the branch", "delete the release"). Anything vaguer = use the policy-respecting path.
 - **Default at a policy gate**: open a draft PR (per PR defaults). Even on solo repos the policy exists for a reason (CI coverage, reviewable history, reversibility) - follow it unless explicitly waived for the specific change.
 
+## SSH signing needs my hands on the machine
+
+SSH auth (git push/fetch/pull over SSH, and SSH to hosts) is signed by a Secure Enclave agent that requires me to approve each key use in person. The laptop is often unattended, so the approval may not come for a long while - only I can grant it.
+
+- **Treat a signing failure as "waiting for me", not as an error to work around.** The tells are `agent refused operation`, `The agent has no identities`, `sign_and_send_pubkey: signing failed`, or `Permission denied (publickey)`.
+- **Do not** retry in a loop, try other keys, switch the remote to HTTPS, or reach for a token. The enclave key is deliberate; a bearer credential is not an acceptable substitute.
+- **Keep working.** Finish everything that doesn't need the network - commit locally, write docs and tests, run checks - so the only thing left is the transfer.
+- **Then stop and tell me plainly** what is committed locally, what is blocked, and the exact command to run, e.g. `! git push -u origin <branch>`. Say clearly that you did NOT do it. Pick the work back up when I confirm.
+- Anything downstream of the blocked step (opening the PR, tagging, releasing) waits too - don't half-do a release.
+
 ## Scripts & pipeline steps
 
 ### Reusable scripts
