@@ -23,7 +23,6 @@
     ]
   },
   "model": "claude-fable-5",
-  "switchModelsOnFlag": false,
   "hooks": {
     "Notification": [
       {
@@ -148,5 +147,6 @@
   "vimInsertModeRemaps": {
     "jj": "<Esc>"
   },
-  "preferredNotifChannel": "notifications_disabled"
+  "preferredNotifChannel": "notifications_disabled",
+  "switchModelsOnFlag": false
 }
