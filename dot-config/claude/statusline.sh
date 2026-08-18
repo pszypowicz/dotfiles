@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Claude Code statusLine command
-# Receives JSON on stdin, writes rate limit cache for SketchyBar.
-# No stdout -- usage is shown via the SketchyBar widget only.
+# Receives JSON on stdin, writes rate limit cache for SketchyBar, and publishes
+# the active model as a tmux pane option for the window-name format.
+# No stdout - usage is shown via the SketchyBar widget only.
 
 CACHE_DIR="$HOME/.cache/claude"
 CACHE_FILE="$CACHE_DIR/rate-limits.json"
@@ -19,4 +20,14 @@ if [[ -n "$RATE_LIMITS" ]]; then
     five_hour: .rate_limits.five_hour,
     seven_day: .rate_limits.seven_day
   }' > "$TMPFILE" && mv "$TMPFILE" "$CACHE_FILE"
+fi
+
+# The payload's model object always reflects the ACTIVE model, including after
+# a mid-session fallback, and no hook fires on model changes - this stream is
+# the only push channel for it. Publish it as a pane-scoped user option; the
+# claude.fish wrapper's automatic-rename-format surfaces it in the window name,
+# which set-titles carries into the terminal title.
+MODEL=$(echo "$INPUT" | jq -r '.model.display_name // empty')
+if [[ -n "$MODEL" && -n "$TMUX_PANE" ]]; then
+  tmux set-option -p -t "$TMUX_PANE" @claude_model "$MODEL"
 fi
