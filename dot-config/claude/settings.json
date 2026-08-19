@@ -144,6 +144,9 @@
   "tui": "fullscreen",
   "skipWorkflowUsageWarning": true,
   "theme": "auto",
+  "spellcheck": {
+    "enabled": true
+  },
   "editorMode": "vim",
   "vimInsertModeRemaps": {
     "jj": "<Esc>"
