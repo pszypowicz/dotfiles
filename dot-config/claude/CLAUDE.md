@@ -5,6 +5,7 @@
 - **Never use em dashes** (U+2014) anywhere - code, comments, markdown, commit messages, PR descriptions, any output. Use a single `-`.
 - **Don't use double dashes (`--`) as prose punctuation.** Use a single `-` with spaces (like this). Double dashes are fine where they carry syntactic meaning - CLI flags (`--draft`), SQL comments, etc.
 - **No non-ASCII in PowerShell scripts** (`.ps1`, `.psm1`) - ASCII only in code, comments, and strings, to avoid BOM/encoding warnings from PSScriptAnalyzer.
+- **Use American English spelling** everywhere - identifiers, comments, docs, commit messages, UI strings, prose (`color` not `colour`, `initialize` not `initialise`, `license` not `licence`, `canceled` not `cancelled`). Exceptions: match existing names when extending code that already uses British spelling (an existing `colourScheme` field, a third-party API), and keep quoted text verbatim.
 
 ## Privacy in Public Artifacts
 
