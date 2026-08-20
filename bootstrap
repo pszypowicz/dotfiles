@@ -4,8 +4,8 @@ set -euo pipefail
 # Bootstrap - run once on a fresh machine, safe to re-run.
 # Handles the public dotfiles and, with --overlay, one private overlay from
 # a sibling dotfiles-private-<name> repo. Overlays are plain stow packages
-# carrying at most a Brewfile.<name> and an npm-globals list; all setup
-# logic lives here.
+# carrying at most a Brewfile.<name>, an npm-globals list, and a Claude Code
+# managed-settings.json; all setup logic lives here.
 #
 # With no arguments every step runs in order. Pass step names to run only
 # those - e.g. `./bootstrap stow` after editing a config, or
@@ -29,7 +29,8 @@ Steps always run in the order below regardless of how they are listed, so
 
 With --overlay NAME, the brew, stow, and npm steps also apply the private
 overlay cloned at ../dotfiles-private-NAME: its Brewfile.NAME is bundled,
-its stow package is linked, and the npm packages listed in its npm-globals
+its stow package is linked, its managed-settings.json is installed for
+Claude Code (with sudo), and the npm packages listed in its npm-globals
 file (one per line, # comments allowed) are installed. Overlay parts that
 do not exist are skipped with a notice.
 
@@ -37,7 +38,8 @@ Steps:
   brew    Install Homebrew if missing, then install packages from the
           Brewfile (plus the overlay Brewfile).
   stow    Symlink the dotfiles into the home directory with stow (plus the
-          overlay package).
+          overlay package), and install the overlay's Claude Code
+          managed-settings.json with sudo.
   npm     Install the global npm tools, including the pinned claude-code
           (plus the overlay npm-globals).
   macos   Write the macOS preference defaults.
@@ -96,6 +98,20 @@ step_stow() {
     if [[ -n $OVERLAY ]]; then
         echo "Stowing $OVERLAY overlay..."
         stow -d "$STOW_DIR" -t ~ "dotfiles-private-$OVERLAY" --dotfiles --restow --no-folding
+
+        # Claude Code reads machine-scoped managed settings from a path
+        # outside the stow target, so the overlay copy is installed there
+        # rather than linked. Machine-only Claude config (per-machine plugin
+        # and MCP overrides) lives in this file because the user-scope
+        # settings.json is shared across machines via the public package.
+        local managed_settings="$OVERLAY_DIR/managed-settings.json"
+        if [[ ! -f $managed_settings ]]; then
+            echo "No $OVERLAY overlay managed-settings.json, skipping."
+            return
+        fi
+        echo "Installing $OVERLAY overlay Claude Code managed settings (sudo)..."
+        sudo install -d -m 755 "/Library/Application Support/ClaudeCode"
+        sudo install -m 644 "$managed_settings" "/Library/Application Support/ClaudeCode/managed-settings.json"
     fi
 }
 
