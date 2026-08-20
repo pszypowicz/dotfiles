@@ -100,7 +100,8 @@
     "swift-concurrency@claude-skills": false,
     "worktrees@claude-skills": true,
     "cloudflare@cloudflare": true,
-    "clangd-lsp@claude-plugins-official": true
+    "clangd-lsp@claude-plugins-official": true,
+    "simple-english@simple-english": true
   },
   "extraKnownMarketplaces": {
     "claude-skills": {
@@ -113,6 +114,12 @@
       "source": {
         "source": "github",
         "repo": "cloudflare/skills"
+      }
+    },
+    "simple-english": {
+      "source": {
+        "source": "github",
+        "repo": "AminBlg/SimpleEnglish"
       }
     }
   },
@@ -139,14 +146,14 @@
       ]
     }
   },
+  "spellcheck": {
+    "enabled": true
+  },
   "effortLevel": "xhigh",
   "emojiCompletionEnabled": false,
   "tui": "fullscreen",
   "skipWorkflowUsageWarning": true,
   "theme": "auto",
-  "spellcheck": {
-    "enabled": true
-  },
   "editorMode": "vim",
   "vimInsertModeRemaps": {
     "jj": "<Esc>"
