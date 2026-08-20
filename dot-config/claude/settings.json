@@ -23,6 +23,10 @@
       "Bash(*devops invoke*approvals*)"
     ]
   },
+  "deniedMcpServers": [
+    { "serverName": "claude.ai Gmail" },
+    { "serverName": "claude.ai Google Calendar" }
+  ],
   "model": "claude-fable-5",
   "hooks": {
     "Notification": [
