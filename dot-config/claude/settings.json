@@ -159,5 +159,6 @@
     "jj": "<Esc>"
   },
   "preferredNotifChannel": "notifications_disabled",
+  "outputStyle": "simple-english:simple-english",
   "switchModelsOnFlag": false
 }
