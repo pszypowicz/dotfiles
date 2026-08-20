@@ -23,11 +23,15 @@
       "Bash(*devops invoke*approvals*)"
     ]
   },
-  "deniedMcpServers": [
-    { "serverName": "claude.ai Gmail" },
-    { "serverName": "claude.ai Google Calendar" }
-  ],
   "model": "claude-fable-5",
+  "deniedMcpServers": [
+    {
+      "serverName": "claude.ai Gmail"
+    },
+    {
+      "serverName": "claude.ai Google Calendar"
+    }
+  ],
   "hooks": {
     "Notification": [
       {
@@ -105,7 +109,8 @@
     "worktrees@claude-skills": true,
     "cloudflare@cloudflare": true,
     "clangd-lsp@claude-plugins-official": true,
-    "simple-english@simple-english": true
+    "simple-english@simple-english": true,
+    "superpowers-extended-cc@superpowers-extended-cc-marketplace": true
   },
   "extraKnownMarketplaces": {
     "claude-skills": {
@@ -125,8 +130,15 @@
         "source": "github",
         "repo": "AminBlg/SimpleEnglish"
       }
+    },
+    "superpowers-extended-cc-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "pcvelz/superpowers"
+      }
     }
   },
+  "outputStyle": "simple-english:simple-english",
   "sandbox": {
     "enabled": false,
     "failIfUnavailable": true,
@@ -163,6 +175,5 @@
     "jj": "<Esc>"
   },
   "preferredNotifChannel": "notifications_disabled",
-  "outputStyle": "simple-english:simple-english",
   "switchModelsOnFlag": false
 }
