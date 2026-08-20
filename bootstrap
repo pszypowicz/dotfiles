@@ -112,9 +112,11 @@ step_npm() {
     # claude-code's postinstall places the native binary over a stub, and
     # npm 12 blocks dependency install scripts unless allowlisted. The spec
     # is name-only on purpose: pin bumps stay covered, and the changelog
-    # script's pin grep only matches the versioned entry below.
+    # script's pin grep only matches the versioned entry below. yarn's
+    # preinstall removes a corepack-owned yarn shim; blocked, a global yarn
+    # install can crash on machines where corepack created that shim.
     npm install -g \
-        --allow-scripts=@anthropic-ai/claude-code \
+        --allow-scripts=@anthropic-ai/claude-code,yarn \
         @anthropic-ai/claude-code@2.1.237 \
         @lhci/cli \
         cf \
