@@ -20,6 +20,10 @@ function __claude_resume_sessions
         set -l sid (path change-extension '' $f | path basename)
         contains -- $sid $active_sids; and continue
 
+        # The project dir name flattens non-alphanumerics, so distinct cwds can
+        # share one directory; keep only sessions recorded in this directory
+        grep -qF '"cwd":"'$PWD'"' $f; or continue
+
         # Extract customTitle from JSONL (last occurrence wins, as renames overwrite)
         set -l title (grep '"type":"custom-title"' $f 2>/dev/null | tail -1 | string match -r '"customTitle":"([^"]*)"')[2]
 
