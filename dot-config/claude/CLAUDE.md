@@ -78,9 +78,10 @@ Applies to any repo with branch protection, required status checks/reviews, or p
 
 ## SSH signing: attempt once, then wait for me
 
-SSH auth (git push/fetch/pull over SSH, and SSH to hosts) is signed by a Secure Enclave agent (Sequester) that pops an approval prompt I must confirm in person for each key use. When I'm at the machine I approve it and the command just works; when I'm not, it hangs or fails.
+SSH auth (git push/fetch/pull over SSH, and SSH to hosts) is signed by a Secure Enclave agent (Sequester) that pops an approval prompt I must confirm in person. When I'm at the machine I approve it and the command just works; when I'm not, it hangs or fails.
 
 - **Attempt the SSH command yourself first, exactly once**, with a ~2 minute timeout - do not pre-emptively hand it to me. If I'm present I'll approve the prompt and you carry on.
+- **One approval covers a window, not one command.** At the prompt I pick a caching duration; while it lasts, further SSH commands go through without a new prompt. So don't cram everything into one giant compound command to save approvals - after the first success, run SSH commands at natural granularity.
 - **If that one attempt fails or times out, treat it as "waiting for me", not an error to work around.** The tells are a hang until timeout, `agent refused operation`, `The agent has no identities`, `sign_and_send_pubkey: signing failed`, or `Permission denied (publickey)`.
 - **Do not** retry in a loop, try other keys, switch the remote to HTTPS, or reach for a token. The enclave key is deliberate; a bearer credential is not an acceptable substitute.
 - **Keep working** on everything that doesn't need the network - commit locally, write docs and tests, run checks - so the only thing left is the transfer.
