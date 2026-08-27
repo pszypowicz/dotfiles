@@ -11,3 +11,8 @@ _scratch/
 .claude/
 CLAUDE.md
 CLAUDE.local.md
+
+# Superpowers plugin working files: plans and state are operator-local,
+# never pushed to any repo.
+.superpowers/
+docs/superpowers/
