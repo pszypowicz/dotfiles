@@ -167,7 +167,7 @@
   },
   "effortLevel": "xhigh",
   "emojiCompletionEnabled": false,
-  "feedbackDrafts": false,
+  "feedbackDrafts": "off",
   "tui": "fullscreen",
   "skipWorkflowUsageWarning": true,
   "theme": "auto",
