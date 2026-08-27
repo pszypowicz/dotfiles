@@ -162,12 +162,12 @@
       ]
     }
   },
+  "feedbackDrafts": "off",
   "spellcheck": {
     "enabled": true
   },
   "effortLevel": "xhigh",
   "emojiCompletionEnabled": false,
-  "feedbackDrafts": "off",
   "tui": "fullscreen",
   "skipWorkflowUsageWarning": true,
   "theme": "auto",
