@@ -23,10 +23,11 @@ if [[ -n "$RATE_LIMITS" ]]; then
 fi
 
 # The payload's model object always reflects the ACTIVE model, including after
-# a mid-session fallback, and no hook fires on model changes - this stream is
-# the only push channel for it. Publish it as a pane-scoped user option; the
+# a mid-session switch. Publish it as a pane-scoped user option; the
 # claude.fish wrapper's automatic-rename-format surfaces it in the window name,
-# which set-titles carries into the terminal title.
+# which set-titles carries into the terminal title. The PostModelSwitch hook in
+# settings.json pushes the raw model ID the moment a switch happens; this
+# refresh then replaces it with the display name.
 MODEL=$(echo "$INPUT" | jq -r '.model.display_name // empty')
 if [[ -n "$MODEL" && -n "$TMUX_PANE" ]]; then
   tmux set-option -p -t "$TMUX_PANE" @claude_model "$MODEL"

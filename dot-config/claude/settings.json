@@ -23,7 +23,7 @@
       "Bash(*devops invoke*approvals*)"
     ]
   },
-  "model": "claude-fable-5",
+  "model": "claude-fable-5-1",
   "deniedMcpServers": [
     {
       "serverName": "claude.ai Gmail"
@@ -84,6 +84,16 @@
             "type": "command",
             "command": "~/.config/claude/hooks/lint-forbidden.sh",
             "statusMessage": "Checking for forbidden characters..."
+          }
+        ]
+      }
+    ],
+    "PostModelSwitch": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "m=$(jq -r '.to_model // empty | sub(\"^claude-\"; \"\")') && if [[ -n \"$m\" && -n \"${TMUX_PANE:-}\" ]]; then tmux set-option -p -t \"$TMUX_PANE\" @claude_model \"$m\"; fi"
           }
         ]
       }

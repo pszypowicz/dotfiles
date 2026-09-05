@@ -45,10 +45,10 @@ function __claude_resume_sessions
     end
 end
 
-set -l subcommands agents auth auto-mode doctor gateway import install mcp plugin project remote-control self-hosted-runner setup-token ultrareview update
+set -l subcommands agents attach auth auto-mode doctor gateway import install logs mcp plugin project remote-control respawn rm self-hosted-runner setup-token stop ultrareview update
 
 function __claude_no_subcommand
-    not __fish_seen_subcommand_from agents auth auto-mode doctor gateway import install mcp plugin project remote-control self-hosted-runner setup-token ultrareview update
+    not __fish_seen_subcommand_from agents attach auth auto-mode doctor gateway import install kill logs mcp plugin project remote-control respawn rm self-hosted-runner setup-token stop ultrareview update
 end
 
 # Suppress default file completion; path-taking flags re-enable it with -F
@@ -56,18 +56,23 @@ complete -c claude -f
 
 # Subcommands
 complete -c claude -n __fish_use_subcommand -a agents -d 'Manage background agents'
+complete -c claude -n __fish_use_subcommand -a attach -d 'Open a background session in this terminal'
 complete -c claude -n __fish_use_subcommand -a auth -d 'Manage authentication'
 complete -c claude -n __fish_use_subcommand -a auto-mode -d 'Inspect or reset auto mode configuration'
 complete -c claude -n __fish_use_subcommand -a doctor -d 'Check the health of the installation'
 complete -c claude -n __fish_use_subcommand -a gateway -d 'Run the enterprise auth/telemetry gateway'
 complete -c claude -n __fish_use_subcommand -a import -d 'Import config from another AI coding agent'
 complete -c claude -n __fish_use_subcommand -a install -d 'Install Claude Code native build'
+complete -c claude -n __fish_use_subcommand -a logs -d "Print a background session's recent terminal output"
 complete -c claude -n __fish_use_subcommand -a mcp -d 'Configure and manage MCP servers'
 complete -c claude -n __fish_use_subcommand -a plugin -d 'Manage plugins'
 complete -c claude -n __fish_use_subcommand -a project -d 'Manage project state'
 complete -c claude -n __fish_use_subcommand -a remote-control -d 'Start a Remote Control session'
+complete -c claude -n __fish_use_subcommand -a respawn -d 'Restart a background session on the current Claude Code version'
+complete -c claude -n __fish_use_subcommand -a rm -d 'Delete a background session'
 complete -c claude -n __fish_use_subcommand -a self-hosted-runner -d 'Run cloud sessions on this machine (Team/Enterprise)'
 complete -c claude -n __fish_use_subcommand -a setup-token -d 'Set up a long-lived authentication token'
+complete -c claude -n __fish_use_subcommand -a stop -d 'Stop a background session'
 complete -c claude -n __fish_use_subcommand -a ultrareview -d 'Cloud-hosted multi-agent code review'
 complete -c claude -n __fish_use_subcommand -a update -d 'Check for updates and install'
 
@@ -103,6 +108,9 @@ complete -c claude -n __claude_no_subcommand -l include-hook-events -d 'Include 
 complete -c claude -n __claude_no_subcommand -l forward-subagent-text -d 'Include subagent text and thinking (stream-json)'
 complete -c claude -n __claude_no_subcommand -l replay-user-messages -d 'Re-emit stdin user messages on stdout'
 complete -c claude -n __claude_no_subcommand -l exclude-dynamic-system-prompt-sections -d 'Move per-machine sections out of the system prompt'
+complete -c claude -n __claude_no_subcommand -l restricted -d 'Remove command-running tools and confine file tools'
+complete -c claude -n __claude_no_subcommand -l cloud -d 'Create or attach to a cloud session'
+complete -c claude -n __claude_no_subcommand -l teleport -d 'Resume a teleport session'
 
 # Value-taking top-level flags
 complete -c claude -n __claude_no_subcommand -l model -x -a 'fable opus sonnet haiku' -d 'Model for the current session'
@@ -132,6 +140,10 @@ complete -c claude -n __claude_no_subcommand -l max-budget-usd -x -d 'Maximum do
 complete -c claude -n __claude_no_subcommand -s n -l name -x -d 'Display name for this session'
 complete -c claude -n __claude_no_subcommand -l session-id -x -d 'Use a specific session UUID'
 complete -c claude -n __claude_no_subcommand -l remote-control-session-name-prefix -x -d 'Prefix for Remote Control session names'
+complete -c claude -n __claude_no_subcommand -l permission-prompts -x -a 'host none' -d 'Who answers permission prompts (print mode)'
+complete -c claude -n __claude_no_subcommand -l autocompact -x -a auto -d 'Auto-compact window size (auto or 100k-1M tokens)'
+complete -c claude -n __claude_no_subcommand -l system-prompt-snapshot -x -a 'on off' -d 'Record the system prompt once and reuse it verbatim'
+complete -c claude -n __claude_no_subcommand -l environment -x -d 'Run a new cloud session on a self-hosted environment'
 
 # Project-aware --resume: suggest resumable sessions for this directory
 complete -c claude -x -k -n __fish_use_subcommand -s r -l resume -d 'Resume a conversation by session ID' -a '(__claude_resume_sessions)'
@@ -180,6 +192,10 @@ complete -c claude -n "__fish_seen_subcommand_from plugin plugins; and not __fis
 complete -c claude -n "__fish_seen_subcommand_from plugin plugins; and not __fish_seen_subcommand_from $plugin_cmds" -a update -d 'Update a plugin to the latest version'
 complete -c claude -n "__fish_seen_subcommand_from plugin plugins; and not __fish_seen_subcommand_from $plugin_cmds" -a validate -d 'Validate a plugin or marketplace manifest'
 
+# plugin validate
+complete -c claude -n '__fish_seen_subcommand_from validate' -l json -d 'Output the validation report as JSON'
+complete -c claude -n '__fish_seen_subcommand_from validate' -l strict -d 'Treat warnings as errors'
+
 # plugin marketplace
 set -l marketplace_cmds add list remove rm update
 complete -c claude -n "__fish_seen_subcommand_from marketplace; and not __fish_seen_subcommand_from $marketplace_cmds" -a add -d 'Add a marketplace from a URL, path, or GitHub repo'
@@ -192,6 +208,9 @@ complete -c claude -n '__fish_seen_subcommand_from project; and not __fish_seen_
 
 # remote-control
 complete -c claude -n '__fish_seen_subcommand_from remote-control' -l continue -d 'Resume the most recent Remote Control session'
+
+# respawn
+complete -c claude -n '__fish_seen_subcommand_from respawn' -l all -d 'Restart all background sessions'
 
 # install targets
 complete -c claude -n '__fish_seen_subcommand_from install' -a 'stable latest' -d 'Version to install'
