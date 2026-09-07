@@ -1,11 +1,15 @@
 #!/usr/bin/env bash
-# Claude Code hook: remember how many background subagents a session has in
-# flight, so bell.sh can hold the idle page while they run.
+# Claude Code hook: remember how much background work (subagents and shell
+# commands) a session has in flight, so bell.sh can hold the idle page while
+# it runs.
 #
 # Reads the hook JSON payload on stdin. The Stop payload carries
 # background_tasks, the task registry's own view of in-flight work; the number
-# of entries typed "subagent" goes to a per-session state file that bell.sh
-# reads before paging. The registry drops killed agents too, which
+# of entries typed "subagent" or "shell" goes to a per-session state file that
+# bell.sh reads before paging. Both kinds wake the main thread when they
+# finish, so the user has nothing to act on until then. A long-lived shell
+# command (a dev server started in the background) holds the page for as long
+# as it runs. The registry drops killed agents too, which
 # SubagentStart/SubagentStop pairs do not (SubagentStop never fires for an
 # agent stopped via TaskStop or session exit). UserPromptSubmit clears the
 # file, covering turns interrupted before their Stop hook - no Stop fires
@@ -20,13 +24,14 @@ usage() {
 Usage: agents-in-flight.sh --event <stop|prompt|end>
 
 Claude Code hook script. Reads the hook JSON payload on stdin and maintains
-a per-session count of background subagents under
+a per-session count of background subagents and shell commands under
 ${XDG_STATE_HOME:-~/.local/state}/claude-pager/<session_id>.
 
 Options:
   --event <kind>   Hook event kind. Required. One of:
-                     stop     count "subagent" entries in .background_tasks
-                              and write the count (wire to Stop)
+                     stop     count "subagent" and "shell" entries in
+                              .background_tasks and write the count
+                              (wire to Stop)
                      prompt   clear the count (wire to UserPromptSubmit)
                      end      remove the state file (wire to SessionEnd)
   -h, --help       Show this help and exit.
@@ -85,7 +90,7 @@ STATE_FILE="$STATE_DIR/$SESSION_ID"
 case "$EVENT" in
   stop)
     COUNT="$(printf '%s' "$PAYLOAD" \
-      | jq -r '[.background_tasks[]? | select(.type == "subagent")] | length' 2>/dev/null)"
+      | jq -r '[.background_tasks[]? | select(.type == "subagent" or .type == "shell")] | length' 2>/dev/null)"
     [[ "$COUNT" =~ ^[0-9]+$ ]] || exit 0
     mkdir -p "$STATE_DIR" 2>/dev/null && printf '%s\n' "$COUNT" > "$STATE_FILE" 2>/dev/null
     # Sessions that die without SessionEnd leave their file behind.
