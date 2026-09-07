@@ -90,8 +90,10 @@ repo and every overlay found in step 1. Under each repo's `dot-config/`:
 
 - `claude/settings.json` - the `env` block, `hooks`, `statusLine`,
   `enabledPlugins`, `extraKnownMarketplaces`, permissions/sandbox.
-- `claude/hooks/bell.sh` and `claude/statusline.sh` - these parse hook and
-  status-line JSON payloads, so payload-schema changes can break them.
+- `claude/hooks/bell.sh`, `claude/hooks/agents-in-flight.sh`, and
+  `claude/statusline.sh` - these parse hook and status-line JSON payloads
+  (`agents-in-flight.sh` reads `background_tasks` from the Stop payload), so
+  payload-schema changes can break them.
 - `fish/functions/claude.fish` and `fish/completions/claude.fish` - CLI flags,
   subcommands, and session-file schema.
 - `fish/conf.d/env.fish` - `CLAUDE_CONFIG_DIR` and related exports.

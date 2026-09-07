@@ -4,7 +4,9 @@
 # Reads the hook JSON payload on stdin and pages the user with a macOS
 # notification (via the Pager agent) naming the tmux session/window where
 # Claude is waiting, suppressed when that window is already the current window
-# of an attached session. Also emits a terminal BEL via the terminalSequence hook
+# of an attached session, and (idle pages only) while the session still has
+# background subagents running - agents-in-flight.sh tracks those from the
+# Stop hook. Also emits a terminal BEL via the terminalSequence hook
 # field, purely so Ghostty bounces the Dock while unfocused (bell-features
 # `attention`); tmux forwards bells to attached clients out of the box
 # (monitor-bell on / bell-action any are the defaults), so the BEL needs no
@@ -76,6 +78,23 @@ summarize() {
     | timeout 10 afm-summarize --max-chars 150 2>/dev/null \
     | jq -Rrs 'gsub("\\s+"; " ") | .[0:150]'
 }
+
+# Hold the idle page while this session has background subagents in flight.
+# Claude Code wakes the main thread when they finish, so the user has nothing
+# to act on yet, and the page after that wake-up carries the result.
+# agents-in-flight.sh (Stop hook) keeps the count in a per-session file. A
+# missing file means none. The BEL is skipped as well, because the Dock
+# bounce would be the same false alarm.
+if [[ "$EVENT" == "idle" ]]; then
+  SESSION_ID="$(printf '%s' "$PAYLOAD" | jq -r '.session_id // empty')"
+  STATE_FILE="${XDG_STATE_HOME:-$HOME/.local/state}/claude-pager/$SESSION_ID"
+  if [[ -n "$SESSION_ID" && -f "$STATE_FILE" ]]; then
+    IN_FLIGHT="$(head -n 1 "$STATE_FILE" 2>/dev/null || true)"
+    if [[ "$IN_FLIGHT" =~ ^[0-9]+$ ]] && (( IN_FLIGHT > 0 )); then
+      exit 0
+    fi
+  fi
+fi
 
 # For idle pages, prefer Claude's last reply over the generic "waiting for
 # your input" message - with several sessions running, it tells which one is
