@@ -83,11 +83,9 @@ cask "pszypowicz/tap/mic-guard", trusted: true
 cask "pszypowicz/tap/pager", trusted: true
 # cask "ghostty"   # disabled while dogfooding the ghostty-personal fork build below
 cask "pszypowicz/tap/ghostty-personal", trusted: true
-cask "google-chrome"
 cask "pszypowicz/tap/sequester", trusted: true
 cask "sf-symbols"
 cask "sublime-text"
-cask "visual-studio-code"
 cask "vlc"
 cask "warrensbox/tap/tfswitch", trusted: true
 go "github.com/golangci/golangci-lint/v2/cmd/golangci-lint"
