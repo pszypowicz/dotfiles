@@ -24,7 +24,7 @@ fi
 
 # The payload's model object always reflects the ACTIVE model, including after
 # a mid-session switch. Publish it as a pane-scoped user option; the
-# claude.fish wrapper's automatic-rename-format surfaces it in the window name,
+# automatic-rename-format in tmux.conf surfaces it in the window name,
 # which set-titles carries into the terminal title. The PostModelSwitch hook in
 # settings.json pushes the raw model ID the moment a switch happens; this
 # refresh then replaces it with the display name.

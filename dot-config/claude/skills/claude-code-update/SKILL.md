@@ -94,8 +94,8 @@ repo and every overlay found in step 1. Under each repo's `dot-config/`:
   `claude/statusline.sh` - these parse hook and status-line JSON payloads
   (`agents-in-flight.sh` reads `background_tasks` from the Stop payload), so
   payload-schema changes can break them.
-- `fish/functions/claude.fish` - the tmux window-rename wrapper; it relies on
-  the pane title Claude Code sets via OSC 2 and passes every flag through.
+- `tmux/tmux.conf` - the `automatic-rename-format` block; it relies on the pane
+  title Claude Code sets via OSC 2 and on `@claude_model` from the statusline.
 - `fish/functions/__claude_sessions.fish`, `fish/functions/__claude_project_dirs.fish`,
   and `claude/scripts/claude-session-*.sh` - the `,cr` and `,cs` pickers; they
   parse the session-file schema and the project-dir naming.
@@ -114,7 +114,7 @@ For every non-trivial changelog bullet, classify it and decide if it matters her
 | New/renamed **env var**                | Is it in the `settings.json` `env` block already? Would setting it help (or does the user's stance - e.g. telemetry off, updates off - mean skip)? |
 | New/changed **settings key**           | Belongs in `settings.json`. Does the user have an equivalent? Is the default fine?                                                                 |
 | New/changed **hook event or payload**  | Does `bell.sh` / `statusline.sh` rely on the old shape? Could a new event improve them?                                                            |
-| New/changed **CLI flag or subcommand** | Does the `claude.fish` wrapper need to learn it?                                                                                                   |
+| New/changed **CLI flag or subcommand** | Do the `,cr` / `,cs` pickers pass it? They only call `claude --resume`.                                                                            |
 | New **feature**                        | Could a hook, the statusline, or a completion now exploit it?                                                                                      |
 | Bugfix / internal                      | Informational - no action.                                                                                                                         |
 
