@@ -19,6 +19,9 @@ fi
 unset target
 
 # History: shared across sessions, deduplicated, and stored under XDG state.
+# HISTFILE is set here and not in .zshenv because /etc/zshrc, which macOS
+# reads in between, overrides it with a path under ZDOTDIR.
+HISTFILE="$XDG_STATE_HOME/zsh/history"
 mkdir -p "${HISTFILE:h}"
 HISTSIZE=100000
 SAVEHIST=100000
