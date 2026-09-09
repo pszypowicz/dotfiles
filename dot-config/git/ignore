@@ -16,3 +16,11 @@ CLAUDE.local.md
 # never pushed to any repo.
 .superpowers/
 docs/superpowers/
+
+# Shell history is never repo content, wherever a stow layout or a stray
+# HISTFILE could place it.
+.zsh_history
+.zsh_sessions/
+.bash_history
+fish_history
+**/zsh/history
