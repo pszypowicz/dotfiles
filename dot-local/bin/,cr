@@ -144,4 +144,12 @@ choice=$(printf '%s\n' "$rows" \
 [[ -n "$choice" ]] || exit 0
 
 file=$(printf '%s\n' "$choice" | cut -f2)
-exec claude --resume "$(basename "$file" .jsonl)"
+# Claude Code sends its terminal queries before it enters raw mode, and a
+# large transcript load stretches that window; with echo on, tmux's replies
+# show up as ^[ sequences above the UI. Claude Code restores the tty to the
+# state it found, so echo is turned back on here, also on a signal.
+if [[ -t 0 ]]; then
+    stty -echo
+    trap 'stty echo' EXIT
+fi
+claude --resume "$(basename "$file" .jsonl)"
