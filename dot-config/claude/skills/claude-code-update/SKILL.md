@@ -99,7 +99,7 @@ repo and every overlay found in step 1. Under each repo's `dot-config/`:
 - the repo's `dot-local/bin/,cr` and `dot-local/bin/claude-session-preview` -
   the session picker; they parse the session-file schema and the project-dir
   naming.
-- `zsh/.zshenv` - `CLAUDE_CONFIG_DIR` and related exports.
+- `zsh/dot-zshenv` - `CLAUDE_CONFIG_DIR` and related exports.
 - the repo's `bootstrap` - the `npm install -g @anthropic-ai/claude-code@X.Y.Z`
   line; its exact pin is the last-analyzed marker this skill reads and bumps.
 - an overlay's `claude/CLAUDE.private.md` or `claude/commands/` only when a

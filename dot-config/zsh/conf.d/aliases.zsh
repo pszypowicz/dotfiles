@@ -6,4 +6,4 @@ alias la='ls -a'
 alias lla='ls -la'
 alias lt='ls --tree'
 
-alias reload='exec zsh'
+alias reload='exec zsh -l'

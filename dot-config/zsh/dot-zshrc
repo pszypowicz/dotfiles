@@ -16,6 +16,7 @@ if [[ -z "$TMUX" && "$TERM_PROGRAM" == ghostty ]] && command -v tmux >/dev/null 
         exec tmux new-session -s scratch -c "$HOME"
     fi
 fi
+unset target
 
 # History: shared across sessions, deduplicated, and stored under XDG state.
 mkdir -p "${HISTFILE:h}"
@@ -34,6 +35,15 @@ compinit -d "$XDG_CACHE_HOME/zsh/zcompdump"
 bindkey -v
 KEYTIMEOUT=1
 
+# Home, End, and Delete are undefined in the stock vi keymaps.
+zmodload zsh/terminfo
+for keymap in viins vicmd; do
+    for cap widget in khome beginning-of-line kend end-of-line kdch1 delete-char; do
+        [[ -n "${terminfo[$cap]}" ]] && bindkey -M "$keymap" "${terminfo[$cap]}" "$widget"
+    done
+done
+unset keymap cap widget
+
 eval "$(starship init zsh)"
 # fzf binds into the vi keymaps, so it must come after bindkey -v.
 source <(fzf --zsh)
@@ -44,6 +54,7 @@ source "$HOMEBREW_PREFIX/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
 for f in "$ZDOTDIR"/conf.d/*.zsh(N); do
     source "$f"
 done
+unset f
 
 # Syntax highlighting must be sourced last.
 source "$HOMEBREW_PREFIX/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"

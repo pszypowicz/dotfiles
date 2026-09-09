@@ -122,6 +122,7 @@ $all && scope_note='in any project'
 rows=$(list_sessions)
 [[ -n "$rows" ]] || die "no resumable sessions $scope_note"
 
+# The preview helper is resolved through PATH by the shell fzf spawns for it.
 # Align the list into columns: pad each title to the longest (capped at 45),
 # then a dimmed date. The path rides along as a hidden second field for the
 # preview and the resume, and --nth=1 keeps it out of the search.

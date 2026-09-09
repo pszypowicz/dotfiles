@@ -18,7 +18,8 @@ also filter what `Ctrl+T` and `Alt+C` see.
 ## Autosuggestions
 
 `zsh-autosuggestions` shows the best history match in gray after the
-cursor. `Right arrow` or `End` accepts the whole suggestion.
+cursor. `Right arrow` or `End` accepts the whole suggestion. Home, End, and
+Delete work in insert mode.
 
 ## Vi mode
 
