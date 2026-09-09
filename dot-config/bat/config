@@ -1,0 +1,4 @@
+# Follow the macOS appearance, the same way the Ghostty theme does.
+--theme=auto:system
+--theme-light=GitHub
+--theme-dark="Monokai Extended"
