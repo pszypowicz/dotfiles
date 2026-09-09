@@ -8,11 +8,13 @@ export XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
 export XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
 
 # Move dotfiles out of ~/
+export GRADLE_USER_HOME="$XDG_DATA_HOME/gradle"
 export NPM_CONFIG_USERCONFIG="$XDG_CONFIG_HOME/npm/npmrc"
 export BUNDLE_USER_HOME="$XDG_DATA_HOME/bundler"
 export BUNDLE_USER_CONFIG="$XDG_CONFIG_HOME/bundler"
 export BUNDLE_USER_CACHE="$XDG_CACHE_HOME/bundler"
 export LESSHISTFILE="$XDG_STATE_HOME/less/history"
+export ANDROID_USER_HOME="$XDG_DATA_HOME/android"
 export DOTNET_CLI_HOME="$XDG_DATA_HOME"
 # The dotnet formula keeps its root outside PATH; hosting tools such as
 # pwsh and IDE extensions locate the SDK through this variable.
