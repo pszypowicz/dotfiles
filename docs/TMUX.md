@@ -16,7 +16,7 @@ unless the Mac reboots or you explicitly kill the session.
   `prefix + %` splits to the right (tmux defaults).
 
 The titlebar shows `session / window` - workspace plus what's currently
-running in the focused pane (`nvim`, `fish`, etc.). The status-left
+running in the focused pane (`nvim`, `zsh`, etc.). The status-left
 shows just the session name as a redundant anchor.
 
 ## Key bindings
@@ -28,7 +28,7 @@ shows just the session name as a redundant anchor.
 | `prefix + f`       | **Sessionizer.** fzf popup of project dirs, pick one to switch-or-create.                                                                  |
 | `prefix + s`       | Tree view of all sessions and their windows. Navigate with hjkl, enter to switch. Also on a two-finger double-tap (smart zoom) in Ghostty. |
 | `prefix + L`       | Jump to the _previous_ session - tmux's `cd -`.                                                                                            |
-| `prefix + d`       | Detach. With `exec tmux` in fish, this also closes Ghostty. The session keeps running.                                                     |
+| `prefix + d`       | Detach. With `exec tmux` in `.zshrc`, this also closes Ghostty. The session keeps running.                                                 |
 | `prefix + $`       | Rename the current session.                                                                                                                |
 | `prefix + ,`       | Rename the current window.                                                                                                                 |
 | `prefix + S`       | Stash current window into a `bg` session (background tunnels etc).                                                                         |
@@ -42,14 +42,14 @@ shows just the session name as a redundant anchor.
 ### Cold start
 
 1. Boot Mac, open Ghostty.
-2. Fish runs, sees no `$TMUX` and a fresh tmux server, creates a `scratch`
+2. zsh runs, sees no `$TMUX` and a fresh tmux server, creates a `scratch`
    session at `~` and attaches.
 3. You're in. Titlebar reads `scratch`.
 
 ### Switch to a project
 
 1. `prefix + f`.
-2. fzf popup shows all dirs from `__fzf_jump_targets`: every git repo
+2. fzf popup shows all dirs from `fzf-jump-targets`: every git repo
    under `~/Developer`, `_scratch` playgrounds, host containers, plus `~/`
    and its visible direct children (Downloads, Documents, ...) - visited
    dirs first, in zoxide frecency order.
@@ -120,9 +120,9 @@ session is already visible in some window, it starts a fresh session at
 
 ## Where this lives
 
-- `dot-config/fish/config.fish` - the attach logic on Ghostty start.
-- `dot-config/fish/functions/__tmux_sessionizer.fish` - the fzf picker.
-- `dot-config/fish/functions/__fzf_jump_targets.fish` - the candidate list,
-  shared with `Alt+C` directory jump.
+- `dot-config/zsh/dot-zshrc` - the attach logic on Ghostty start.
+- `dot-local/bin/tmux-sessionizer` - the fzf picker.
+- `dot-local/bin/fzf-jump-targets` - the candidate list, shared with `Alt+C`
+  directory jump.
 - `dot-config/tmux/tmux.conf` - the `prefix + f` binding, titlebar format,
   status-left.

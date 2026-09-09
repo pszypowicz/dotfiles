@@ -49,7 +49,7 @@ ln -s ../../Developer/github.com/pszypowicz/dotfiles/dot-config/claude/statuslin
 
 ## What's included
 
-**Shells:** Fish (primary, vi keybindings), Bash, Zsh
+**Shells:** Zsh (vi keybindings, autosuggestions, syntax highlighting)
 **Terminal:** Ghostty, Tmux, Starship prompt
 **Window management:** AeroSpace (tiling)
 **Status bar:** SketchyBar
@@ -63,15 +63,27 @@ Cheat sheets and usage notes live in [`docs/`](docs/) (stow-ignored):
 - [TMUX.md](docs/TMUX.md) - tmux session flow: sessions, windows, panes, and the Ghostty viewport model
 - [MACOS-SHORTCUTS.md](docs/MACOS-SHORTCUTS.md) - native window, desktop, and app-management shortcuts
 - [AEROSPACE-SHORTCUTS.md](docs/AEROSPACE-SHORTCUTS.md) - AeroSpace tiling bindings and service mode
-- [FISH-SHORTCUTS.md](docs/FISH-SHORTCUTS.md) - fzf pickers and vi mode at the fish prompt
+- [ZSH-SHORTCUTS.md](docs/ZSH-SHORTCUTS.md) - fzf pickers, autosuggestions, and vi mode at the zsh prompt
+
+## Login shell
+
+zsh, the macOS default, with its config under `~/.config/zsh`. The one-line `dot-zshenv` at home sets `ZDOTDIR` and hands off to `dot-config/zsh/`. A new Mac needs no change. A machine that was switched to another shell comes back with:
+
+```bash
+chsh -s /bin/zsh
+```
 
 ## XDG
 
-Configs live under `~/.config` via XDG env vars set in `env.fish` (and equivalents in bash/zsh). `env.fish` also relocates tool state directories (Gradle, npm, Android, bundler, etc.) out of `~/`.
+Configs live under `~/.config` via XDG env vars exported in `dot-config/zsh/dot-zshenv`, which every zsh reads, interactive or not. The same file relocates tool state directories (npm, bundler, Go, Terraform, etc.) out of `~/`.
+
+## Scripts
+
+`dot-local/bin` stows to `~/.local/bin`, which `.zprofile` puts first on `PATH`. Commands meant for typing start with `,` (`,cr`); helpers that only bindings and other scripts call have plain names (`fzf-jump-targets`, `fzf-alt-c-source`, `tmux-sessionizer`, `claude-session-preview`). Every script answers `--help`.
 
 ## fzf
 
-Fish sources fzf shell integration (`fzf --fish`). `env.fish` customizes it to use `fd` for file/directory discovery, `zoxide` results in `Alt+C`, and a tmux popup for the UI. The bindings are in [FISH-SHORTCUTS.md](docs/FISH-SHORTCUTS.md).
+`.zshrc` sources the fzf shell integration (`fzf --zsh`). `.zshenv` customizes it to use `fd` for file and directory discovery, the `fzf-alt-c-source` script for `Alt+C`, and a tmux popup for the UI. The bindings are in [ZSH-SHORTCUTS.md](docs/ZSH-SHORTCUTS.md).
 
 ## fd ignore
 
