@@ -6,7 +6,7 @@
 ./bootstrap
 ```
 
-Installs Homebrew (if missing), packages, stows dotfiles, installs npm globals, and writes macOS defaults. Safe to re-run.
+Installs Homebrew (if missing), packages, stows dotfiles, starts services, installs npm globals, and writes macOS defaults. Safe to re-run.
 
 Private overlays (work, personal) live in sibling `dotfiles-private-*` repos as plain stow packages with a `Brewfile.<name>` and an optional `npm-globals` list - all setup logic lives in this bootstrap. On a machine that needs an overlay, pass it by name:
 
@@ -26,7 +26,7 @@ The brew, stow, and npm steps then cover the overlay too: its Brewfile is bundle
 ./bootstrap brew npm      # refresh packages and npm globals
 ```
 
-Steps are `brew`, `stow`, `npm`, and `macos`; `./bootstrap --help` lists them.
+Steps are `brew`, `stow`, `services`, `npm`, and `macos`; `./bootstrap --help` lists them.
 
 ### Stow only
 

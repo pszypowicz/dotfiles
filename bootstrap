@@ -16,6 +16,14 @@ SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 PACKAGE_NAME=$(basename "$SCRIPT_DIR")
 STOW_DIR=$(dirname "$SCRIPT_DIR")
 
+# brew bundle installs the Brewfile's go entries into $GOPATH/bin, and
+# dot-config/zsh/dot-zshenv moves GOPATH under XDG_DATA_HOME. On a fresh
+# machine that file is not stowed yet when the brew step runs, so the same
+# value is set here; otherwise the tools land in ~/go/bin, which .zprofile
+# never puts on PATH.
+export XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+export GOPATH="$XDG_DATA_HOME/go"
+
 usage() {
     cat <<'EOF'
 Usage: bootstrap [--overlay NAME] [STEP ...]
@@ -35,14 +43,16 @@ file (one per line, # comments allowed) are installed. Overlay parts that
 do not exist are skipped with a notice.
 
 Steps:
-  brew    Install Homebrew if missing, then install packages from the
-          Brewfile (plus the overlay Brewfile).
-  stow    Symlink the dotfiles into the home directory with stow (plus the
-          overlay package), and install the overlay's Claude Code
-          managed-settings.json with sudo.
-  npm     Install the global npm tools, including the pinned claude-code
-          (plus the overlay npm-globals).
-  macos   Write the macOS preference defaults.
+  brew      Install Homebrew if missing, then install packages from the
+            Brewfile (plus the overlay Brewfile).
+  stow      Symlink the dotfiles into the home directory with stow (plus the
+            overlay package), and install the overlay's Claude Code
+            managed-settings.json with sudo.
+  services  Start the Homebrew services that expect the stowed config to be
+            in place (colima).
+  npm       Install the global npm tools, including the pinned claude-code
+            (plus the overlay npm-globals).
+  macos     Write the macOS preference defaults.
 
 Options:
   --overlay NAME   Apply the dotfiles-private-NAME overlay on top of the
@@ -115,14 +125,27 @@ step_stow() {
     fi
 }
 
+step_services() {
+    # Colima's first start adds an Include line to ~/.ssh/config and creates
+    # the file when it is missing. The stowed ssh config already carries that
+    # line, so the service starts after stow. Started from the Brewfile
+    # (start_service: true), it runs inside the brew step, and the plain file
+    # it leaves behind makes the stow step fail with a conflict.
+    echo "Starting services..."
+    brew services start colima
+}
+
 step_npm() {
     # claude-code is pinned to the exact version whose changelog was last reviewed
     # against these dotfiles; the claude-code-update skill bumps the pin on each
     # update, so a fresh machine gets the reviewed version rather than blind
     # @latest.
+    # The Brewfile's node formula provides npm. A missing npm means that
+    # formula is absent or unlinked (brew link node), and a silent skip here
+    # would leave the machine without claude-code.
     if ! command -v npm &>/dev/null; then
-        echo "Skipping npm globals: npm not found."
-        return
+        echo "npm not found on PATH: install or link the node formula, then re-run the npm step." >&2
+        exit 1
     fi
     echo "Installing npm globals..."
     # claude-code's postinstall places the native binary over a stub, and
@@ -163,7 +186,7 @@ step_macos() {
 
 # Parse arguments into the set of steps to run. No step names -> run all.
 OVERLAY=""
-run_brew=false run_stow=false run_npm=false run_macos=false
+run_brew=false run_stow=false run_services=false run_npm=false run_macos=false
 any_step=false
 
 while [[ $# -gt 0 ]]; do
@@ -174,10 +197,11 @@ while [[ $# -gt 0 ]]; do
             OVERLAY="$2"
             shift
             ;;
-        brew)  run_brew=true;  any_step=true ;;
-        stow)  run_stow=true;  any_step=true ;;
-        npm)   run_npm=true;   any_step=true ;;
-        macos) run_macos=true; any_step=true ;;
+        brew)     run_brew=true;     any_step=true ;;
+        stow)     run_stow=true;     any_step=true ;;
+        services) run_services=true; any_step=true ;;
+        npm)      run_npm=true;      any_step=true ;;
+        macos)    run_macos=true;    any_step=true ;;
         *) echo "unknown step: $1" >&2; usage >&2; exit 2 ;;
     esac
     shift
@@ -195,14 +219,16 @@ if [[ -n $OVERLAY ]]; then
 fi
 
 if [[ $any_step == false ]]; then
-    run_brew=true run_stow=true run_npm=true run_macos=true
+    run_brew=true run_stow=true run_services=true run_npm=true run_macos=true
 fi
 
 # Run selected steps in dependency order: brew provides the tools the later
-# steps rely on (stow, node/npm), so it always goes first.
-if $run_brew;  then step_brew;  fi
-if $run_stow;  then step_stow;  fi
-if $run_npm;   then step_npm;   fi
-if $run_macos; then step_macos; fi
+# steps rely on (stow, node/npm), so it always goes first, and services start
+# only once stow has put their config in place.
+if $run_brew;     then step_brew;     fi
+if $run_stow;     then step_stow;     fi
+if $run_services; then step_services; fi
+if $run_npm;      then step_npm;      fi
+if $run_macos;    then step_macos;    fi
 
 echo "Done."
