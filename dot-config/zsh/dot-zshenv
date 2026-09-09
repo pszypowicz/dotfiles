@@ -14,6 +14,9 @@ export BUNDLE_USER_CONFIG="$XDG_CONFIG_HOME/bundler"
 export BUNDLE_USER_CACHE="$XDG_CACHE_HOME/bundler"
 export LESSHISTFILE="$XDG_STATE_HOME/less/history"
 export DOTNET_CLI_HOME="$XDG_DATA_HOME"
+# The dotnet formula keeps its root outside PATH; hosting tools such as
+# pwsh and IDE extensions locate the SDK through this variable.
+[[ -d /opt/homebrew/opt/dotnet/libexec ]] && export DOTNET_ROOT="/opt/homebrew/opt/dotnet/libexec"
 export DOCKER_CONFIG="$XDG_CONFIG_HOME/docker"
 export MPLCONFIGDIR="$XDG_CONFIG_HOME/matplotlib"
 export NUGET_PACKAGES="$XDG_CACHE_HOME/nuget/packages"
