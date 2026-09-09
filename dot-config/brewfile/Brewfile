@@ -82,7 +82,6 @@ cask "pszypowicz/tap/pager", trusted: true
 # cask "ghostty"   # disabled while dogfooding the ghostty-personal fork build below
 cask "pszypowicz/tap/ghostty-personal", trusted: true
 cask "google-chrome"
-cask "microsoft-teams"
 cask "pszypowicz/tap/sequester", trusted: true
 cask "sf-symbols"
 cask "sublime-text"
