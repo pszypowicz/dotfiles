@@ -94,8 +94,11 @@ repo and every overlay found in step 1. Under each repo's `dot-config/`:
   `claude/statusline.sh` - these parse hook and status-line JSON payloads
   (`agents-in-flight.sh` reads `background_tasks` from the Stop payload), so
   payload-schema changes can break them.
-- `fish/functions/claude.fish` and `fish/completions/claude.fish` - CLI flags,
-  subcommands, and session-file schema.
+- `fish/functions/claude.fish` and `fish/completions/claude.fish` - CLI flags
+  and subcommands.
+- `fish/functions/__claude_sessions.fish`, `fish/functions/__claude_project_dirs.fish`,
+  and `claude/scripts/claude-session-*.sh` - the `,cr` and `,cs` pickers; they
+  parse the session-file schema and the project-dir naming.
 - `fish/conf.d/env.fish` - `CLAUDE_CONFIG_DIR` and related exports.
 - the repo's `bootstrap` - the `npm install -g @anthropic-ai/claude-code@X.Y.Z`
   line; its exact pin is the last-analyzed marker this skill reads and bumps.
