@@ -1,0 +1,9 @@
+# Login shells only. Runs after /etc/zprofile, so path_helper has already
+# assembled the system PATH and these prepends stay in front of it.
+eval "$(/opt/homebrew/bin/brew shellenv)"
+
+# Prepend in reverse priority order: ~/.local/bin goes last so its shims
+# shadow both brew and Go binaries.
+typeset -U path
+path=("$GOPATH/bin" "$HOME/bin" $path)
+path=("$HOME/.local/bin" $path)

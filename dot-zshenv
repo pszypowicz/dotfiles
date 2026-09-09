@@ -1,0 +1,5 @@
+# zsh reads this file from $HOME before anything else. ZDOTDIR set here moves
+# .zprofile, .zshrc, and .zlogin to ~/.config/zsh; the ZDOTDIR copy of .zshenv
+# is not read on its own, so source it explicitly.
+export ZDOTDIR="$HOME/.config/zsh"
+[[ -r "$ZDOTDIR/.zshenv" ]] && source "$ZDOTDIR/.zshenv"

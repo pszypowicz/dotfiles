@@ -1,0 +1,49 @@
+# Interactive shells only.
+
+# Ghostty windows are viewports onto tmux sessions: attach to the most
+# recently used session that no client is showing, and never mirror a
+# session already visible in another window. Other terminals, such as the
+# VS Code one, skip this.
+if [[ -z "$TMUX" && "$TERM_PROGRAM" == ghostty ]] && command -v tmux >/dev/null 2>&1; then
+    target=$(tmux list-sessions -f '#{==:#{session_attached},0}' \
+        -F '#{session_last_attached} #{session_name}' 2>/dev/null \
+        | sort -rn | awk 'NR == 1 { print $2 }')
+    if [[ -n "$target" ]]; then
+        exec tmux attach -t "=$target"
+    elif tmux has-session -t '=scratch' 2>/dev/null; then
+        exec tmux new-session -c "$HOME"
+    else
+        exec tmux new-session -s scratch -c "$HOME"
+    fi
+fi
+
+# History: shared across sessions, deduplicated, and stored under XDG state.
+mkdir -p "${HISTFILE:h}"
+HISTSIZE=100000
+SAVEHIST=100000
+setopt EXTENDED_HISTORY SHARE_HISTORY HIST_IGNORE_ALL_DUPS HIST_IGNORE_SPACE HIST_REDUCE_BLANKS
+
+# Completion, with the dump file under XDG cache.
+: "${HOMEBREW_PREFIX:=/opt/homebrew}"
+fpath=("$HOMEBREW_PREFIX/share/zsh/site-functions" $fpath)
+autoload -Uz compinit
+mkdir -p "$XDG_CACHE_HOME/zsh"
+compinit -d "$XDG_CACHE_HOME/zsh/zcompdump"
+
+# Vi keys at the prompt. KEYTIMEOUT=1 removes the delay after Esc.
+bindkey -v
+KEYTIMEOUT=1
+
+eval "$(starship init zsh)"
+# fzf binds into the vi keymaps, so it must come after bindkey -v.
+source <(fzf --zsh)
+eval "$(zoxide init zsh)"
+source "$HOMEBREW_PREFIX/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
+
+# Overlay hook: any overlay stows its shell config into conf.d.
+for f in "$ZDOTDIR"/conf.d/*.zsh(N); do
+    source "$f"
+done
+
+# Syntax highlighting must be sourced last.
+source "$HOMEBREW_PREFIX/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"

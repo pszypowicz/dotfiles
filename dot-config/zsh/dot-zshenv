@@ -1,16 +1,18 @@
+# Exports only. Every zsh reads this file, interactive or not, so keep it
+# free of PATH edits: on macOS, /etc/zprofile runs path_helper after this
+# file and reorders PATH. PATH lives in .zprofile for that reason.
+
 export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 export XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 export XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
 export XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
 
 # Move dotfiles out of ~/
-export GRADLE_USER_HOME="$XDG_DATA_HOME/gradle"
 export NPM_CONFIG_USERCONFIG="$XDG_CONFIG_HOME/npm/npmrc"
 export BUNDLE_USER_HOME="$XDG_DATA_HOME/bundler"
 export BUNDLE_USER_CONFIG="$XDG_CONFIG_HOME/bundler"
 export BUNDLE_USER_CACHE="$XDG_CACHE_HOME/bundler"
 export LESSHISTFILE="$XDG_STATE_HOME/less/history"
-export ANDROID_USER_HOME="$XDG_DATA_HOME/android"
 export DOTNET_CLI_HOME="$XDG_DATA_HOME"
 export DOCKER_CONFIG="$XDG_CONFIG_HOME/docker"
 export MPLCONFIGDIR="$XDG_CONFIG_HOME/matplotlib"
@@ -26,10 +28,21 @@ export KUBECONFIG="$XDG_CONFIG_HOME/kube/config"
 export KUBECACHEDIR="$XDG_CACHE_HOME/kube"
 export TF_CLI_CONFIG_FILE="$XDG_CONFIG_HOME/terraform/terraformrc"
 export TF_PLUGIN_CACHE_DIR="$XDG_CACHE_HOME/terraform/plugins"
+export TF_INSTALL_PATH="$XDG_DATA_HOME"
+export TF_BINARY_PATH="$HOME/bin/terraform"
 export CHECKPOINT_DISABLE=1
 export BICEP_CACHE_ROOT="$XDG_CACHE_HOME/bicep"
 export HOMEBREW_NO_ENV_HINTS=1
+export CLAUDE_CONFIG_DIR="$XDG_CONFIG_HOME/claude"
 
-export PATH="$GOPATH/bin:$PATH"
-# Prepended last so shims in ~/.local/bin shadow brew-installed binaries.
-export PATH="$HOME/.local/bin:$PATH"
+export EDITOR=vim
+export LESS='-RFiW -x2 --mouse --incsearch'
+
+# fzf: fd for discovery, a tmux popup for the UI, and the Alt-C candidates
+# from the fzf-alt-c-source script in ~/.local/bin.
+export FZF_DEFAULT_COMMAND='fd --type f'
+export FZF_DEFAULT_OPTS='--tmux bottom,80%,70%,border-native'
+export FZF_ALT_C_COMMAND=fzf-alt-c-source
+export FZF_ALT_C_OPTS='--preview "lsd --tree --depth 1 {}"'
+export FZF_CTRL_T_OPTS='--select-1 --exit-0 --preview "test -d {} && lsd --tree --depth 1 {} || bat --color=always --style=numbers {}"'
+export FZF_CTRL_R_OPTS='--layout=reverse --preview "echo {}" --preview-window down:3:hidden:wrap --bind "?:toggle-preview"'
