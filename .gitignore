@@ -7,20 +7,15 @@ dot-config/k9s
 dot-config/docker
 dot-config/matplotlib
 
-# Fish auto-managed
-dot-config/fish/fish_variables
-
 # Claude Code - track only settings.json, ignore everything else
 dot-config/claude/*
 !dot-config/claude/CLAUDE.md
-!dot-config/claude/container/
 !dot-config/claude/fetch-usage.sh
 !dot-config/claude/keybindings.json
 !dot-config/claude/settings.json
 !dot-config/claude/statusline.sh
 !dot-config/claude/theme/
 !dot-config/claude/hooks/
-!dot-config/claude/scripts/
 !dot-config/claude/skills/
 
 # Xcode artifacts
