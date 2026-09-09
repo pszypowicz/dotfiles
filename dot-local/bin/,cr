@@ -1,0 +1,146 @@
+#!/usr/bin/env bash
+#
+# ,cr - fuzzy-pick a Claude Code session to resume, with a transcript preview.
+#
+# Lists the resumable sessions of the current project, meaning the transcript
+# directory Claude Code keeps for $PWD, or of every project with --all. Live
+# sessions are skipped because resuming one is unsafe, and so are sessions
+# with no real conversation, because there is nothing to preview or resume.
+# The preview pane renders the transcript through claude-session-preview,
+# scrolled to its latest messages.
+set -euo pipefail
+
+PROGRAM=$(basename "$0")
+CLAUDE_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.config/claude}"
+
+usage() {
+    cat <<EOF
+$PROGRAM - pick a Claude Code session to resume, with a transcript preview.
+
+Usage:
+  $PROGRAM [--all]
+  $PROGRAM --help
+
+Options:
+  -a, --all    List sessions of every project, not only the current directory.
+  -h, --help   Show this help.
+
+Examples:
+  $PROGRAM          # sessions started in this directory
+  $PROGRAM --all    # sessions of every project
+EOF
+}
+
+die() {
+    echo "$PROGRAM: $1" >&2
+    exit "${2:-1}"
+}
+
+all=false
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -a | --all) all=true; shift ;;
+        -h | --help) usage; exit 0 ;;
+        *) usage >&2; die "unknown argument: $1" 2 ;;
+    esac
+done
+
+for tool in claude claude-session-preview fzf jq; do
+    command -v "$tool" >/dev/null 2>&1 || die "$tool not found on PATH"
+done
+
+# Transcript directories in scope. Claude Code names a project directory
+# after its cwd with every character outside [a-zA-Z0-9-] replaced by a dash.
+project_dirs() {
+    if $all; then
+        find "$CLAUDE_DIR/projects" -mindepth 1 -maxdepth 1 -type d 2>/dev/null || true
+    else
+        printf '%s/projects/%s\n' "$CLAUDE_DIR" "$(printf '%s' "$PWD" | sed 's/[^a-zA-Z0-9-]/-/g')"
+    fi
+}
+
+# Session ids of Claude Code processes that are still running.
+active_session_ids() {
+    local f pid
+    for f in "$CLAUDE_DIR"/sessions/*.json; do
+        [[ -f "$f" ]] || continue
+        pid=$(jq -r '.pid // empty' "$f" 2>/dev/null || true)
+        [[ "$pid" =~ ^[0-9]+$ ]] || continue
+        kill -0 "$pid" 2>/dev/null || continue
+        jq -r '.sessionId // empty' "$f" 2>/dev/null || true
+    done
+}
+
+# Title preference: user-set > model-generated > first typed prompt > slash
+# command name (skipping /clear and /compact) > session id. The typed filter
+# skips synthetic user lines, which carry "promptSource":null, so titles read
+# like real prompts.
+session_title() {
+    local f=$1 sid=$2 title
+    title=$(grep '"type":"custom-title"' "$f" 2>/dev/null | tail -1 \
+        | sed -nE 's/.*"customTitle":"([^"]*)".*/\1/p' || true)
+    [[ -n "$title" ]] || title=$(grep '"type":"ai-title"' "$f" 2>/dev/null | tail -1 \
+        | sed -nE 's/.*"aiTitle":"([^"]*)".*/\1/p' || true)
+    [[ -n "$title" ]] || title=$(grep -m1 '"promptSource":"typed"' "$f" 2>/dev/null \
+        | jq -r '.message.content
+            | if type == "array" then (map(select(.type == "text") | .text)[0] // "") else . end
+            | .[0:60] | gsub("[\t\n<>]"; " ") | gsub("  +"; " ") | ltrimstr(" ")' 2>/dev/null || true)
+    [[ -n "$title" ]] || title=$(grep -o '<command-name>/[^<]*</command-name>' "$f" 2>/dev/null \
+        | sed -E 's#<command-name>(/[^<]+)</command-name>#\1#' \
+        | grep -vE '^/(clear|compact)$' | head -1 || true)
+    printf '%s\n' "${title:-$sid}"
+}
+
+# Resumable sessions as title<TAB>date<TAB>path, newest first, at most 40.
+list_sessions() {
+    local -a files=()
+    local active dir f sid title
+    active=$(active_session_ids)
+    while IFS= read -r dir; do
+        [[ -d "$dir" ]] || continue
+        while IFS= read -r f; do
+            files+=("$f")
+        done < <(find "$dir" -maxdepth 1 -type f -name '*.jsonl' 2>/dev/null || true)
+    done < <(project_dirs)
+    [[ ${#files[@]} -gt 0 ]] || return 0
+
+    # shellcheck disable=SC2012 # files are already resolved paths from find, sorted here by mtime
+    while IFS= read -r f; do
+        sid=$(basename "$f" .jsonl)
+        grep -qxF "$sid" <<<"$active" && continue
+        # Skip sessions with no real conversation (bare startups, /clear only).
+        grep -q -m1 '"promptSource":"typed"' "$f" 2>/dev/null \
+            || grep -q -m1 '"type":"assistant"' "$f" 2>/dev/null \
+            || continue
+        title=$(session_title "$f" "$sid")
+        printf '%s\t%s\t%s\n' "$title" "$(date -r "$(stat -f %m "$f")" '+%b %d %H:%M')" "$f"
+    done < <(ls -t "${files[@]}" 2>/dev/null | head -40 || true)
+}
+
+scope_note='for this project (try: ,cr --all)'
+$all && scope_note='in any project'
+rows=$(list_sessions)
+[[ -n "$rows" ]] || die "no resumable sessions $scope_note"
+
+# Align the list into columns: pad each title to the longest (capped at 45),
+# then a dimmed date. The path rides along as a hidden second field for the
+# preview and the resume, and --nth=1 keeps it out of the search.
+#
+# The preview opens scrolled to the bottom, because a session is remembered
+# by its last messages. `follow` tails the output, and the focus bind forces
+# the end even on the focused row, which sidesteps the fzf quirk where follow
+# plus wrap can stop mid-content on long wrapped lines.
+choice=$(printf '%s\n' "$rows" \
+    | awk -F '\t' '
+        { ttl[NR] = $1; dt[NR] = $2; pth[NR] = $3; n = length($1); if (n > 45) n = 45; if (n > w) w = n }
+        END { for (i = 1; i <= NR; i++) printf "%-*.*s  \033[2m%s\033[0m\t%s\n", w, w, ttl[i], dt[i], pth[i] }
+      ' \
+    | fzf --ansi --reverse --prompt='session> ' \
+        --delimiter=$'\t' --with-nth=1 --nth=1 \
+        --bind 'focus:preview-bottom' \
+        --preview='claude-session-preview {2}' \
+        --preview-window='right,60%,wrap,follow' || true)
+[[ -n "$choice" ]] || exit 0
+
+file=$(printf '%s\n' "$choice" | cut -f2)
+exec claude --resume "$(basename "$file" .jsonl)"

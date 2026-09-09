@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+#
+# fzf-alt-c-source - candidates for fzf's Alt-C directory jump.
+#
+# From ~: the curated jump targets, so the most recently visited directories
+# sit right under the prompt for arrow-key selection. Anywhere else: zoxide
+# frecency plus fd's walk rooted at the cwd, so Alt-C serves both "jump
+# within this project" and "jump to another project without going home
+# first". FZF_ALT_C_COMMAND in .zshenv names this script.
+set -euo pipefail
+
+PROGRAM=$(basename "$0")
+
+usage() {
+    cat <<EOF
+$PROGRAM - print Alt-C directory candidates for the current directory.
+
+Usage:
+  $PROGRAM
+  $PROGRAM --help
+
+Options:
+  -h, --help   Show this help.
+
+Example:
+  FZF_ALT_C_COMMAND=$PROGRAM
+EOF
+}
+
+die() {
+    echo "$PROGRAM: $1" >&2
+    exit "${2:-1}"
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -h | --help) usage; exit 0 ;;
+        *) usage >&2; die "unknown argument: $1" 2 ;;
+    esac
+done
+
+for tool in fd fzf-jump-targets zoxide; do
+    command -v "$tool" >/dev/null 2>&1 || die "$tool not found on PATH"
+done
+
+if [[ "$PWD" == "$HOME" ]]; then
+    exec fzf-jump-targets
+fi
+
+{
+    zoxide query --list 2>/dev/null || true
+    fd --type d
+} | awk '!seen[$0]++'

@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+#
+# fzf-jump-targets - the curated list of directories worth jumping to, for
+# Alt-C at the prompt and for the tmux sessionizer.
+#
+# Candidates:
+#   - Every git repository under ~/Developer, found by a .git entry down to
+#     depth 5, which covers the deepest clone layout
+#     (dev.azure.com/<org>/<project>/<repo>). The depth cap keeps the walk
+#     out of repo contents; a repo nested deeper than that needs the cap
+#     raised before it shows up.
+#   - Top-level directories inside ~/Developer/_scratch.
+#   - Container directories: the children of ~/Developer and the owner, org,
+#     and project groupings under each host. _scratch descendants are
+#     excluded from this pass.
+#   - ~ itself and its visible children. Hidden directories are excluded:
+#     fd skips them without --hidden, and the membership filter below drops
+#     any that zoxide surfaces.
+#
+# Output order: visited candidates first, in zoxide frecency order, then the
+# unvisited ones in fd discovery order. zoxide's --base-dir restricts its
+# list to ~, and the membership check against the fd set drops entries that
+# are not jump targets, such as hidden home directories and subdirectories
+# inside a repo.
+set -euo pipefail
+
+PROGRAM=$(basename "$0")
+
+usage() {
+    cat <<EOF
+$PROGRAM - print the curated list of jump-target directories, one per line.
+
+Usage:
+  $PROGRAM
+  $PROGRAM --help
+
+Options:
+  -h, --help   Show this help.
+
+Example:
+  $PROGRAM | fzf
+EOF
+}
+
+die() {
+    echo "$PROGRAM: $1" >&2
+    exit "${2:-1}"
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -h | --help) usage; exit 0 ;;
+        *) usage >&2; die "unknown argument: $1" 2 ;;
+    esac
+done
+
+for tool in fd zoxide; do
+    command -v "$tool" >/dev/null 2>&1 || die "$tool not found on PATH"
+done
+
+dev="$HOME/Developer"
+
+awk '
+    # Normalize: strip a trailing slash so fd (which emits one with --type d)
+    # and zoxide and fd --format {//} (which do not) compare as one set.
+    { sub(/\/$/, "") }
+
+    # First file: the authoritative candidate set from fd. Keep discovery
+    # order and dedupe (a scratch subdir that is itself a repo appears twice).
+    NR == FNR {
+        if (!($0 in candidate)) {
+            candidate[$0] = 1
+            order[++cn] = $0
+        }
+        next
+    }
+
+    # Second file: the zoxide frecency list, most frecent first. Keep only
+    # entries that are candidates.
+    ($0 in candidate) && !($0 in seen) {
+        seen[$0] = 1
+        zlist[++zn] = $0
+    }
+
+    END {
+        for (i = 1; i <= zn; i++) print zlist[i]
+        for (i = 1; i <= cn; i++)
+            if (!(order[i] in seen)) print order[i]
+    }
+' \
+    <(
+        set +e
+        fd --type d --hidden --prune --max-depth 5 '^\.git$' "$dev" --format '{//}'
+        fd --type d --max-depth 1 . "$dev/_scratch" 2>/dev/null
+        fd --type d --max-depth 1 . "$dev"
+        fd --type d --min-depth 2 --max-depth 3 --exclude _scratch . "$dev"
+        echo "$HOME"
+        fd --type d --max-depth 1 . "$HOME"
+    ) \
+    <(zoxide query --list --base-dir "$HOME" 2>/dev/null || true)

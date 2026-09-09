@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+#
+# tmux-sessionizer - fuzzy-pick a jump target and switch to, or create, a
+# tmux session named after its basename, with the cwd set to that directory.
+#
+# Always sources from fzf-jump-targets regardless of the cwd, so sessions are
+# scoped to real projects rather than whatever subdirectory tmux was launched
+# from. Bound in tmux.conf as prefix + f through run-shell, which launches
+# this outside any interactive shell; the fzf popup geometry is therefore
+# passed here instead of read from FZF_DEFAULT_OPTS. Also runs outside tmux,
+# where fzf ignores the popup flag and the script attaches instead of
+# switching.
+set -euo pipefail
+
+PROGRAM=$(basename "$0")
+
+usage() {
+    cat <<EOF
+$PROGRAM - pick a project directory and switch to (or create) its tmux session.
+
+Usage:
+  $PROGRAM
+  $PROGRAM --help
+
+Options:
+  -h, --help   Show this help.
+
+Example:
+  bind f run-shell -b "~/.local/bin/$PROGRAM"    # in tmux.conf
+EOF
+}
+
+die() {
+    echo "$PROGRAM: $1" >&2
+    exit "${2:-1}"
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -h | --help) usage; exit 0 ;;
+        *) usage >&2; die "unknown argument: $1" 2 ;;
+    esac
+done
+
+for tool in fzf fzf-jump-targets tmux; do
+    command -v "$tool" >/dev/null 2>&1 || die "$tool not found on PATH"
+done
+
+# Show ~ instead of the home path so the username does not match every line;
+# expand it back before tmux uses the pick, since -c takes a literal path.
+choice=$(fzf-jump-targets \
+    | sed "s|^$HOME|~|" \
+    | fzf --tmux 'bottom,80%,70%,border-native' --reverse --prompt='session> ' || true)
+[[ -n "$choice" ]] || exit 0
+choice="${choice/#\~/$HOME}"
+
+name=$(basename "$choice" | tr '.: ' '___')
+
+# =name is an exact match. A bare name would also match any session whose
+# name merely starts with it, such as dotfiles-private-work for dotfiles.
+tmux has-session -t "=$name" 2>/dev/null || tmux new-session -ds "$name" -c "$choice"
+
+if [[ -n "${TMUX:-}" ]]; then
+    tmux switch-client -t "=$name"
+else
+    tmux attach -t "=$name"
+fi
