@@ -2,6 +2,7 @@
 .envrc
 .direnv
 .venv
+__pycache__/
 .terraform
 
 # Operator-local working area in any repo. Convention: anything inside
