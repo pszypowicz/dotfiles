@@ -67,7 +67,7 @@ Cheat sheets and usage notes live in [`docs/`](docs/) (stow-ignored):
 
 ## Login shell
 
-zsh, the macOS default, with its config under `~/.config/zsh`. The one-line `dot-zshenv` at home sets `ZDOTDIR` and hands off to `dot-config/zsh/`. A new Mac needs no change.
+zsh, the macOS default, with its config under `~/.config/zsh`. The one-line `dot-zshenv` at home sets `ZDOTDIR` and hands off to `dot-config/zsh/`.
 
 ## XDG
 
