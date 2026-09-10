@@ -93,6 +93,48 @@ step_brew() {
     fi
 }
 
+# stow only unlinks a target whose file still exists in the package, because
+# unstow works by walking the package tree. A file deleted from the repo
+# therefore leaves a broken symlink in the home directory for good, and stow
+# never mentions it again. This sweeps those up after a stow run.
+#
+# A link is only removed when it is broken AND its target path points back
+# into the stow directory, so a broken link owned by some other tool stays put.
+#
+# The scan roots come from the package's own top level, which keeps the sweep
+# to a few small directories instead of a walk of $HOME. The gap: a top-level
+# directory that a package drops entirely is no longer named by anything, so
+# nothing sends the sweep there.
+prune_stale_links() {
+    local pkg_dir=$1
+    local rel_stow=${STOW_DIR#"$HOME"/}
+    local entry name target link removed=0
+
+    if [[ $rel_stow == "$STOW_DIR" ]]; then
+        echo "Stow directory sits outside \$HOME, skipping the stale-link sweep." >&2
+        return 0
+    fi
+
+    for entry in "$pkg_dir"/*; do
+        name=$(basename "$entry")
+        target="$HOME/${name/#dot-/.}"
+        [[ -e $target || -L $target ]] || continue
+
+        while IFS= read -r -d '' link; do
+            [[ -e $link ]] && continue
+            case $(readlink "$link") in
+                *"$rel_stow"/*)
+                    rm -f "$link"
+                    echo "  dropped stale link: ${link#"$HOME"/}"
+                    removed=$((removed + 1))
+                    ;;
+            esac
+        done < <(find "$target" -type l -print0 2>/dev/null)
+    done
+
+    [[ $removed -eq 0 ]] || echo "Dropped $removed stale link(s) left behind by deleted files."
+}
+
 step_stow() {
     # --no-folding forces stow to create every package subdirectory as a real
     # directory in the target and symlink individual files, instead of collapsing
@@ -104,10 +146,12 @@ step_stow() {
     # the target dir is real and the runtime writes stay local.
     echo "Stowing dotfiles..."
     stow -d "$STOW_DIR" -t ~ "$PACKAGE_NAME" --dotfiles --restow --no-folding
+    prune_stale_links "$SCRIPT_DIR"
 
     if [[ -n $OVERLAY ]]; then
         echo "Stowing $OVERLAY overlay..."
         stow -d "$STOW_DIR" -t ~ "dotfiles-private-$OVERLAY" --dotfiles --restow --no-folding
+        prune_stale_links "$OVERLAY_DIR"
 
         # Claude Code reads machine-scoped managed settings from a path
         # outside the stow target, so the overlay copy is installed there
