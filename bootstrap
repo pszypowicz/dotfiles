@@ -115,13 +115,26 @@ step_stow() {
         # and MCP overrides) lives in this file because the user-scope
         # settings.json is shared across machines via the public package.
         local managed_settings="$OVERLAY_DIR/managed-settings.json"
-        if [[ ! -f $managed_settings ]]; then
+        if [[ -f $managed_settings ]]; then
+            echo "Installing $OVERLAY overlay Claude Code managed settings (sudo)..."
+            sudo install -d -m 755 "/Library/Application Support/ClaudeCode"
+            sudo install -m 644 "$managed_settings" "/Library/Application Support/ClaudeCode/managed-settings.json"
+        else
             echo "No $OVERLAY overlay managed-settings.json, skipping."
-            return
         fi
-        echo "Installing $OVERLAY overlay Claude Code managed settings (sudo)..."
-        sudo install -d -m 755 "/Library/Application Support/ClaudeCode"
-        sudo install -m 644 "$managed_settings" "/Library/Application Support/ClaudeCode/managed-settings.json"
+    fi
+
+    # SketchyBar builds its item list once, when it runs sketchybarrc at
+    # launch. An edit under items/ therefore does nothing until the bar
+    # restarts, and the plugin that references a new item logs
+    # "Item not found" on every tick until then. Plugin scripts are re-read
+    # from disk on each invocation, so those need no restart.
+    #
+    # Only restart a bar that is already up: on a fresh machine the services
+    # step starts it, after this step puts the config in place.
+    if pgrep -xq sketchybar; then
+        echo "Restarting sketchybar..."
+        brew services restart sketchybar
     fi
 }
 
