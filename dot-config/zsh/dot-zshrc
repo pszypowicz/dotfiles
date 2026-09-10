@@ -18,12 +18,6 @@ if [[ -z "$TMUX" && "$TERM_PROGRAM" == ghostty ]] && command -v tmux >/dev/null 
 fi
 unset target
 
-# powerlevel10k instant prompt. It must come after the tmux block, which
-# execs, and before anything that prints to the terminal.
-if [[ -r "$XDG_CACHE_HOME/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-    source "$XDG_CACHE_HOME/p10k-instant-prompt-${(%):-%n}.zsh"
-fi
-
 # What /etc/zshrc did, which NO_GLOBAL_RCS in .zshenv skips: combining
 # characters render in a UTF-8 locale, and the log builtin gets out of the
 # way of /usr/bin/log.
