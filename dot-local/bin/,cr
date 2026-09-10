@@ -145,11 +145,18 @@ choice=$(printf '%s\n' "$rows" \
 
 file=$(printf '%s\n' "$choice" | cut -f2)
 # Claude Code sends its terminal queries before it enters raw mode, and a
-# large transcript load stretches that window; with echo on, tmux's replies
+# large transcript load stretches that window. With echo on, tmux's replies
 # show up as ^[ sequences above the UI. Claude Code restores the tty to the
-# state it found, so echo is turned back on here, also on a signal.
+# state it found, so echo goes off here. Restore the saved modes rather than
+# `stty echo`, so a caller that already turned echo off keeps it off.
+# Remove this once anthropics/claude-code#92275 is fixed.
 if [[ -t 0 ]]; then
+    saved_tty=$(stty -g)
+    trap 'stty "$saved_tty" 2>/dev/null' EXIT INT TERM HUP
     stty -echo
-    trap 'stty echo' EXIT
 fi
+# Job control puts claude in its own process group. tmux reads the pane
+# command from the foreground group leader, so without this the pane reports
+# this script and the window loses its Claude Code name.
+set -m
 claude --resume "$(basename "$file" .jsonl)"

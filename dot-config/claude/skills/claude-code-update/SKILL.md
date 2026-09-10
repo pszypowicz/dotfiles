@@ -99,6 +99,10 @@ repo and every overlay found in step 1. Under each repo's `dot-config/`:
 - the repo's `dot-local/bin/,cr` and `dot-local/bin/claude-session-preview` -
   the session picker; they parse the session-file schema and the project-dir
   naming.
+- `zsh/conf.d/claude.zsh` and the launch block at the end of `dot-local/bin/,cr`
+  turn terminal echo off around a Claude Code run, working around the startup
+  terminal queries of anthropics/claude-code#92275. Delete both once a
+  changelog entry says that is fixed.
 - `zsh/dot-zshenv` - `CLAUDE_CONFIG_DIR` and related exports.
 - the repo's `bootstrap` - the `npm install -g @anthropic-ai/claude-code@X.Y.Z`
   line; its exact pin is the last-analyzed marker this skill reads and bumps.
