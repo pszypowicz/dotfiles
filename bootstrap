@@ -38,7 +38,8 @@ Steps always run in the order below regardless of how they are listed, so
 With --overlay NAME, the brew, stow, and npm steps also apply the private
 overlay cloned at ../dotfiles-private-NAME: its Brewfile.NAME is bundled,
 its stow package is linked, its managed-settings.json is installed for
-Claude Code (with sudo), and the npm packages listed in its npm-globals
+Claude Code (with sudo, only when the installed copy differs), and the
+npm packages listed in its npm-globals
 file (one per line, # comments allowed) are installed. Overlay parts that
 do not exist are skipped with a notice.
 
@@ -47,7 +48,8 @@ Steps:
             Brewfile (plus the overlay Brewfile).
   stow      Symlink the dotfiles into the home directory with stow (plus the
             overlay package), and install the overlay's Claude Code
-            managed-settings.json with sudo.
+            managed-settings.json with sudo when it differs from the
+            installed copy.
   services  Start the Homebrew services that expect the stowed config to be
             in place (colima, sketchybar).
   npm       Install the global npm tools, including the pinned claude-code
@@ -150,6 +152,20 @@ prune_stale_links() {
     [[ $removed -eq 0 ]] || echo "Dropped $removed stale link(s) left behind by deleted files."
 }
 
+# Root owns the managed-settings path, so writing it needs sudo, and sudo asks
+# for a password - the one interactive stop in an otherwise unattended run. The
+# installed file is world-readable under a world-executable directory, so this
+# check runs unprivileged and the write only happens when something differs.
+# Content, mode, and owner all have to match; every other case, including an
+# unreadable or absent file, falls through to the privileged install.
+# `install -m 644` under sudo yields root:wheel, hence 644 0 0.
+managed_settings_current() {
+    local src=$1 dst=$2
+    [[ -f $dst ]] || return 1
+    cmp -s "$src" "$dst" || return 1
+    [[ $(stat -f '%Lp %u %g' "$dst") == "644 0 0" ]]
+}
+
 step_stow() {
     # --no-folding forces stow to create every package subdirectory as a real
     # directory in the target and symlink individual files, instead of collapsing
@@ -174,12 +190,16 @@ step_stow() {
         # and MCP overrides) lives in this file because the user-scope
         # settings.json is shared across machines via the public package.
         local managed_settings="$OVERLAY_DIR/managed-settings.json"
-        if [[ -f $managed_settings ]]; then
-            echo "Installing $OVERLAY overlay Claude Code managed settings (sudo)..."
-            sudo install -d -m 755 "/Library/Application Support/ClaudeCode"
-            sudo install -m 644 "$managed_settings" "/Library/Application Support/ClaudeCode/managed-settings.json"
-        else
+        local managed_dir="/Library/Application Support/ClaudeCode"
+        local installed="$managed_dir/managed-settings.json"
+        if [[ ! -f $managed_settings ]]; then
             echo "No $OVERLAY overlay managed-settings.json, skipping."
+        elif managed_settings_current "$managed_settings" "$installed"; then
+            echo "$OVERLAY overlay Claude Code managed settings already current."
+        else
+            echo "Installing $OVERLAY overlay Claude Code managed settings (sudo)..."
+            sudo install -d -m 755 "$managed_dir"
+            sudo install -m 644 "$managed_settings" "$installed"
         fi
     fi
 
