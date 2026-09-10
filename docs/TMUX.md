@@ -1,128 +1,100 @@
 # Tmux session flow
 
-Ghostty windows are viewports onto persistent named tmux sessions. Each
-new Ghostty window attaches to the most recently used session that no
-other window is showing, so windows never mirror each other. Closing a
-window detaches its session; nothing is lost between Ghostty restarts
-unless the Mac reboots or you explicitly kill the session.
+A Ghostty window is a viewport onto a persistent named tmux session. Each new Ghostty window attaches to the most recently used session that no other window shows, so two windows never mirror each other. A closed window detaches its session. Nothing is lost across a Ghostty restart. Only a Mac reboot or an explicit kill ends a session.
 
 ## Mental model
 
-- **Session** = a long-lived workspace. Named after a project directory
-  (`dotfiles`, `journal-agent`, ...) or `scratch` for ad-hoc work.
-- **Window** = a tab inside a session. Cmd+Shift+[ / Cmd+Shift+] steps
-  like Safari tabs, no wrap-around (configured in Ghostty).
-- **Pane** = a split inside a window. `prefix + "` splits below,
-  `prefix + %` splits to the right (tmux defaults).
+- **Session** = a long-lived workspace. The name comes from a project directory (`dotfiles`, `journal-agent`), or it is `scratch` for ad-hoc work.
+- **Window** = a tab inside a session. `Cmd+Shift+[` and `Cmd+Shift+]` step through the tabs with no wrap-around. Ghostty owns that binding.
+- **Pane** = a split inside a window. `prefix + "` splits below and `prefix + %` splits to the right. Both are tmux defaults.
 
-The titlebar shows `session / window` - workspace plus what's currently
-running in the focused pane (`nvim`, `zsh`, etc.). The status-left
-shows just the session name as a redundant anchor.
+The titlebar shows `session / window`. That gives the workspace plus the command in the focused pane, for example `nvim` or `zsh`. The status line on the left repeats the session name as an anchor.
 
 ## Key bindings
 
-`prefix` is `Ctrl-b` (tmux default).
+`prefix` is `Ctrl-b`, the tmux default.
 
-| Binding            | What it does                                                                                                                               |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `prefix + f`       | **Sessionizer.** fzf popup of project dirs, pick one to switch-or-create.                                                                  |
-| `prefix + s`       | Tree view of all sessions and their windows. Navigate with hjkl, enter to switch. Also on a two-finger double-tap (smart zoom) in Ghostty. |
-| `prefix + L`       | Jump to the _previous_ session - tmux's `cd -`.                                                                                            |
-| `prefix + d`       | Detach. With `exec tmux` in `.zshrc`, this also closes Ghostty. The session keeps running.                                                 |
-| `prefix + $`       | Rename the current session.                                                                                                                |
-| `prefix + ,`       | Rename the current window.                                                                                                                 |
-| `prefix + S`       | Stash current window into a `bg` session (background tunnels etc).                                                                         |
-| `prefix + r`       | Reload `tmux.conf`.                                                                                                                        |
-| `prefix + ^`       | Toggle between the two most recent windows.                                                                                                |
-| `prefix + h/j/k/l` | Jump between panes. Repeatable - keep tapping after one prefix.                                                                            |
-| `Ctrl+H/J/K/L`     | Resize the current pane by 5 cells. No prefix.                                                                                             |
+| Binding            | What it does                                                                                                                            |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `prefix + f`       | **Sessionizer.** Opens an fzf popup of project directories. Pick one to switch to it or to create it.                                   |
+| `prefix + s`       | Tree view of every session and its windows. Move with hjkl and press enter to switch. A two-finger double-tap in Ghostty does the same. |
+| `prefix + L`       | Jump to the previous session. This is the tmux equivalent of `cd -`.                                                                    |
+| `prefix + d`       | Detach. With `exec tmux` in `.zshrc` this closes Ghostty too. The session keeps running.                                                |
+| `prefix + $`       | Rename the current session.                                                                                                             |
+| `prefix + ,`       | Rename the current window.                                                                                                              |
+| `prefix + S`       | Stash the current window into a `bg` session, for background tunnels and similar work.                                                  |
+| `prefix + r`       | Reload `tmux.conf`.                                                                                                                     |
+| `prefix + ^`       | Toggle between the two most recent windows.                                                                                             |
+| `prefix + h/j/k/l` | Jump between panes. Repeatable, so keep tapping after one prefix.                                                                       |
+| `Ctrl+H/J/K/L`     | Resize the current pane by 5 cells. No prefix.                                                                                          |
 
-## Scenarios
+## Tasks
 
-### Cold start
+### Start from cold
 
-1. Boot Mac, open Ghostty.
-2. zsh runs, sees no `$TMUX` and a fresh tmux server, creates a `scratch`
-   session at `~` and attaches.
-3. You're in. Titlebar reads `scratch`.
+1. Boot the Mac and open Ghostty.
+2. zsh finds no `$TMUX` and a fresh tmux server.
+3. zsh creates a `scratch` session at `~` and attaches to it.
+
+The titlebar reads `scratch`.
 
 ### Switch to a project
 
-1. `prefix + f`.
-2. fzf popup shows all dirs from `fzf-jump-targets`: every git repo
-   under `~/Developer`, `_scratch` playgrounds, host containers, plus `~/`
-   and its visible direct children (Downloads, Documents, ...) - visited
-   dirs first, in zoxide frecency order.
-3. Type `dot`, hit enter on `dotfiles`.
-4. If `dotfiles` session doesn't exist, it's created at the repo root.
-5. Either way, `switch-client` moves you there. Titlebar updates.
+1. Press `prefix + f`.
+2. Type part of the directory name, for example `dot`.
+3. Press enter on `dotfiles`.
 
-### Open a brand-new project
+The popup lists every git repository under `~/Developer`, the `_scratch` playgrounds, the host containers, `~/` itself, and the visible children of home. Visited directories come first, in zoxide frecency order.
 
-Same as above. The first `prefix + f` on a fresh repo creates the session
-with cwd at the repo root - vim, tests, splits all start there.
+If the session is absent, tmux creates it at the repository root. Either way `switch-client` moves you there, and the titlebar updates. A new session starts vim, tests, and splits at the repository root.
 
 ### Hop between two projects
 
-Working on `dotfiles`, need to check something in `journal-agent`:
+1. Press `prefix + f` and pick the second project.
+2. Do the work there.
+3. Press `prefix + L` to return.
 
-1. `prefix + f`, pick `journal-agent`. Switch.
-2. Look at the thing.
-3. `prefix + L` (lowercase L). Back to `dotfiles`, exactly where you left
-   it - vim still open, output still on screen.
+`prefix + L` toggles between the last two sessions. The first session is intact, with vim still open and the output still on screen.
 
-`prefix + L` toggles between the last two sessions. Two-handed hop.
+### Take a break
 
-### Lunch break
+1. Press `prefix + d`. tmux detaches, `exec` exits, and Ghostty closes.
+2. Leave.
+3. Open Ghostty again. It lands on the session you used last.
 
-1. `prefix + d`. Detaches. `exec` exits. Ghostty closes.
-2. Eat.
-3. Open Ghostty. Lands back in whichever session you were last on.
-   All sessions still running detached in the tmux server.
+Every session stays alive and detached in the tmux server.
 
-### Ad-hoc shell for non-project work
+### Open an ad-hoc shell
 
-You need to poke around `/var/log` or `/etc`, no project context:
+For work with no project context, such as a look at `/var/log`, pick one option.
 
-- **Option A** - stay in `scratch`. `prefix + f`, pick anything matching
-  `_scratch` or just hit enter on the default. `cd /var/log`. Sessions
-  don't enforce a directory; they just start there.
-- **Option B** - new ad-hoc session via tmux's command prompt:
-  `prefix + :` then `new -s logs -c /var/log`. Creates and switches.
-- **Option C** - from a fresh shell outside tmux: `tmux new -s logs -c
-/var/log`.
+- **Option A.** Stay in `scratch`. Press `prefix + f`, accept the default, then `cd /var/log`. A session does not enforce a directory. It only starts there.
+- **Option B.** Press `prefix + :` and run `new -s logs -c /var/log`. This creates the session and switches to it.
+- **Option C.** From a shell outside tmux, run `tmux new -s logs -c /var/log`.
 
-When done: `tmux kill-session -t logs` from anywhere, or just leave it -
-it costs almost nothing.
+To drop the session afterwards, run `tmux kill-session -t logs`. An idle session costs almost nothing, so it is also fine to leave it.
 
-### See what's running
+### See what runs
 
-`prefix + s` opens a tree view. Shows every session, expand to see
-windows, hjkl to move, enter to switch, `x` to kill the highlighted
-session/window with confirmation.
+Press `prefix + s` for the tree view. It shows every session. Expand a session to see its windows. Move with hjkl, press enter to switch, and press `x` to kill the highlighted item after a confirmation.
 
 ### Clean up old sessions
 
 ```sh
-tmux ls                    # list sessions with attach state and last-used time
-tmux kill-session -t name  # drop one
-tmux kill-server           # nuke everything (last resort - loses all state)
+tmux ls                    # list the sessions with attach state and last-used time
+tmux kill-session -t name  # drop one session
+tmux kill-server           # end every session
 ```
 
-In `prefix + s`, `x` on a session kills it after confirmation. Same effect.
+Use `tmux kill-server` as a last resort. The command discards the state of every session.
 
-### Two Ghostty windows
+### Run two Ghostty windows
 
-A second Ghostty window attaches to the most recently used session that
-no other window is showing - never a mirror of the first. If every
-session is already visible in some window, it starts a fresh session at
-`~` instead. Two windows, two sessions, side by side.
+A second Ghostty window attaches to the most recently used session that no other window shows. It never mirrors the first window. If every session is already visible somewhere, Ghostty starts a fresh session at `~`. The result is two windows on two sessions, side by side.
 
 ## Where this lives
 
-- `dot-config/zsh/dot-zshrc` - the attach logic on Ghostty start.
-- `dot-local/bin/tmux-sessionizer` - the fzf picker.
-- `dot-local/bin/fzf-jump-targets` - the candidate list, shared with `Alt+C`
-  directory jump.
-- `dot-config/tmux/tmux.conf` - the `prefix + f` binding, titlebar format,
-  status-left.
+- `dot-config/zsh/dot-zshrc` - the attach logic at Ghostty start
+- `dot-local/bin/tmux-sessionizer` - the fzf picker
+- `dot-local/bin/fzf-jump-targets` - the candidate list, shared with the `Alt+C` directory jump
+- `dot-config/tmux/tmux.conf` - the `prefix + f` binding, the titlebar format, and the status line
