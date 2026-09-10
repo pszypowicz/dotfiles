@@ -97,30 +97,11 @@ defaults write NSGlobalDomain NSWindowShouldDragOnGesture -bool true
 
 Move-only, the modifier combo is fixed, and there is no System Settings UI for it. Apps pick it up on launch, so already-running apps need a relaunch. Non-AppKit windows can ignore it (some Electron apps; Ghostty with `window-decoration = false`).
 
-## SketchyBar LaunchAgent
+## SketchyBar service
 
-`Library/LaunchAgents/com.felixkratz.sketchybar.plist` is a custom launchd plist that replaces `brew services start sketchybar`.
-
-**Why:** The Homebrew-generated plist loads in all five launchd session types (`Aqua`, `Background`, `LoginWindow`, `StandardIO`, `System`), which causes lock-file conflicts and log noise on reboot. The custom plist restricts loading to the `Aqua` session only via `LimitLoadToSessionType`.
-
-**Switching from brew services:**
+SketchyBar runs under `brew services`, started by the `services` step of `bootstrap` so that the stowed config in `~/.config/sketchybar` is already in place when it launches. Logs go to `/opt/homebrew/var/log/sketchybar/`.
 
 ```bash
-brew services stop sketchybar
-launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.felixkratz.sketchybar.plist
+brew services restart sketchybar   # after editing sketchybarrc or a plugin
+killall sketchybar                 # quicker, KeepAlive brings it straight back
 ```
-
-**Managing the service:**
-
-```bash
-# Stop
-launchctl bootout gui/$(id -u)/com.felixkratz.sketchybar
-
-# Start
-launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.felixkratz.sketchybar.plist
-
-# Restart (quick) - KeepAlive auto-relaunches after kill
-killall sketchybar
-```
-
-**Upstream issue:** [FelixKratz/homebrew-formulae#17](https://github.com/FelixKratz/homebrew-formulae/issues/17) - once resolved, `brew services` can be used directly and this custom plist can be removed.

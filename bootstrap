@@ -49,7 +49,7 @@ Steps:
             overlay package), and install the overlay's Claude Code
             managed-settings.json with sudo.
   services  Start the Homebrew services that expect the stowed config to be
-            in place (colima).
+            in place (colima, sketchybar).
   npm       Install the global npm tools, including the pinned claude-code
             (plus the overlay npm-globals).
   macos     Write the macOS preference defaults.
@@ -131,8 +131,12 @@ step_services() {
     # line, so the service starts after stow. Started from the Brewfile
     # (start_service: true), it runs inside the brew step, and the plain file
     # it leaves behind makes the stow step fail with a conflict.
+    #
+    # SketchyBar reads ~/.config/sketchybar at launch and only picks up later
+    # edits on a restart, so it also belongs here rather than in the Brewfile.
     echo "Starting services..."
     brew services start colima
+    brew services start sketchybar
 }
 
 step_npm() {
