@@ -40,7 +40,7 @@ SBAR_ARGS+=(
   --set claude.model "${claude_popup_row[@]}" icon="$SPARKLE"
 
   --add item claude.token popup.claude
-  --set claude.token "${claude_popup_row[@]}" icon="$LOCK"
+  --set claude.token "${claude_popup_row[@]}" icon="$SLEEP_OFF"
 
   --add item claude.age popup.claude
   --set claude.age "${claude_popup_row[@]}" icon.drawing=off

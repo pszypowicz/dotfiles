@@ -40,4 +40,5 @@ export CLAUDE=󰚩
 export CLOCK=󰅐
 export CALENDAR=󰃭
 export SPARKLE=󰙴
+export SLEEP_OFF=󰒳
 export CHEVRON=
