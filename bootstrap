@@ -132,9 +132,14 @@ step_stow() {
     #
     # Only restart a bar that is already up: on a fresh machine the services
     # step starts it, after this step puts the config in place.
+    #
+    # The restart is a convenience, so a failure here must not take the run
+    # down with it under `set -e`. The stowed config is already in place, and
+    # the remaining steps do not depend on the bar.
     if pgrep -xq sketchybar; then
         echo "Restarting sketchybar..."
-        brew services restart sketchybar
+        brew services restart sketchybar ||
+            echo "sketchybar restart failed, continuing without it." >&2
     fi
 }
 
