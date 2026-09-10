@@ -26,6 +26,8 @@ Touches:
   - Cyclist: enable the AeroSpace integration
   - Text input: disable auto-capitalization, smart quotes/dashes,
     auto-period, spelling correction, smart-reply suggestions
+  - Language & Region: preferred languages English (US) primary, then
+    Polish, then Arabic (system UI picks it up after logout)
   - Keyboard: remap Caps Lock to Escape for all keyboards (the "All Keyboards"
     Modifier Keys entry; takes effect after logout)
   - Mission Control: keep the overview enabled on its Ctrl+Up default,
@@ -111,6 +113,14 @@ defaults write NSGlobalDomain NSAutomaticPeriodSubstitutionEnabled -bool false
 defaults write NSGlobalDomain NSAutomaticQuoteSubstitutionEnabled  -bool false
 defaults write NSGlobalDomain NSAutomaticSpellingCorrectionEnabled -bool false
 defaults write NSGlobalDomain NSSmartReplyEnabled                  -bool false
+
+# Language & Region: preferred languages, primary first. -array replaces the
+# whole list, so the order is pinned on every run. Apps launched after the
+# write read the new list, and the system UI reads it after logout. The
+# region and date/number formats live in AppleLocale and are not touched
+# here. macOS can rewrite a bare language code to a region-qualified one
+# (ar-PL) once Language & Region is opened, and both forms are equivalent.
+defaults write NSGlobalDomain AppleLanguages -array "en-US" "pl-PL" "ar"
 
 # Keyboard: remap Caps Lock to Escape for every keyboard. macOS stores the
 # "All Keyboards" entry from System Settings > Keyboard > Keyboard Shortcuts >
