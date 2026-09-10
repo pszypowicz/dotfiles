@@ -24,30 +24,53 @@ if [[ -r "$XDG_CACHE_HOME/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
     source "$XDG_CACHE_HOME/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
+# What /etc/zshrc did, which NO_GLOBAL_RCS in .zshenv skips: combining
+# characters render in a UTF-8 locale, and the log builtin gets out of the
+# way of /usr/bin/log.
+setopt COMBINING_CHARS
+disable log
+
 # History: shared across sessions, deduplicated, and stored under XDG state.
 # HISTFILE is set here and not in .zshenv because /etc/zshrc, which macOS
 # reads in between, overrides it with a path under ZDOTDIR.
 HISTFILE="$XDG_STATE_HOME/zsh/history"
-mkdir -p "${HISTFILE:h}"
+[[ -d ${HISTFILE:h} ]] || mkdir -p "${HISTFILE:h}"
 HISTSIZE=100000
 SAVEHIST=100000
 setopt EXTENDED_HISTORY SHARE_HISTORY HIST_IGNORE_ALL_DUPS HIST_IGNORE_SPACE HIST_REDUCE_BLANKS
 
-# Completion, with the dump file under XDG cache.
+# Completion, with the dump file under XDG cache. A full compinit run scans
+# every completion directory for insecure permissions, so it runs at most
+# once a day, and the other startups load the dump as it is. A completion
+# file that a new tool installs shows up after the next full run, or at
+# once after deleting the dump.
 : "${HOMEBREW_PREFIX:=/opt/homebrew}"
 fpath=("$HOMEBREW_PREFIX/share/zsh/site-functions" $fpath)
 autoload -Uz compinit
-mkdir -p "$XDG_CACHE_HOME/zsh"
-compinit -d "$XDG_CACHE_HOME/zsh/zcompdump"
+zcompdump="$XDG_CACHE_HOME/zsh/zcompdump"
+[[ -d ${zcompdump:h} ]] || mkdir -p "${zcompdump:h}"
+# Filename generation does not run inside [[ ]] without EXTENDED_GLOB, so
+# the age check goes through an array.
+zcompdump_fresh=( "$zcompdump"(N.mh-24) )
+if (( $#zcompdump_fresh )); then
+    compinit -C -d "$zcompdump"
+else
+    compinit -d "$zcompdump"
+    touch "$zcompdump"
+    zcompile "$zcompdump"
+fi
+unset zcompdump zcompdump_fresh
 
 # Vi keys at the prompt. KEYTIMEOUT=1 removes the delay after Esc.
 bindkey -v
 KEYTIMEOUT=1
 
-# Home, End, and Delete are undefined in the stock vi keymaps.
+# Home, End, and Delete are undefined in the stock vi keymaps, and Up and
+# Down walk the history without the prefix search.
 zmodload zsh/terminfo
 for keymap in viins vicmd; do
-    for cap widget in khome beginning-of-line kend end-of-line kdch1 delete-char; do
+    for cap widget in khome beginning-of-line kend end-of-line kdch1 delete-char \
+                      kcuu1 up-line-or-search kcud1 down-line-or-search; do
         [[ -n "${terminfo[$cap]}" ]] && bindkey -M "$keymap" "${terminfo[$cap]}" "$widget"
     done
 done
@@ -55,11 +78,34 @@ unset keymap cap widget
 
 # Prompt. The config is the lean sample from the powerlevel10k package with
 # the icon mode set for Nerd Fonts v3. `p10k configure` regenerates it.
+# p10k runs `who -m` to detect an SSH session when no SSH variable is set.
+# Derive the flag from the variables instead. The guard in p10k also needs
+# _P9K_SSH_TTY to match the current tty.
+P9K_SSH=0
+[[ -n $SSH_CONNECTION$SSH_TTY$SSH_CLIENT ]] && P9K_SSH=1
+_P9K_SSH_TTY=$TTY
 source "$HOMEBREW_PREFIX/share/powerlevel10k/powerlevel10k.zsh-theme"
 source "$ZDOTDIR/.p10k.zsh"
+# fzf and zoxide load from cached init scripts instead of running the tool
+# on every startup. The first line of a cache file records the resolved
+# binary path. Homebrew keeps the version in that path, so an upgrade
+# regenerates the file.
+cached-init() {
+    local tool=$1 file="$XDG_CACHE_HOME/zsh/init-$1.zsh" bin first
+    shift
+    bin=${commands[$tool]}
+    [[ -n $bin ]] || return 1
+    bin=${bin:A}
+    { read -r first < "$file" } 2>/dev/null
+    if [[ $first != "# $bin" ]]; then
+        { print -r -- "# $bin"; "$@" } > "$file"
+        zcompile "$file"
+    fi
+    source "$file"
+}
 # fzf binds into the vi keymaps, so it must come after bindkey -v.
-source <(fzf --zsh)
-eval "$(zoxide init zsh)"
+cached-init fzf fzf --zsh
+cached-init zoxide zoxide init zsh
 source "$HOMEBREW_PREFIX/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
 
 # Overlay hook: any overlay stows its shell config into conf.d.

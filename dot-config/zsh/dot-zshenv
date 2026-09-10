@@ -1,6 +1,16 @@
-# Exports only. Every zsh reads this file, interactive or not, so keep it
-# free of PATH edits: on macOS, /etc/zprofile runs path_helper after this
-# file and reorders PATH. PATH lives in .zprofile for that reason.
+# Exports and one option. Every zsh reads this file, interactive or not, so
+# keep it free of PATH edits: .zprofile runs path_helper after this file,
+# which reorders PATH. PATH lives in .zprofile for that reason.
+#
+# A shell that inherits ZDOTDIR from its parent, such as every tmux window,
+# reads this file directly and never reads ~/.zshenv, so the option lives
+# here and not there.
+
+# Skip /etc/zprofile and /etc/zshrc. They cost a locale lookup and a set of
+# key bindings on every shell. .zprofile and .zshrc carry the parts that
+# matter: path_helper, the LANG fallback, COMBINING_CHARS, the disabled log
+# builtin, and the prefix search on Up and Down.
+setopt NO_GLOBAL_RCS
 
 export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 export XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"

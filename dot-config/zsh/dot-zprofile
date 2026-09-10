@@ -1,9 +1,24 @@
-# Login shells only. Runs after /etc/zprofile, so path_helper has already
-# assembled the system PATH and these prepends stay in front of it.
-eval "$(/opt/homebrew/bin/brew shellenv)"
+# Login shells only. NO_GLOBAL_RCS in .zshenv skips /etc/zprofile, so its
+# two jobs happen here: the LANG fallback, and path_helper, which assembles
+# the system PATH and MANPATH from /etc/paths* and /etc/manpaths*. The
+# prepends below stay in front of that PATH.
+[[ -n $LANG ]] || export LANG=C.UTF-8
+eval "$(/usr/libexec/path_helper -s)"
+
+# The static form of `brew shellenv` for the Apple Silicon prefix. The
+# command spawns a bash process on every login shell, and every tmux window
+# starts one. Formulae that add entries under /opt/homebrew/etc/paths.d are
+# not picked up here.
+export HOMEBREW_PREFIX=/opt/homebrew
+export HOMEBREW_CELLAR=/opt/homebrew/Cellar
+export HOMEBREW_REPOSITORY=/opt/homebrew
+typeset -U path
+path=(/opt/homebrew/bin /opt/homebrew/sbin $path)
+# The leading colon keeps the manual pages that man derives from PATH.
+[[ -z ${MANPATH-} ]] || export MANPATH=":${MANPATH#:}"
+[[ :${INFOPATH-}: == *:/opt/homebrew/share/info:* ]] || export INFOPATH="/opt/homebrew/share/info:${INFOPATH-}"
 
 # Prepend in reverse priority order: ~/.local/bin goes last so its shims
 # shadow both brew and Go binaries.
-typeset -U path
 path=("$GOPATH/bin" "$HOME/bin" $path)
 path=("$HOME/.local/bin" $path)
