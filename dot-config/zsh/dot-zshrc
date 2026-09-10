@@ -59,6 +59,24 @@ unset zcompdump zcompdump_fresh
 bindkey -v
 KEYTIMEOUT=1
 
+# `jj` leaves insert mode, as an alternative to Esc. A `jj` bindkey would
+# need a KEYTIMEOUT long enough to type the pair, and that same timeout is
+# the delay after Esc, so the widget times the pair itself: a `j` that
+# follows another `j` within the window replaces it and switches keymap.
+zmodload zsh/datetime
+typeset -F _jj_last=0
+jj-or-self-insert() {
+    if [[ $LBUFFER == *j ]] && (( EPOCHREALTIME - _jj_last < 0.3 )); then
+        LBUFFER=${LBUFFER%j}
+        zle vi-cmd-mode
+        return
+    fi
+    _jj_last=$EPOCHREALTIME
+    zle .self-insert
+}
+zle -N jj-or-self-insert
+bindkey -M viins j jj-or-self-insert
+
 # Home, End, and Delete are undefined in the stock vi keymaps, and Up and
 # Down walk the history without the prefix search.
 zmodload zsh/terminfo
