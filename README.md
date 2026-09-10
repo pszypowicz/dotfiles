@@ -50,7 +50,7 @@ ln -s ../../Developer/github.com/pszypowicz/dotfiles/dot-config/claude/statuslin
 ## What's included
 
 **Shells:** Zsh (vi keybindings, autosuggestions, syntax highlighting)
-**Terminal:** Ghostty, Tmux, Starship prompt
+**Terminal:** Ghostty, Tmux, Powerlevel10k prompt
 **Window management:** AeroSpace (tiling)
 **Status bar:** SketchyBar
 **Dev tools:** Git, GitHub CLI, Vim, fd, fzf, Claude Code

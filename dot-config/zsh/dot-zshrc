@@ -18,6 +18,12 @@ if [[ -z "$TMUX" && "$TERM_PROGRAM" == ghostty ]] && command -v tmux >/dev/null 
 fi
 unset target
 
+# powerlevel10k instant prompt. It must come after the tmux block, which
+# execs, and before anything that prints to the terminal.
+if [[ -r "$XDG_CACHE_HOME/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+    source "$XDG_CACHE_HOME/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+
 # History: shared across sessions, deduplicated, and stored under XDG state.
 # HISTFILE is set here and not in .zshenv because /etc/zshrc, which macOS
 # reads in between, overrides it with a path under ZDOTDIR.
@@ -47,7 +53,10 @@ for keymap in viins vicmd; do
 done
 unset keymap cap widget
 
-eval "$(starship init zsh)"
+# Prompt. The config is the lean sample from the powerlevel10k package with
+# the icon mode set for Nerd Fonts v3. `p10k configure` regenerates it.
+source "$HOMEBREW_PREFIX/share/powerlevel10k/powerlevel10k.zsh-theme"
+source "$ZDOTDIR/.p10k.zsh"
 # fzf binds into the vi keymaps, so it must come after bindkey -v.
 source <(fzf --zsh)
 eval "$(zoxide init zsh)"

@@ -24,6 +24,6 @@ Delete work in insert mode.
 ## Vi mode
 
 `bindkey -v` is set: `Esc` drops to normal mode for vi motions and edits at
-the prompt, `i`/`a` return to insert mode. Starship shows a `❮` instead of
+the prompt, `i`/`a` return to insert mode. Powerlevel10k shows a `❮` instead of
 the prompt character while in normal mode. `KEYTIMEOUT=1` removes the delay
 after `Esc`.
