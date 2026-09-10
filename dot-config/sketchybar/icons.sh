@@ -39,4 +39,5 @@ export BATTERY_CHARGING=
 export CLAUDE=󰚩
 export CLOCK=󰅐
 export CALENDAR=󰃭
+export SPARKLE=󰙴
 export CHEVRON=

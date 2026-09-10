@@ -36,6 +36,9 @@ SBAR_ARGS+=(
   --add item claude.sevenday popup.claude
   --set claude.sevenday "${claude_popup_row[@]}" icon="$CALENDAR"
 
+  --add item claude.model popup.claude
+  --set claude.model "${claude_popup_row[@]}" icon="$SPARKLE"
+
   --add item claude.token popup.claude
   --set claude.token "${claude_popup_row[@]}" icon="$LOCK"
 

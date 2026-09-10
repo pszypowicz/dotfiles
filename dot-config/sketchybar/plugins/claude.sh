@@ -5,6 +5,7 @@ source "$CONFIG_DIR/icons.sh"
 
 CACHE_FILE="$HOME/.cache/claude/rate-limits.json"
 STATE_FILE="$HOME/.cache/claude/usage-poll.json"
+SCOPED_FILE="$HOME/.cache/claude/scoped-limits.json"
 FETCHER="$HOME/.config/claude/fetch-usage.sh"
 FRESH_THRESHOLD=120 # statusline refreshes every 60s; older means no live session
 AGE_WARN=900        # background polls run every ~5 min; older means polling is failing
@@ -77,6 +78,33 @@ format_age() {
   fi
 }
 
+# Color based on percentage
+color_for_pct() {
+  local pct="${1%.*}"
+  if (( pct >= 90 )); then
+    echo "$RED"
+  elif (( pct >= 80 )); then
+    echo "$ORANGE"
+  elif (( pct >= 60 )); then
+    echo "$YELLOW"
+  else
+    echo "$WHITE"
+  fi
+}
+
+# Column-aligned rows. Monospace alignment relies on the CaskaydiaCove
+# Nerd Font set as label.font in sketchybarrc defaults.
+#   col 1 (used %):   up to "100% used"   → width 10
+#   col 2 (in X):     up to "23h 59m"     → width  9
+#   col 3 (resets at): last column, no padding
+format_row() { # <col1> <resets-at-epoch>
+  local remain=0
+  [[ -n "$2" ]] && remain=$(( $2 - NOW ))
+  printf "%-10s %-9s %s" "$1" \
+    "$(format_remaining "$remain")" \
+    "$(format_reset_at "$2")"
+}
+
 # ── OAuth token row (from the poller's state file) ─────────────────
 
 TOKEN_EXP=0
@@ -102,6 +130,30 @@ else
   TOKEN_COLOR="$WHITE"
 fi
 
+# ── Model-scoped weekly row (from the poller's scoped file) ────────
+# Only the OAuth usage endpoint reports per-model weekly caps; the
+# statusline payload has none, so this row lags the others by up to one
+# poll interval. One row: the scoped limit with the highest usage. The
+# row hides when the account has no scoped limit. Popup only: a capped
+# model does not block work on the others, so the bar item ignores it.
+
+MODEL_ROW="no data"
+MODEL_COLOR="$DIM_WHITE"
+MODEL_DRAWING=on
+if [[ -f "$SCOPED_FILE" ]]; then
+  SCOPED=$(jq -c '.limits // [] | max_by(.percent) // empty' "$SCOPED_FILE" 2>/dev/null)
+  if [[ -z "$SCOPED" ]]; then
+    MODEL_DRAWING=off
+  else
+    MODEL_NAME=$(jq -r '.model // "model"' <<<"$SCOPED")
+    MODEL_PCT=$(jq -r '.percent // 0' <<<"$SCOPED")
+    MODEL_RESETS=$(jq -r '.resets_at // empty' <<<"$SCOPED")
+    MODEL_INT="${MODEL_PCT%.*}"
+    MODEL_ROW=$(format_row "${MODEL_NAME} ${MODEL_INT}%" "${MODEL_RESETS%.*}")
+    MODEL_COLOR=$(color_for_pct "$MODEL_PCT")
+  fi
+fi
+
 # ── Cache ───────────────────────────────────────────────────────────
 
 no_data() { # <age-row message>
@@ -109,6 +161,7 @@ no_data() { # <age-row message>
     label="--" label.color="$DIM_WHITE" \
     --set claude.fivehour label="no data" label.color="$DIM_WHITE" \
     --set claude.sevenday label="no data" label.color="$DIM_WHITE" \
+    --set claude.model label="$MODEL_ROW" label.color="$MODEL_COLOR" drawing="$MODEL_DRAWING" \
     --set claude.token label="$TOKEN_ROW" label.color="$TOKEN_COLOR" \
     --set claude.age label="$1" label.color="$DIM_WHITE"
   exit 0
@@ -131,20 +184,6 @@ FIVE_RESETS=$(echo "$CACHE" | jq -r '.five_hour.resets_at // empty')
 SEVEN_RESETS=$(echo "$CACHE" | jq -r '.seven_day.resets_at // empty')
 
 [[ -z "$FIVE_PCT" && -z "$SEVEN_PCT" ]] && no_data "${AUTH_MSG:-cache has no rate limit data}"
-
-# Color based on percentage
-color_for_pct() {
-  local pct="${1%.*}"
-  if (( pct >= 90 )); then
-    echo "$RED"
-  elif (( pct >= 80 )); then
-    echo "$ORANGE"
-  elif (( pct >= 60 )); then
-    echo "$YELLOW"
-  else
-    echo "$WHITE"
-  fi
-}
 
 FIVE_INT="${FIVE_PCT%.*}"
 SEVEN_INT="${SEVEN_PCT%.*}"
@@ -188,27 +227,8 @@ else
   LABEL="$CLOCK ${FIVE_INT}% $CALENDAR ${SEVEN_INT}%"
 fi
 
-FIVE_RESETS_I="${FIVE_RESETS%.*}"
-SEVEN_RESETS_I="${SEVEN_RESETS%.*}"
-
-FIVE_REMAIN=0
-SEVEN_REMAIN=0
-[[ -n "$FIVE_RESETS_I" ]] && FIVE_REMAIN=$(( FIVE_RESETS_I - NOW ))
-[[ -n "$SEVEN_RESETS_I" ]] && SEVEN_REMAIN=$(( SEVEN_RESETS_I - NOW ))
-
-# Column-aligned rows. Monospace alignment relies on the CaskaydiaCove
-# Nerd Font set as label.font in sketchybarrc defaults.
-#   col 1 (used %):   up to "100% used"   → width 10
-#   col 2 (in X):     up to "23h 59m"     → width  9
-#   col 3 (resets at): last column, no padding
-FIVE_ROW=$(printf "%-10s %-9s %s" \
-  "${FIVE_INT}% used" \
-  "$(format_remaining "$FIVE_REMAIN")" \
-  "$(format_reset_at "$FIVE_RESETS_I")")
-SEVEN_ROW=$(printf "%-10s %-9s %s" \
-  "${SEVEN_INT}% used" \
-  "$(format_remaining "$SEVEN_REMAIN")" \
-  "$(format_reset_at "$SEVEN_RESETS_I")")
+FIVE_ROW=$(format_row "${FIVE_INT}% used" "${FIVE_RESETS%.*}")
+SEVEN_ROW=$(format_row "${SEVEN_INT}% used" "${SEVEN_RESETS%.*}")
 
 AGE_LABEL="updated $(format_age "$AGE") ($SOURCE)"
 AGE_COLOR="$DIM_WHITE"
@@ -233,5 +253,6 @@ sketchybar --set "$NAME" \
   label.color="$LABEL_COLOR" \
   --set claude.fivehour label="$FIVE_ROW" label.color="$FIVE_COLOR" \
   --set claude.sevenday label="$SEVEN_ROW" label.color="$SEVEN_COLOR" \
+  --set claude.model label="$MODEL_ROW" label.color="$MODEL_COLOR" drawing="$MODEL_DRAWING" \
   --set claude.token label="$TOKEN_ROW" label.color="$TOKEN_COLOR" \
   --set claude.age label="$AGE_LABEL" label.color="$AGE_COLOR"

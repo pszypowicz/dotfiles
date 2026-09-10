@@ -5,6 +5,11 @@
 # account-level, so sessions on other machines show up here too. Also records
 # the OAuth token expiry in the state file for the widget's token row.
 #
+# The endpoint's "limits" array carries per-model weekly caps (kind
+# weekly_scoped) that the statusline payload lacks. Those go to a separate
+# scoped-limits file, so the poll keeps running while a session is live and
+# the statusline owns the main cache.
+#
 # The endpoint is undocumented; two hard requirements: the OAuth access token
 # comes from the "Claude Code-credentials*" Keychain entries, and the
 # User-Agent must be claude-code/<version> or the request lands in an
@@ -15,25 +20,27 @@ set -u
 CACHE_DIR="$HOME/.cache/claude"
 CACHE_FILE="$CACHE_DIR/rate-limits.json"
 STATE_FILE="$CACHE_DIR/usage-poll.json"
+SCOPED_FILE="$CACHE_DIR/scoped-limits.json"
 LOCK_DIR="$CACHE_DIR/.usage-poll.lock"
 USAGE_URL="https://api.anthropic.com/api/oauth/usage"
 
 CHECK_INTERVAL=60      # seconds between credential checks (local, cheap)
 MIN_INTERVAL=300       # seconds between network polls
-FRESH_THRESHOLD=120    # skip polling while a live session's statusline feeds the cache
+FRESH_THRESHOLD=120    # the main cache stays session-owned while its statusline feeds it
 ERROR_BACKOFF=600      # network/server errors
 RATE_LIMIT_BACKOFF=900 # floor for 429s; Retry-After can raise it
 AUTH_BACKOFF=1800      # server rejected a locally-valid token; retry slowly
 
 usage() {
   cat <<EOF
-Poll the Anthropic OAuth usage endpoint into ~/.cache/claude/rate-limits.json.
+Poll the Anthropic OAuth usage endpoint into ~/.cache/claude/rate-limits.json
+and ~/.cache/claude/scoped-limits.json.
 
 Usage: fetch-usage.sh [--force] [--help]
 
 Flags:
-  --force  Poll now: skip the ${CHECK_INTERVAL}s/${MIN_INTERVAL}s throttles, error backoff, and
-           the skip-when-cache-is-fresh check.
+  --force  Poll now: skip the ${CHECK_INTERVAL}s/${MIN_INTERVAL}s throttles and error backoff,
+           and overwrite the main cache even while a live session feeds it.
   --help   Show this help.
 
 Example:
@@ -155,14 +162,14 @@ fi
 [[ "$STATUS" == token_expired || "$STATUS" == no_token ]] && STATUS=ok
 
 # ── Poll gates ──────────────────────────────────────────────────────
+# A fresh main cache means a live session's statusline is feeding it; the
+# poll still runs for the scoped limits but leaves the main cache alone.
+MAIN_FRESH=0
 if ((!FORCE)); then
   if [[ -f "$CACHE_FILE" ]]; then
     CACHE_TS=$(jq -r '.timestamp // 0' "$CACHE_FILE" 2>/dev/null)
     CACHE_TS=${CACHE_TS%.*}
-    if ((NOW - ${CACHE_TS:-0} < FRESH_THRESHOLD)); then
-      save_state
-      exit 0
-    fi
+    ((NOW - ${CACHE_TS:-0} < FRESH_THRESHOLD)) && MAIN_FRESH=1
   fi
   if ((NOW < BACKOFF_UNTIL || NOW - LAST_POLL < MIN_INTERVAL)); then
     save_state
@@ -191,18 +198,35 @@ HTTP_CODE=$(curl -sS --max-time 15 -o "$BODY_FILE" -D "$HDR_FILE" -w '%{http_cod
   -H "User-Agent: claude-code/$UA_VERSION" \
   "$USAGE_URL" 2>/dev/null) || HTTP_CODE=000
 
+# The endpoint reports resets a fraction of a second early (hh:59:59.9), so
+# round to the minute; the statusline delivers the same instants on the minute.
+JQ_ISO2EPOCH='def iso2epoch: try (sub("\\.[0-9]+"; "") | sub("\\+00:00$"; "Z") | fromdateiso8601 | ((. + 30) / 60 | floor) * 60) catch null;'
+
 case "$HTTP_CODE" in
   200)
     if jq -e '(.five_hour.utilization != null) or (.seven_day.utilization != null)' "$BODY_FILE" >/dev/null 2>&1; then
-      TMP=$(mktemp "$CACHE_DIR/.rate-limits.XXXXXX")
-      jq -c '
-        def iso2epoch: try (sub("\\.[0-9]+"; "") | sub("\\+00:00$"; "Z") | fromdateiso8601) catch null;
+      if ((!MAIN_FRESH)); then
+        TMP=$(mktemp "$CACHE_DIR/.rate-limits.XXXXXX")
+        jq -c "$JQ_ISO2EPOCH"'
+          {
+            timestamp: now,
+            source: "poll",
+            five_hour: {used_percentage: .five_hour.utilization, resets_at: (.five_hour.resets_at | iso2epoch)},
+            seven_day: {used_percentage: .seven_day.utilization, resets_at: (.seven_day.resets_at | iso2epoch)}
+          }' "$BODY_FILE" >"$TMP" && mv "$TMP" "$CACHE_FILE"
+      fi
+      # Per-model weekly caps; the scope names the model (or the surface
+      # for surface-scoped entries).
+      TMP=$(mktemp "$CACHE_DIR/.scoped-limits.XXXXXX")
+      jq -c "$JQ_ISO2EPOCH"'
         {
           timestamp: now,
-          source: "poll",
-          five_hour: {used_percentage: .five_hour.utilization, resets_at: (.five_hour.resets_at | iso2epoch)},
-          seven_day: {used_percentage: .seven_day.utilization, resets_at: (.seven_day.resets_at | iso2epoch)}
-        }' "$BODY_FILE" >"$TMP" && mv "$TMP" "$CACHE_FILE"
+          limits: [.limits[]? | select(.kind == "weekly_scoped") | {
+            model: (.scope.model.display_name // .scope.surface // .kind),
+            percent: .percent,
+            resets_at: (.resets_at | iso2epoch)
+          }]
+        }' "$BODY_FILE" >"$TMP" && mv "$TMP" "$SCOPED_FILE"
       STATUS=ok
       BACKOFF_UNTIL=0
     else
