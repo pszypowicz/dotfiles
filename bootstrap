@@ -105,6 +105,20 @@ step_brew() {
 # to a few small directories instead of a walk of $HOME. The gap: a top-level
 # directory that a package drops entirely is no longer named by anything, so
 # nothing sends the sweep there.
+# Drop the directories that the link sweep just emptied, and their parents.
+# With --no-folding every package subdirectory is a real directory in the
+# target, so a package that drops a whole subtree leaves the directories
+# behind after the links go. rmdir refuses a directory that still holds
+# anything, so real content is never at risk. The walk stops below $HOME.
+prune_empty_dirs() {
+    local dir=$1
+    while [[ $dir == "$HOME"/?* ]]; do
+        rmdir "$dir" 2>/dev/null || return 0
+        echo "  dropped empty dir:  ${dir#"$HOME"/}"
+        dir=$(dirname "$dir")
+    done
+}
+
 prune_stale_links() {
     local pkg_dir=$1
     local rel_stow=${STOW_DIR#"$HOME"/}
@@ -127,6 +141,7 @@ prune_stale_links() {
                     rm -f "$link"
                     echo "  dropped stale link: ${link#"$HOME"/}"
                     removed=$((removed + 1))
+                    prune_empty_dirs "$(dirname "$link")"
                     ;;
             esac
         done < <(find "$target" -type l -print0 2>/dev/null)
