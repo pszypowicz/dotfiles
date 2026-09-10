@@ -23,5 +23,4 @@ docs/superpowers/
 .zsh_history
 .zsh_sessions/
 .bash_history
-fish_history
 **/zsh/history
