@@ -23,7 +23,7 @@
       "Bash(*devops invoke*approvals*)"
     ]
   },
-  "model": "claude-fable-5-1",
+  "model": "opus[1m]",
   "deniedMcpServers": [
     {
       "serverName": "claude.ai Gmail"
