@@ -255,7 +255,7 @@ step_npm() {
     # script's pin grep only matches the versioned entry below.
     npm install -g \
         --allow-scripts=@anthropic-ai/claude-code \
-        @anthropic-ai/claude-code@2.1.267 \
+        @anthropic-ai/claude-code@2.1.268 \
         @lhci/cli \
         cf \
         lighthouse
