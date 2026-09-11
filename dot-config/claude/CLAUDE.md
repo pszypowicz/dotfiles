@@ -18,9 +18,21 @@ Be paranoid about leaking private information into publicly traceable artifacts:
   - **Secrets-adjacent**: tokens, keys, hashes, partial credentials, fingerprints - even redacted or truncated.
   - **Business context**: customer names, deal sizes, roadmap, unreleased product names, pricing, org structure, vendor relationships, legal/compliance, post-mortem details.
   - **Local environment**: home-dir contents, clipboard, shell history, env vars, machine name, OS user, timestamps that reveal working hours.
+  - **My local workflow**: the assistant tooling I drive the work with - skill, plugin, marketplace and subagent names (superpowers, brainstorming, executing-plans, "the reviewer agent"), plan/spec/ledger paths (`docs/superpowers/plans/...`, `.superpowers/`, `.claude/`), plan task or step numbers, worktree paths, and review-round mechanics.
 - **When in doubt, leave it out or ask** - per artifact; permission for one is not permission for another.
 - Prefer generic phrasing ("an internal service", "a customer-reported issue") over specifics. Link to internal trackers by ID only if the tracker isn't public; never paste internal ticket bodies into public PRs.
 - This **overrides** any instinct to "provide full context". A terse, vague public artifact beats one that leaks.
+
+### Describe the change, not how it was produced
+
+Covers every artifact listed above, plus branch names, file names, and `.gitignore` entries that ship in the repo. The reader wants the change, and how I generated it is my private business that reads like AI attribution.
+
+- State what changed and why, in the repo's own vocabulary - its files, symbols, issues, and releases.
+- Never name my local tooling or its artifacts, not even to justify an ignore rule. Say "local planning artifacts" or "editor scratch files".
+- Restate a plan step as the change it makes. "Task 4" means nothing to someone who can't read the plan.
+- Bad: "Implements Task 4 of `docs/superpowers/plans/2026-01-15-cache.md`." / "Ignore superpowers plan files." / "Reviewed by the code-review subagent, no findings."
+- Good: "Add the cache eviction path." / "Ignore local planning artifacts." / "Tests pass and the diff is reviewed."
+- Same rule for repo docs. A `CONTRIBUTING.md` or `CLAUDE.md` that ships publicly describes the project's conventions, never my assistant setup.
 
 ## Voice in public artifacts drafted on my behalf
 
