@@ -55,14 +55,29 @@ if [[ -n "$TMUX_PANE" ]]; then
   # a mid-session switch. The PostModelSwitch hook in settings.json pushes the
   # raw model ID the moment a switch happens; this refresh then replaces it with
   # the display name.
-  MODEL=$(echo "$INPUT" | jq -r '.model.display_name // empty')
+  #
+  # The display name can carry a trailing variant note in parentheses, such as
+  # the context window size. The window name only needs the model, so drop it.
+  MODEL=$(echo "$INPUT" | jq -r '.model.display_name // empty | sub(" *\\([^)]*\\)$"; "")')
   if [[ -n "$MODEL" ]]; then
     tmux set-option -p -t "$TMUX_PANE" @claude_model "$MODEL"
   fi
 
+  # The payload reports the window size for every model, so the display name
+  # does not have to carry it. Sizes print as "1M" or "200k", and the fill joins
+  # them as "C:1M:5%".
+  #
   # The percent sign is part of the value. A tmux #{?...} conditional reads a
-  # bare "0" as false, which would hide the number on a fresh session. The
-  # value is empty until the first assistant reply sets a token count.
-  CONTEXT=$(echo "$INPUT" | jq -r '.context_window.used_percentage // empty | tostring + "%"')
+  # bare "0" as false, which would hide the number on a fresh session. The fill
+  # is absent until the first assistant reply sets a token count.
+  CONTEXT=$(echo "$INPUT" | jq -r '
+    .context_window.context_window_size as $size
+    | .context_window.used_percentage as $fill
+    | [ (if $size == null then empty
+         elif $size >= 1000000 then "C:" + ($size / 1000000 | tostring) + "M"
+         elif $size >= 1000 then "C:" + ($size / 1000 | round | tostring) + "k"
+         else "C:" + ($size | tostring) end),
+        (if $fill == null then empty else ($fill | tostring) + "%" end) ]
+    | join(":")')
   tmux set-option -p -t "$TMUX_PANE" @claude_context "$CONTEXT"
 fi
