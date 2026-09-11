@@ -22,13 +22,22 @@ if [[ -n "$RATE_LIMITS" ]]; then
   }' > "$TMPFILE" && mv "$TMPFILE" "$CACHE_FILE"
 fi
 
-# The payload's model object always reflects the ACTIVE model, including after
-# a mid-session switch. Publish it as a pane-scoped user option; the
-# automatic-rename-format in tmux.conf surfaces it in the window name,
-# which set-titles carries into the terminal title. The PostModelSwitch hook in
-# settings.json pushes the raw model ID the moment a switch happens; this
-# refresh then replaces it with the display name.
-MODEL=$(echo "$INPUT" | jq -r '.model.display_name // empty')
-if [[ -n "$MODEL" && -n "$TMUX_PANE" ]]; then
-  tmux set-option -p -t "$TMUX_PANE" @claude_model "$MODEL"
+# Publish the active model and the context window fill as pane-scoped user
+# options. The automatic-rename-format in tmux.conf surfaces both in the window
+# name, which set-titles carries into the terminal title.
+if [[ -n "$TMUX_PANE" ]]; then
+  # The payload's model object always reflects the ACTIVE model, including after
+  # a mid-session switch. The PostModelSwitch hook in settings.json pushes the
+  # raw model ID the moment a switch happens; this refresh then replaces it with
+  # the display name.
+  MODEL=$(echo "$INPUT" | jq -r '.model.display_name // empty')
+  if [[ -n "$MODEL" ]]; then
+    tmux set-option -p -t "$TMUX_PANE" @claude_model "$MODEL"
+  fi
+
+  # The percent sign is part of the value. A tmux #{?...} conditional reads a
+  # bare "0" as false, which would hide the number on a fresh session. The
+  # value is empty until the first assistant reply sets a token count.
+  CONTEXT=$(echo "$INPUT" | jq -r '.context_window.used_percentage // empty | tostring + "%"')
+  tmux set-option -p -t "$TMUX_PANE" @claude_context "$CONTEXT"
 fi
