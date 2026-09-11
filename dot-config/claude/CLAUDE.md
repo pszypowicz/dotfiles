@@ -62,43 +62,52 @@ Before presenting a draft, audit it specifically for these patterns and rewrite 
 
 Prose captures the _why_ and the non-obvious context. It never restates what the surrounding tooling already supplies, and it describes the current code, not how it got here.
 
-- **Commit messages** - don't restate what metadata or the diff shows: no dates/timestamps/author/branch (git stores these); no version numbers or tags in the body when a CHANGELOG entry is in the same commit; no file lists or line counts; no "bumped X to Y" when the manifest bump is in the same commit.
+- **Commit messages** - don't restate what metadata or the diff shows:
+  - No dates, timestamps, author, or branch. Git stores these.
+  - No version numbers or tags in the body when a CHANGELOG entry is in the same commit.
+  - No file lists or line counts.
+  - No "bumped X to Y" when the manifest bump is in the same commit.
 - **Comments** - don't cite snapshot state tooling can regenerate:
-  - No coverage percentages (they rot every test run; the coverage tool is authoritative).
+  - No coverage percentages. They rot every test run, and the coverage tool is authoritative.
   - No cross-file line-number refs (`parse.go:125`) - name the function/symbol so grep survives moves.
   - No session-relative phrasing ("earlier this session", "the fix we just landed", "recently") - a future reader has no session context.
   - No "currently" claims about your own code - state the invariant it must hold, not today's observed behavior.
   - No local filesystem paths (`~/Downloads/...`, `/Users/...`, `/tmp/...`) - not durable, not shareable, reads like a leak. Paraphrase the finding inline instead.
   - No ephemeral IDs (pipeline build/run numbers) - cite a durable artifact (commit, tag, issue #, PR #) or just the invariant.
-- **Docstrings** - state the behavior, in as few lines as that takes. Don't walk through the mechanism, restate the rationale from the commit or PR that introduced the code, or argue that the code is correct. A test docstring says what is asserted, not why the bug existed. Reasoning worth recording belongs in the commit message or PR body, where reviewers look for it and where it doesn't go stale as the code moves on.
-- **Don't overclaim scope**: "only reachable here", "the only caller", "always", "never" are load-bearing claims a reader will trust and a later edit will quietly falsify. State what holds and under which condition ("entries aren't unloaded at shutdown"), not what you believe holds everywhere. If the condition can't be named, the comment isn't ready.
-- **Don't narrate edit history**: no "changed from X to Y", "was a loop, now a map", "tested and the old way failed", "removed the call to `foo()`". When you fix a mistake, just fix it; document the new code only if it needs explaining. Never memorialize the old version.
+- **Docstrings** - state the behavior, in as few lines as that takes. Don't walk through the mechanism. Don't restate the rationale from the commit or PR that introduced the code. Don't argue that the code is correct. A test docstring says what is asserted, not why the bug existed. Reasoning worth recording belongs in the commit message or PR body. Reviewers look for it there, and it doesn't go stale as the code moves on.
+- **Don't overclaim scope**: "only reachable here", "the only caller", "always", "never" are absolute claims. A reader will trust them, and a later edit will quietly falsify them. State what holds and under which condition ("entries aren't unloaded at shutdown"), not what you believe holds everywhere. If the condition can't be named, the comment isn't ready.
+- **Don't narrate edit history**: no "changed from X to Y", "was a loop, now a map", "tested and the old way failed", "removed the call to `foo()`". When you fix a mistake, just fix it. Document the new code only if it needs explaining. Never memorialize the old version.
 - **Durable cross-references are fine** (they don't rot): issue numbers (`#27`), before/after #N markers on regression tests, named behaviors of pinned deps ("go-cty-yaml quotes object keys"), links to external trackers not in the diff.
 - **What belongs in prose**: the problem being solved, the reasoning behind the approach, trade-offs, hidden invariants, constraints a reader can't derive from the code or diff.
 
-Rule of thumb: if the comment would still be accurate a year from now with nobody updating it, it's durable. If it depends on current counts/coverage/layout/session, it's a lie waiting to happen - and if it only makes sense to someone who saw the previous version, delete it.
+Rule of thumb: if the comment would still be accurate a year from now with nobody updating it, it's durable. If it depends on current counts, coverage, layout, or session, it's a lie waiting to happen. If it only makes sense to someone who saw the previous version, delete it.
 
 ## Respect repository and branch policy
 
 Applies to any repo with branch protection, required status checks/reviews, or protected tags (GitHub, ADO, GitLab, Bitbucket).
 
-- **A policy-violation warning from the remote is a stop signal, not confirmation to proceed.** On `git push` output like `Bypassed rule violations for refs/heads/...`, `Changes must be made through a pull request`, or `Required status check "X" is expected`: stop and report. Don't retry, don't re-push with different flags, don't push dependent refs (tags, branches). The push may succeed only because you hold admin rights - the admin _bypass_ is exactly what needs permission, and the warning is the server telling you that's what happened.
-- **Each of these needs explicit, per-action approval** (prior approval doesn't carry over; a general "commit and push" authorizes only the policy-respecting flow):
-  - Pushing directly to a PR-required branch; bypassing required checks/reviews/signed-commit rules; force-pushing a protected branch or tag; deleting a protected branch or tag; merging with failing checks, missing reviews, or unresolved threads; passing `--no-verify`, `--force`, or any `--admin-*` flag.
-- **Approval means the user names the specific action** ("push directly to main this once", "force-push the branch", "delete the release"). Anything vaguer = use the policy-respecting path.
-- **Never force-push a branch that an open PR against an upstream repo points at.** The branch sits on my fork and carries no protection, so the push succeeds and nothing warns you. The damage lands on the upstream PR: review threads detach from their lines, "changes since your last review" stops working, and commits a reviewer already read can vanish. Add a new commit on top instead, even when the history gets ugly - the maintainer squashes on merge anyway. If the history genuinely has to be rewritten (a leaked secret, a botched rebase), stop and ask me first, naming the branch and the PR number. This covers `git push -f`, `--force-with-lease`, and amend-then-push, and it holds until the PR is merged or closed. Before any force-push, check for an open PR on that branch: `gh pr list --head <branch> --state open`.
-- **Default at a policy gate**: open a draft PR (per PR defaults). Even on solo repos the policy exists for a reason (CI coverage, reviewable history, reversibility) - follow it unless explicitly waived for the specific change.
+- **A policy-violation warning from the remote is a stop signal, not confirmation to proceed.** If `git push` prints `Bypassed rule violations for refs/heads/...`, `Changes must be made through a pull request`, or `Required status check "X" is expected`, stop and report. Don't retry. Don't re-push with different flags. Don't push dependent refs (tags, branches). The push may succeed only because you hold admin rights. The admin _bypass_ is exactly what needs permission, and the warning is the server telling you that's what happened.
+- **Each of these needs explicit, per-action approval.** Prior approval doesn't carry over. A general "commit and push" authorizes only the policy-respecting flow.
+  - Pushing directly to a PR-required branch.
+  - Bypassing required checks, reviews, or signed-commit rules.
+  - Force-pushing a protected branch or tag.
+  - Deleting a protected branch or tag.
+  - Merging with failing checks, missing reviews, or unresolved threads.
+  - Passing `--no-verify`, `--force`, or any `--admin-*` flag.
+- **Approval means the user names the specific action** ("push directly to main this once", "force-push the branch", "delete the release"). If the request is vaguer, use the policy-respecting path.
+- **Never force-push a branch that an open PR against an upstream repo points at.** The branch sits on my fork and carries no protection, so the push succeeds and nothing warns you. The damage lands on the upstream PR. Review threads detach from their lines, "changes since your last review" stops working, and commits a reviewer already read can vanish. Add a new commit on top instead, even when the history gets ugly - the maintainer squashes on merge anyway. If the history genuinely has to be rewritten (a leaked secret, a botched rebase), stop and ask me first. Name the branch and the PR number. This covers `git push -f`, `--force-with-lease`, and amend-then-push. It holds until the PR is merged or closed. Before any force-push, check for an open PR on that branch: `gh pr list --head <branch> --state open`.
+- **Default at a policy gate**: open a draft PR (per PR defaults). Even on solo repos the policy exists for a reason (CI coverage, reviewable history, reversibility). Unless I explicitly waive it for the specific change, follow it.
 
 ## SSH signing: attempt once, then wait for me
 
-SSH auth (git push/fetch/pull over SSH, and SSH to hosts) is signed by a Secure Enclave agent (Sequester) that pops an approval prompt I must confirm in person. When I'm at the machine I approve it and the command just works; when I'm not, it hangs or fails.
+SSH auth (git push/fetch/pull over SSH, and SSH to hosts) is signed by a Secure Enclave agent (Sequester) that pops an approval prompt I must confirm in person. When I'm at the machine, I approve it and the command just works. When I'm not, it hangs or fails.
 
-- **Attempt the SSH command yourself first, exactly once**, with a ~2 minute timeout - do not pre-emptively hand it to me. If I'm present I'll approve the prompt and you carry on.
-- **One approval covers a window, not one command.** At the prompt I pick a caching duration; while it lasts, further SSH commands go through without a new prompt. So don't cram everything into one giant compound command to save approvals - after the first success, run SSH commands at natural granularity.
+- **Attempt the SSH command yourself first, exactly once**, with a ~2 minute timeout - do not pre-emptively hand it to me. If I'm present, I'll approve the prompt and you carry on.
+- **One approval covers a window, not one command.** At the prompt I pick a caching duration. While it lasts, further SSH commands go through without a new prompt. So don't cram everything into one giant compound command to save approvals. After the first success, run SSH commands at natural granularity.
 - **If that one attempt fails or times out, treat it as "waiting for me", not an error to work around.** The tells are a hang until timeout, `agent refused operation`, `The agent has no identities`, `sign_and_send_pubkey: signing failed`, or `Permission denied (publickey)`.
-- **Do not** retry in a loop, try other keys, switch the remote to HTTPS, or reach for a token. The enclave key is deliberate; a bearer credential is not an acceptable substitute.
+- **Do not** retry in a loop, try other keys, switch the remote to HTTPS, or reach for a token. The enclave key is deliberate. A bearer credential is not an acceptable substitute.
 - **Keep working** on everything that doesn't need the network - commit locally, write docs and tests, run checks - so the only thing left is the transfer.
-- **Then stop and tell me plainly** what is done locally, what is blocked, and the exact command for me to run, e.g. `! git push -u origin <branch>`. Say clearly the attempt did not go through. Pick the work back up when I confirm.
+- **Then stop and tell me plainly** what is done locally, what is blocked, and the exact command for me to run, e.g. `! git push -u origin <branch>`. Say clearly the attempt did not go through. When I confirm, pick the work back up.
 - Anything downstream of the blocked step (opening the PR, tagging, releasing) waits too - don't half-do a release.
 
 ## Scripts & pipeline steps
