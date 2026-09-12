@@ -55,8 +55,9 @@ Steps:
   npm       Install the global npm tools, including the pinned claude-code
             (plus the overlay npm-globals).
   macos     Write the macOS preference defaults.
-  sharing   Turn on Remote Login, so ssh and mosh can reach this machine.
-            Needs sudo and Full Disk Access for the terminal.
+  sharing   Turn on Remote Login and stop system sleep on AC power, so ssh
+            and mosh can reach this machine. Needs sudo, and Full Disk
+            Access for the terminal to write the Remote Login state.
 
 Options:
   --overlay NAME   Apply the dotfiles-private-NAME overlay on top of the
@@ -288,7 +289,7 @@ step_macos() {
 }
 
 # Kept out of the macos step because that one writes user preferences and
-# never asks for a password. This one drives a system service through sudo.
+# never asks for a password. This one writes system settings through sudo.
 step_sharing() {
     "$SCRIPT_DIR/macos/sharing"
 }

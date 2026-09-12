@@ -1,6 +1,6 @@
 # Dotfiles
 
-Personal macOS configuration, managed with GNU Stow. One `./bootstrap` run installs the packages, links the configs into `$HOME`, starts the services, writes the macOS defaults, and turns on Remote Login.
+Personal macOS configuration, managed with GNU Stow. One `./bootstrap` run installs the packages, links the configs into `$HOME`, starts the services, writes the macOS defaults, and opens the machine to remote access.
 
 ## What is included
 
@@ -42,7 +42,7 @@ cd ~/Developer/github.com/pszypowicz/dotfiles
 | `services` | Start the Homebrew services that need the stowed config (colima, sketchybar). |
 | `npm`      | Install the global npm tools, with the pinned claude-code version.            |
 | `macos`    | Write the macOS preference defaults.                                          |
-| `sharing`  | Turn on Remote Login, so ssh and mosh can reach this machine.                 |
+| `sharing`  | Turn on Remote Login and stop system sleep on AC power, for ssh and mosh.     |
 
 ```bash
 ./bootstrap stow          # re-link the configs after an edit
@@ -74,7 +74,7 @@ The brew, stow, and npm steps then cover the overlay too. `--overlay` combines w
 | `dot-ssh/`       | `~/.ssh/`       | SSH client config.                                 |
 | `bootstrap`      | not stowed      | The installer.                                     |
 | `macos/defaults` | not stowed      | The `defaults write` calls.                        |
-| `macos/sharing`  | not stowed      | The Remote Login switch.                           |
+| `macos/sharing`  | not stowed      | The Remote Login and AC sleep switches.            |
 | `docs/`          | not stowed      | Cheat sheets.                                      |
 
 `.stow-local-ignore` lists the paths that stow skips.
