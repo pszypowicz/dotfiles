@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# macos/sharing - turn on the macOS Remote Login service.
+# Idempotent and safe to re-run. Invoked from ../bootstrap, but can also
+# be run standalone to re-apply just this block without redoing the rest
+# of the bootstrap.
+#
+# This is a system service rather than a user preference, so it needs root
+# and lives here instead of in macos/defaults, which stays unprivileged.
+
+usage() {
+    cat <<'EOF'
+Usage: macos/sharing [--help]
+
+Turn on Remote Login (System Settings > General > Sharing > Remote Login).
+Remote Login starts the SSH server, which is what lets ssh and mosh reach
+this machine. mosh opens its session over SSH before it switches to its own
+UDP transport, so mosh needs this too. Idempotent and safe to re-run.
+
+systemsetup reads and writes the service state, and both directions need
+root, so this asks for a sudo password. The write also needs Full Disk
+Access for the terminal that runs it (System Settings > Privacy & Security >
+Full Disk Access). The state is read back afterwards, so a blocked write is
+reported instead of passed over.
+
+Remote Login accepts every account on the machine. To narrow that, put the
+accounts in the com.apple.access_ssh group from the Sharing pane.
+
+Options:
+  -h, --help    Show this help and exit.
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -h|--help) usage; exit 0 ;;
+        *) echo "unknown argument: $1" >&2; usage >&2; exit 2 ;;
+    esac
+done
+
+# systemsetup prints "Remote Login: On" or "Remote Login: Off".
+if [[ $(sudo systemsetup -getremotelogin) == *"Remote Login: On"* ]]; then
+    echo "Remote Login already on."
+    exit 0
+fi
+
+echo "Turning Remote Login on..."
+sudo systemsetup -setremotelogin on
+
+if [[ $(sudo systemsetup -getremotelogin) != *"Remote Login: On"* ]]; then
+    cat >&2 <<'EOF'
+Remote Login is still off after the write. The usual cause is a missing Full
+Disk Access grant for the terminal. Add it under System Settings > Privacy &
+Security > Full Disk Access, then run `bootstrap sharing` again.
+EOF
+    exit 1
+fi
+
+echo "Remote Login on."

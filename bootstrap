@@ -55,6 +55,8 @@ Steps:
   npm       Install the global npm tools, including the pinned claude-code
             (plus the overlay npm-globals).
   macos     Write the macOS preference defaults.
+  sharing   Turn on Remote Login, so ssh and mosh can reach this machine.
+            Needs sudo and Full Disk Access for the terminal.
 
 Options:
   --overlay NAME   Apply the dotfiles-private-NAME overlay on top of the
@@ -285,9 +287,16 @@ step_macos() {
     "$SCRIPT_DIR/macos/defaults"
 }
 
+# Kept out of the macos step because that one writes user preferences and
+# never asks for a password. This one drives a system service through sudo.
+step_sharing() {
+    "$SCRIPT_DIR/macos/sharing"
+}
+
 # Parse arguments into the set of steps to run. No step names -> run all.
 OVERLAY=""
 run_brew=false run_stow=false run_services=false run_npm=false run_macos=false
+run_sharing=false
 any_step=false
 
 while [[ $# -gt 0 ]]; do
@@ -303,6 +312,7 @@ while [[ $# -gt 0 ]]; do
         services) run_services=true; any_step=true ;;
         npm)      run_npm=true;      any_step=true ;;
         macos)    run_macos=true;    any_step=true ;;
+        sharing)  run_sharing=true;  any_step=true ;;
         *) echo "unknown step: $1" >&2; usage >&2; exit 2 ;;
     esac
     shift
@@ -321,6 +331,7 @@ fi
 
 if [[ $any_step == false ]]; then
     run_brew=true run_stow=true run_services=true run_npm=true run_macos=true
+    run_sharing=true
 fi
 
 # Run selected steps in dependency order: brew provides the tools the later
@@ -331,5 +342,6 @@ if $run_stow;     then step_stow;     fi
 if $run_services; then step_services; fi
 if $run_npm;      then step_npm;      fi
 if $run_macos;    then step_macos;    fi
+if $run_sharing;  then step_sharing;  fi
 
 echo "Done."

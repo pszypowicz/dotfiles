@@ -1,6 +1,6 @@
 # Dotfiles
 
-Personal macOS configuration, managed with GNU Stow. One `./bootstrap` run installs the packages, links the configs into `$HOME`, starts the services, and writes the macOS defaults.
+Personal macOS configuration, managed with GNU Stow. One `./bootstrap` run installs the packages, links the configs into `$HOME`, starts the services, writes the macOS defaults, and turns on Remote Login.
 
 ## What is included
 
@@ -12,6 +12,7 @@ Personal macOS configuration, managed with GNU Stow. One `./bootstrap` run insta
 | Window management | AeroSpace (tiling)                                            |
 | Status bar        | SketchyBar                                                    |
 | Navigation        | fzf, fd, zoxide, ripgrep, lsd, bat                            |
+| Remote access     | Remote Login (sshd), mosh                                     |
 | Development       | Git, GitHub CLI, Vim, Claude Code, Node, Go, Rust, Homebrew   |
 
 The full package list is `dot-config/brewfile/Brewfile`.
@@ -41,6 +42,7 @@ cd ~/Developer/github.com/pszypowicz/dotfiles
 | `services` | Start the Homebrew services that need the stowed config (colima, sketchybar). |
 | `npm`      | Install the global npm tools, with the pinned claude-code version.            |
 | `macos`    | Write the macOS preference defaults.                                          |
+| `sharing`  | Turn on Remote Login, so ssh and mosh can reach this machine.                 |
 
 ```bash
 ./bootstrap stow          # re-link the configs after an edit
@@ -72,6 +74,7 @@ The brew, stow, and npm steps then cover the overlay too. `--overlay` combines w
 | `dot-ssh/`       | `~/.ssh/`       | SSH client config.                                 |
 | `bootstrap`      | not stowed      | The installer.                                     |
 | `macos/defaults` | not stowed      | The `defaults write` calls.                        |
+| `macos/sharing`  | not stowed      | The Remote Login switch.                           |
 | `docs/`          | not stowed      | Cheat sheets.                                      |
 
 `.stow-local-ignore` lists the paths that stow skips.
