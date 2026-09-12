@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+#
+# ssh-agent-live - exit 0 when an ssh agent socket answers a request.
+#
+# Written for ssh_config `Match exec`, which reads a zero exit as a match and
+# any other exit as a miss. `test -S` cannot do this job: sshd leaves the
+# forwarded agent socket behind when a session ends uncleanly, and the leftover
+# file still passes every file test while it refuses every connection. A stale
+# file would then win over the agent the host config names, and the connection
+# would fail instead of falling back. Asking the agent is the only way to tell
+# a live socket from a dead one.
+set -euo pipefail
+
+PROGRAM=$(basename "$0")
+PROBE_TIMEOUT=2
+
+usage() {
+    cat <<EOF
+$PROGRAM - test whether an ssh agent socket answers.
+
+Exits 0 when the agent responds with at least one key, and 1 when it does not.
+
+Usage:
+  $PROGRAM --socket <path>
+  $PROGRAM --help
+
+Options:
+  -s, --socket <path>   Agent socket to probe. Required. A leading ~ is expanded.
+  -h, --help            Show this help.
+
+Example:
+  Match host github.com exec "~/.local/bin/$PROGRAM --socket ~/.ssh/agent.sock"
+EOF
+}
+
+die() {
+    echo "$PROGRAM: $1" >&2
+    exit "${2:-1}"
+}
+
+socket=""
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -s | --socket)
+            [[ $# -ge 2 ]] || die "--socket needs a path" 2
+            socket="$2"
+            shift 2
+            ;;
+        -h | --help) usage; exit 0 ;;
+        *) usage >&2; die "unknown argument: $1" 2 ;;
+    esac
+done
+
+[[ -n "$socket" ]] || { usage >&2; die "--socket is required" 2; }
+
+socket="${socket/#\~/$HOME}"
+[[ -S "$socket" ]] || exit 1
+
+# Homebrew coreutils supplies both names, and neither is guaranteed to be on
+# PATH here: ssh runs the Match command through $SHELL with whatever
+# environment the calling process had, which for a git hook or a launchd job
+# can be the bare system PATH. Probing without a timeout still beats not
+# probing, so a missing timeout degrades rather than fails.
+timeout_cmd=""
+for candidate in timeout gtimeout; do
+    if command -v "$candidate" >/dev/null 2>&1; then
+        timeout_cmd="$candidate"
+        break
+    fi
+done
+
+# ssh-add exits 2 when it cannot reach the agent, 1 when the agent holds no
+# keys, and 0 when it lists at least one. An agent with no keys is reachable
+# but cannot authenticate anything, so only 0 counts as a match.
+if [[ -n "$timeout_cmd" ]]; then
+    SSH_AUTH_SOCK="$socket" "$timeout_cmd" "$PROBE_TIMEOUT" ssh-add -l >/dev/null 2>&1 && exit 0
+else
+    SSH_AUTH_SOCK="$socket" ssh-add -l >/dev/null 2>&1 && exit 0
+fi
+
+exit 1
