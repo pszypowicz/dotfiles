@@ -1,0 +1,114 @@
+#!/usr/bin/env bash
+#
+# build-codex-agents-md - generate the Codex global instruction file.
+#
+# Codex reads its user-level instructions from AGENTS.md inside CODEX_HOME,
+# and it has no include directive. The same rules already live in the Claude
+# Code instruction file, which pulls the machine overlay in with an "@path"
+# import. This script flattens that chain into one file: it copies the public
+# rules and replaces every "@path" line with the content of that file.
+#
+# The output is generated state, not a stow package, which is why bootstrap
+# writes it after stow rather than linking it. Edit the source files and run
+# this again.
+set -euo pipefail
+
+PROGRAM=$(basename "$0")
+CLAUDE_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.config/claude}"
+CODEX_DIR="${CODEX_HOME:-$HOME/.codex}"
+
+usage() {
+    cat <<EOF
+$PROGRAM - generate the Codex global instruction file from the Claude one.
+
+Usage:
+  $PROGRAM [--source FILE] [--output FILE] [--dry-run]
+  $PROGRAM --help
+
+Options:
+  -s, --source FILE   Instruction file to flatten.
+                      Default: \$CLAUDE_CONFIG_DIR/CLAUDE.md
+                      ($CLAUDE_DIR/CLAUDE.md)
+  -o, --output FILE   File to write.
+                      Default: \$CODEX_HOME/AGENTS.md
+                      ($CODEX_DIR/AGENTS.md)
+  -n, --dry-run       Write the result to stdout and leave the output file
+                      alone.
+  -h, --help          Show this help.
+
+Examples:
+  $PROGRAM                      # refresh the Codex instructions
+  $PROGRAM --dry-run | less     # review the merge first
+EOF
+}
+
+die() {
+    echo "$PROGRAM: $1" >&2
+    exit "${2:-1}"
+}
+
+source_file="$CLAUDE_DIR/CLAUDE.md"
+output_file="$CODEX_DIR/AGENTS.md"
+dry_run=false
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -s | --source) [[ $# -ge 2 ]] || die "--source needs a file" 2; source_file=$2; shift 2 ;;
+        -o | --output) [[ $# -ge 2 ]] || die "--output needs a file" 2; output_file=$2; shift 2 ;;
+        -n | --dry-run) dry_run=true; shift ;;
+        -h | --help) usage; exit 0 ;;
+        *) usage >&2; die "unknown argument: $1" 2 ;;
+    esac
+done
+
+[[ -f $source_file ]] || die "source file not found: $source_file"
+
+# "@~/path" and "@/path" lines are Claude Code imports. Codex ignores them, so
+# each one is replaced by the file it points at. A missing import is a warning
+# rather than an error: the machine overlay is optional, and the public rules
+# are still worth installing without it.
+flatten() {
+    local line target
+    while IFS= read -r line; do
+        if [[ $line =~ ^@(.+)$ ]]; then
+            target=${BASH_REMATCH[1]}
+            target=${target/#\~\//$HOME/}
+            if [[ -f $target ]]; then
+                cat "$target"
+            else
+                echo "$PROGRAM: import not found, skipped: $target" >&2
+            fi
+        else
+            printf '%s\n' "$line"
+        fi
+    done <"$source_file"
+}
+
+render() {
+    cat <<EOF
+<!--
+Generated file. Do not edit.
+
+Source: $source_file
+Rebuild: $PROGRAM
+-->
+
+EOF
+    flatten
+}
+
+if $dry_run; then
+    render
+    exit 0
+fi
+
+mkdir -p "$(dirname "$output_file")"
+tmp=$(mktemp "${TMPDIR:-/tmp}/agents-md.XXXXXX")
+trap 'rm -f "$tmp"' EXIT
+render >"$tmp"
+if cmp -s "$tmp" "$output_file"; then
+    echo "Codex instructions already current: $output_file"
+else
+    mv "$tmp" "$output_file"
+    echo "Wrote Codex instructions: $output_file"
+fi

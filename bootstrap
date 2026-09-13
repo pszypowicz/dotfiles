@@ -206,6 +206,17 @@ step_stow() {
         fi
     fi
 
+    # Codex reads its user-level instructions from AGENTS.md inside CODEX_HOME
+    # and has no include directive, so the Claude instruction file and the
+    # overlay it imports are flattened into one generated file there. That file
+    # is written rather than stowed, because the merged form exists only on
+    # disk. The fallback path repeats the CODEX_HOME export in
+    # dot-config/zsh/dot-zshenv, which is not in effect during a fresh
+    # machine's first run.
+    echo "Generating Codex instructions..."
+    CODEX_HOME="${CODEX_HOME:-$HOME/.config/codex}" \
+        "$SCRIPT_DIR/dot-local/bin/build-codex-agents-md"
+
     # SketchyBar builds its item list once, when it runs sketchybarrc at
     # launch. An edit under items/ therefore does nothing until the bar
     # restarts, and the plugin that references a new item logs
