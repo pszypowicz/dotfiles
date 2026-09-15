@@ -162,7 +162,8 @@
     "clangd-lsp@claude-plugins-official": true,
     "simple-english@simple-english": true,
     "superpowers-extended-cc@superpowers-extended-cc-marketplace": true,
-    "house-style@claude-skills": true
+    "house-style@claude-skills": true,
+    "codex@openai-codex": true
   },
   "extraKnownMarketplaces": {
     "claude-skills": {
@@ -187,6 +188,12 @@
       "source": {
         "source": "github",
         "repo": "pcvelz/superpowers"
+      }
+    },
+    "openai-codex": {
+      "source": {
+        "source": "github",
+        "repo": "openai/codex-plugin-cc"
       }
     }
   },
