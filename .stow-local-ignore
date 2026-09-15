@@ -16,5 +16,8 @@
 ^/bootstrap
 ^/macos
 
+# Hook config for commits made in this repo, not a home-directory package.
+^/\.pre-commit-config\.yaml
+
 # Claude Code project settings for work inside this repo, not a home-directory package.
 ^/\.claude

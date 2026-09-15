@@ -46,6 +46,8 @@ do not exist are skipped with a notice.
 Steps:
   brew      Install Homebrew if missing, then install packages from the
             Brewfile (plus the overlay Brewfile).
+  hooks     Install this repo's pre-commit hook, which scans staged changes
+            for secrets with betterleaks.
   stow      Symlink the dotfiles into the home directory with stow (plus the
             overlay package), and install the overlay's Claude Code
             managed-settings.json with sudo when it differs from the
@@ -96,6 +98,15 @@ step_brew() {
         echo "Installing $OVERLAY overlay packages..."
         brew bundle --file "$overlay_brewfile"
     fi
+}
+
+# Git keeps hooks in .git/hooks, which no clone carries, so the secret scan has
+# to be re-installed per checkout. The hook itself shells out to the betterleaks
+# binary from the Brewfile rather than a copy in the pre-commit cache, so brew
+# is the only place the tool's version is set.
+step_hooks() {
+    echo "Installing the pre-commit hook..."
+    (cd "$SCRIPT_DIR" && pre-commit install)
 }
 
 # stow only unlinks a target whose file still exists in the package, because
@@ -308,7 +319,7 @@ step_sharing() {
 # Parse arguments into the set of steps to run. No step names -> run all.
 OVERLAY=""
 run_brew=false run_stow=false run_services=false run_npm=false run_macos=false
-run_sharing=false
+run_sharing=false run_hooks=false
 any_step=false
 
 while [[ $# -gt 0 ]]; do
@@ -320,6 +331,7 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         brew)     run_brew=true;     any_step=true ;;
+        hooks)    run_hooks=true;    any_step=true ;;
         stow)     run_stow=true;     any_step=true ;;
         services) run_services=true; any_step=true ;;
         npm)      run_npm=true;      any_step=true ;;
@@ -343,13 +355,14 @@ fi
 
 if [[ $any_step == false ]]; then
     run_brew=true run_stow=true run_services=true run_npm=true run_macos=true
-    run_sharing=true
+    run_sharing=true run_hooks=true
 fi
 
 # Run selected steps in dependency order: brew provides the tools the later
 # steps rely on (stow, node/npm), so it always goes first, and services start
 # only once stow has put their config in place.
 if $run_brew;     then step_brew;     fi
+if $run_hooks;    then step_hooks;    fi
 if $run_stow;     then step_stow;     fi
 if $run_services; then step_services; fi
 if $run_npm;      then step_npm;      fi

@@ -38,6 +38,7 @@ cd ~/Developer/github.com/pszypowicz/dotfiles
 | Step       | What it does                                                                  |
 | ---------- | ----------------------------------------------------------------------------- |
 | `brew`     | Install Homebrew if it is absent, then install the Brewfile packages.         |
+| `hooks`    | Install this repo's pre-commit hook, which scans staged changes for secrets.  |
 | `stow`     | Symlink the configs into the home directory.                                  |
 | `services` | Start the Homebrew services that need the stowed config (colima, sketchybar). |
 | `npm`      | Install the global npm tools, with the pinned claude-code version.            |
@@ -66,16 +67,17 @@ The brew, stow, and npm steps then cover the overlay too. `--overlay` combines w
 
 ## Layout
 
-| Path             | Target          | Contents                                           |
-| ---------------- | --------------- | -------------------------------------------------- |
-| `dot-zshenv`     | `~/.zshenv`     | Sets `ZDOTDIR` and hands off to `dot-config/zsh/`. |
-| `dot-config/`    | `~/.config/`    | Tool config, one directory per tool.               |
-| `dot-local/bin/` | `~/.local/bin/` | Scripts on `PATH`.                                 |
-| `dot-ssh/`       | `~/.ssh/`       | SSH client config.                                 |
-| `bootstrap`      | not stowed      | The installer.                                     |
-| `macos/defaults` | not stowed      | The `defaults write` calls.                        |
-| `macos/sharing`  | not stowed      | The Remote Login and AC sleep switches.            |
-| `docs/`          | not stowed      | Cheat sheets.                                      |
+| Path                      | Target          | Contents                                           |
+| ------------------------- | --------------- | -------------------------------------------------- |
+| `dot-zshenv`              | `~/.zshenv`     | Sets `ZDOTDIR` and hands off to `dot-config/zsh/`. |
+| `dot-config/`             | `~/.config/`    | Tool config, one directory per tool.               |
+| `dot-local/bin/`          | `~/.local/bin/` | Scripts on `PATH`.                                 |
+| `dot-ssh/`                | `~/.ssh/`       | SSH client config.                                 |
+| `bootstrap`               | not stowed      | The installer.                                     |
+| `.pre-commit-config.yaml` | not stowed      | The secret scan that runs before each commit.      |
+| `macos/defaults`          | not stowed      | The `defaults write` calls.                        |
+| `macos/sharing`           | not stowed      | The Remote Login and AC sleep switches.            |
+| `docs/`                   | not stowed      | Cheat sheets.                                      |
 
 `.stow-local-ignore` lists the paths that stow skips.
 
