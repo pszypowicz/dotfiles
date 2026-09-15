@@ -5,6 +5,7 @@ Include /Users/pszypowicz/.config/colima/ssh_config
 Include ~/.ssh/config.d/*.conf
 
 Host *
-  UseKeychain yes
-  AddKeysToAgent yes
+  ServerAliveInterval 30
+  ServerAliveCountMax 6
+  TCPKeepAlive no
   ForwardAgent yes
