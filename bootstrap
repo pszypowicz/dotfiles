@@ -53,7 +53,7 @@ Steps:
             managed-settings.json with sudo when it differs from the
             installed copy.
   services  Start the Homebrew services that expect the stowed config to be
-            in place (colima, sketchybar).
+            in place (sketchybar).
   npm       Install the global npm tools, including the pinned claude-code
             (plus the overlay npm-globals).
   gh        Install the gh extensions (gh-stack).
@@ -249,16 +249,11 @@ step_stow() {
 }
 
 step_services() {
-    # Colima's first start adds an Include line to ~/.ssh/config and creates
-    # the file when it is missing. The stowed ssh config already carries that
-    # line, so the service starts after stow. Started from the Brewfile
-    # (start_service: true), it runs inside the brew step, and the plain file
-    # it leaves behind makes the stow step fail with a conflict.
-    #
     # SketchyBar reads ~/.config/sketchybar at launch and only picks up later
-    # edits on a restart, so it also belongs here rather than in the Brewfile.
+    # edits on a restart, so it starts here rather than from the Brewfile
+    # (start_service: true), which would run it inside the brew step, before
+    # stow puts the config in place.
     echo "Starting services..."
-    brew services start colima
     brew services start sketchybar
 }
 

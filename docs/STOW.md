@@ -48,6 +48,4 @@ ln -s ../../Developer/github.com/pszypowicz/dotfiles/dot-config/claude/statuslin
 
 Stow refuses to link over a real file that already exists in the target. The error names the path. Read that file, then either delete it or move it aside, and run `./bootstrap stow` again.
 
-A service that writes its own config causes this. Colima is the example. On its first start it adds an `Include` line to `~/.ssh/config`, and it creates that file when the file is absent.
-
-A Brewfile entry with `start_service: true` runs inside the `brew` step, before stow. The plain file that colima leaves behind then blocks the stow step. Colima therefore starts in the `services` step, after stow puts the ssh config in place. The stowed config already carries the `Include` line.
+A service that writes its own config causes this. A Brewfile entry with `start_service: true` runs inside the `brew` step, before stow. A plain file that the service leaves behind then blocks the stow step. Services that need the stowed config therefore start in the `services` step, after stow.

@@ -45,16 +45,16 @@ Until then, the page shows a reminder instead of the summary.
 
 `./bootstrap` with no arguments runs every step. To repeat one part, pass its name. The steps always run in dependency order, whatever order you type them in.
 
-| Step       | What it does                                                                  |
-| ---------- | ----------------------------------------------------------------------------- |
-| `brew`     | Install Homebrew if it is absent, then install the Brewfile packages.         |
-| `hooks`    | Install this repo's pre-commit hook, which scans staged changes for secrets.  |
-| `stow`     | Symlink the configs into the home directory.                                  |
-| `services` | Start the Homebrew services that need the stowed config (colima, sketchybar). |
-| `npm`      | Install the global npm tools, with the pinned claude-code version.            |
-| `gh`       | Install the gh extensions (gh-stack).                                         |
-| `macos`    | Write the macOS preference defaults.                                          |
-| `sharing`  | Turn on Remote Login and stop system sleep on AC power, for ssh and mosh.     |
+| Step       | What it does                                                                 |
+| ---------- | ---------------------------------------------------------------------------- |
+| `brew`     | Install Homebrew if it is absent, then install the Brewfile packages.        |
+| `hooks`    | Install this repo's pre-commit hook, which scans staged changes for secrets. |
+| `stow`     | Symlink the configs into the home directory.                                 |
+| `services` | Start the Homebrew services that need the stowed config (sketchybar).        |
+| `npm`      | Install the global npm tools, with the pinned claude-code version.           |
+| `gh`       | Install the gh extensions (gh-stack).                                        |
+| `macos`    | Write the macOS preference defaults.                                         |
+| `sharing`  | Turn on Remote Login and stop system sleep on AC power, for ssh and mosh.    |
 
 ```bash
 ./bootstrap stow          # re-link the configs after an edit

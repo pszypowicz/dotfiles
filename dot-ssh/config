@@ -1,7 +1,3 @@
-Include /Users/pszypowicz/.colima/ssh_config
-
-Include /Users/pszypowicz/.config/colima/ssh_config
-
 Include ~/.ssh/config.d/*.conf
 
 Host *
