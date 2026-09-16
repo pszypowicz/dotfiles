@@ -23,7 +23,7 @@
       "Bash(*devops invoke*approvals*)"
     ]
   },
-  "model": "opus[1m]",
+  "model": "claude-fable-5-1",
   "deniedMcpServers": [
     {
       "serverName": "claude.ai Gmail"
@@ -141,6 +141,7 @@
     ]
   },
   "workflowSizeGuideline": "unrestricted",
+  "bashEditDiffEnabled": true,
   "statusLine": {
     "type": "command",
     "command": "~/.config/claude/statusline.sh",
@@ -226,7 +227,6 @@
     "enabled": true
   },
   "effortLevel": "xhigh",
-  "bashEditDiffEnabled": true,
   "emojiCompletionEnabled": false,
   "tui": "fullscreen",
   "skipWorkflowUsageWarning": true,
