@@ -31,6 +31,16 @@ cd ~/Developer/github.com/pszypowicz/dotfiles
 
 `./bootstrap` is safe to re-run.
 
+### Requirements
+
+The minimum supported macOS version is 27. The Claude Code idle page summarizes long replies with the on-device Apple Foundation Model through `/usr/bin/fm`, which ships with macOS 27. The command needs a one-time agreement to Apple's terms, and no script can give it. Run this once per machine in a terminal:
+
+```bash
+sudo fm license
+```
+
+Until then, the page shows a reminder instead of the summary.
+
 ### Steps
 
 `./bootstrap` with no arguments runs every step. To repeat one part, pass its name. The steps always run in dependency order, whatever order you type them in.

@@ -67,16 +67,30 @@ PAYLOAD="$(cat)"
 
 MSG="$(printf '%s' "$PAYLOAD" | jq -r '.message // empty')"
 
-# Summarize text with the on-device Apple Intelligence model via
-# afm-summarize (brew "pszypowicz/tap/afm-summarize"). Prints nothing on any
-# failure - tool not installed, model unavailable, guardrail refusal,
-# timeout - so callers degrade to clipping instead of losing the page.
+# Summarize text with the on-device Apple Foundation Model through
+# /usr/bin/fm, which ships with macOS 27. The model answers only after
+# `sudo fm license` ran once on the machine. Prints nothing on any failure -
+# license not agreed, model unavailable, guardrail refusal, timeout - so
+# callers degrade to clipping instead of losing the page.
 summarize() {
-  command -v afm-summarize >/dev/null || return 1
+  command -v fm >/dev/null || return 1
   command -v timeout >/dev/null || return 1
   printf '%s' "$1" \
-    | timeout 10 afm-summarize --max-chars 150 2>/dev/null \
-    | jq -Rrs 'gsub("\\s+"; " ") | .[0:150]'
+    | timeout 10 fm respond --no-stream --greedy \
+        --guardrails permissive-content-transformations \
+        --instructions 'You summarize text for a one-line notification. Reply with one plain-text sentence of at most 120 characters stating the key outcome or question. Output only the sentence, with no quotes and no preamble.' \
+        2>/dev/null \
+    | jq -Rrs 'gsub("\\s+"; " ") | rtrimstr(" ") | .[0:150]'
+}
+
+# True when fm is installed but the Apple Foundation Models terms are not
+# agreed on this machine - the one summarize failure a single command fixes.
+# `fm license --status` reports "Agreed to license ..." once they are.
+fm_unlicensed() {
+  command -v fm >/dev/null || return 1
+  local status
+  status="$(fm license --status 2>&1 || true)"
+  [[ "$status" != *"Agreed to license"* ]]
 }
 
 # Hold the idle page while this session has background subagents or shell
@@ -101,7 +115,9 @@ fi
 # worth visiting first. Replies that fit the ~150-char notification budget
 # pass through untouched; longer ones are summarized on-device. The page
 # must still fire when summarization is impossible, so every failure path
-# falls back to a bare clip (and ultimately to the payload .message).
+# falls back to a bare clip (and ultimately to the payload .message). The one
+# exception is an unagreed fm license: that page carries the fix instead,
+# because the user can apply it in a minute and every long reply hits it.
 if [[ "$EVENT" == "idle" ]]; then
   TRANSCRIPT="$(printf '%s' "$PAYLOAD" | jq -r '.transcript_path // empty')"
   if [[ -n "$TRANSCRIPT" && -f "$TRANSCRIPT" ]]; then
@@ -114,7 +130,11 @@ if [[ "$EVENT" == "idle" ]]; then
       else
         MSG="${EXCERPT:0:150}"
         SUMMARY="$(summarize "$EXCERPT" || true)"
-        [[ -n "$SUMMARY" ]] && MSG="$SUMMARY"
+        if [[ -n "$SUMMARY" ]]; then
+          MSG="$SUMMARY"
+        elif fm_unlicensed; then
+          MSG="Summaries are off. Run 'sudo fm license' in a terminal to agree to the Apple Foundation Models terms."
+        fi
       fi
     fi
   fi
