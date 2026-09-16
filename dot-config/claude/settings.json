@@ -226,6 +226,7 @@
     "enabled": true
   },
   "effortLevel": "xhigh",
+  "bashEditDiffEnabled": true,
   "emojiCompletionEnabled": false,
   "tui": "fullscreen",
   "skipWorkflowUsageWarning": true,
