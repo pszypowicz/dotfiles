@@ -52,6 +52,7 @@ Until then, the page shows a reminder instead of the summary.
 | `stow`     | Symlink the configs into the home directory.                                  |
 | `services` | Start the Homebrew services that need the stowed config (colima, sketchybar). |
 | `npm`      | Install the global npm tools, with the pinned claude-code version.            |
+| `gh`       | Install the gh extensions (gh-stack).                                         |
 | `macos`    | Write the macOS preference defaults.                                          |
 | `sharing`  | Turn on Remote Login and stop system sleep on AC power, for ssh and mosh.     |
 

@@ -56,6 +56,7 @@ Steps:
             in place (colima, sketchybar).
   npm       Install the global npm tools, including the pinned claude-code
             (plus the overlay npm-globals).
+  gh        Install the gh extensions (gh-stack).
   macos     Write the macOS preference defaults.
   sharing   Turn on Remote Login and stop system sleep on AC power, so ssh
             and mosh can reach this machine. Needs sudo, and Full Disk
@@ -305,6 +306,16 @@ step_npm() {
     fi
 }
 
+# gh extensions install through gh itself, so the Brewfile cannot carry them.
+# A public binary extension needs no token, so this runs before `gh auth
+# login` on a fresh machine. --force keeps a re-run from failing on an
+# extension that is already present: an outdated one is upgraded, a current
+# one is left alone.
+step_gh() {
+    echo "Installing gh extensions..."
+    gh extension install --force github/gh-stack
+}
+
 step_macos() {
     echo "Writing macOS defaults..."
     "$SCRIPT_DIR/macos/defaults"
@@ -318,8 +329,8 @@ step_sharing() {
 
 # Parse arguments into the set of steps to run. No step names -> run all.
 OVERLAY=""
-run_brew=false run_stow=false run_services=false run_npm=false run_macos=false
-run_sharing=false run_hooks=false
+run_brew=false run_stow=false run_services=false run_npm=false run_gh=false
+run_macos=false run_sharing=false run_hooks=false
 any_step=false
 
 while [[ $# -gt 0 ]]; do
@@ -335,6 +346,7 @@ while [[ $# -gt 0 ]]; do
         stow)     run_stow=true;     any_step=true ;;
         services) run_services=true; any_step=true ;;
         npm)      run_npm=true;      any_step=true ;;
+        gh)       run_gh=true;       any_step=true ;;
         macos)    run_macos=true;    any_step=true ;;
         sharing)  run_sharing=true;  any_step=true ;;
         *) echo "unknown step: $1" >&2; usage >&2; exit 2 ;;
@@ -354,18 +366,19 @@ if [[ -n $OVERLAY ]]; then
 fi
 
 if [[ $any_step == false ]]; then
-    run_brew=true run_stow=true run_services=true run_npm=true run_macos=true
-    run_sharing=true run_hooks=true
+    run_brew=true run_stow=true run_services=true run_npm=true run_gh=true
+    run_macos=true run_sharing=true run_hooks=true
 fi
 
 # Run selected steps in dependency order: brew provides the tools the later
-# steps rely on (stow, node/npm), so it always goes first, and services start
-# only once stow has put their config in place.
+# steps rely on (stow, node/npm, gh), so it always goes first, and services
+# start only once stow has put their config in place.
 if $run_brew;     then step_brew;     fi
 if $run_hooks;    then step_hooks;    fi
 if $run_stow;     then step_stow;     fi
 if $run_services; then step_services; fi
 if $run_npm;      then step_npm;      fi
+if $run_gh;       then step_gh;       fi
 if $run_macos;    then step_macos;    fi
 if $run_sharing;  then step_sharing;  fi
 
