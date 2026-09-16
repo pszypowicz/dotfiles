@@ -21,6 +21,9 @@
     "deny": [
       "Bash(*_apis/pipelines/approvals*)",
       "Bash(*devops invoke*approvals*)"
+    ],
+    "allow": [
+      "mcp__plugin_github_github__github_support_docs_search"
     ]
   },
   "model": "claude-fable-5-1",
@@ -164,7 +167,8 @@
     "simple-english@simple-english": true,
     "superpowers-extended-cc@superpowers-extended-cc-marketplace": true,
     "house-style@claude-skills": true,
-    "codex@openai-codex": true
+    "codex@openai-codex": true,
+    "github@claude-skills": true
   },
   "extraKnownMarketplaces": {
     "claude-skills": {
