@@ -18,15 +18,15 @@
     "pr": ""
   },
   "permissions": {
+    "allow": [
+      "mcp__plugin_github_github__github_support_docs_search"
+    ],
     "deny": [
       "Bash(*_apis/pipelines/approvals*)",
       "Bash(*devops invoke*approvals*)"
-    ],
-    "allow": [
-      "mcp__plugin_github_github__github_support_docs_search"
     ]
   },
-  "model": "claude-fable-5-1",
+  "model": "opus[1m]",
   "deniedMcpServers": [
     {
       "serverName": "claude.ai Gmail"
