@@ -21,6 +21,9 @@ dot-config/claude/*
 # Xcode artifacts
 *.profraw
 
+# Python test caches
+tests/__pycache__/
+
 # Sensitive file types
 *.pem
 *.key

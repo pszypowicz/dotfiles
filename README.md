@@ -50,6 +50,7 @@ Until then, the page shows a reminder instead of the summary.
 | `brew`     | Install Homebrew if it is absent, then install the Brewfile packages.         |
 | `hooks`    | Install this repo's pre-commit hook, which scans staged changes for secrets.  |
 | `stow`     | Symlink the configs into the home directory.                                  |
+| `codex`    | Install public Codex defaults and hooks with sudo only for missing or changed files. |
 | `services` | Start the Homebrew services that need the stowed config (colima, sketchybar). |
 | `npm`      | Install the global npm tools, with the pinned claude-code version.            |
 | `gh`       | Install the gh extensions (gh-stack).                                         |
@@ -58,11 +59,30 @@ Until then, the page shows a reminder instead of the summary.
 
 ```bash
 ./bootstrap stow          # re-link the configs after an edit
+./bootstrap codex         # install public Codex defaults
 ./bootstrap macos         # re-write the macOS defaults after a tweak
 ./bootstrap brew npm      # refresh the packages and the npm globals
 ```
 
 `./bootstrap --help` prints the same list.
+
+The `codex` step installs the public configuration and hook scripts from `etc/codex/` into `/etc/codex/`.
+It compares each file before calling sudo and skips files whose contents match.
+Private settings stay in `$CODEX_HOME/config.toml` and take priority over the public defaults.
+
+The public defaults select high reasoning effort, enable Vim editing and terminal bells, and disable analytics.
+The force-push hook refuses recognized shell commands that rewrite branches with open GitHub pull requests.
+It also refuses those commands when GitHub cannot return the pull request state.
+The guard inspects shell text and does not cover every way to invoke Git.
+
+The formatting hook handles Markdown and Terraform files named in `apply_patch` calls, including multi-file patches, renames, and deletions.
+It runs Prettier for Markdown and `terraform fmt` for Terraform.
+It runs `terraform-docs` once per affected module with a `.terraform-docs.yml` file.
+Missing tools and formatter failures produce a warning without blocking the session.
+Edits made through shell commands do not trigger this formatter.
+
+The hooks require Bash, Python 3, jq, and gh. Install Prettier, Terraform, and terraform-docs to enable the corresponding formatters.
+Run `python3 -B -m unittest discover -s tests -p 'test_codex.py'` to test the hooks and installer without modifying system files.
 
 ### Private overlays
 
@@ -85,6 +105,8 @@ The brew, stow, and npm steps then cover the overlay too. `--overlay` combines w
 | `dot-local/bin/`          | `~/.local/bin/` | Scripts on `PATH`.                                 |
 | `dot-ssh/`                | `~/.ssh/`       | SSH client config.                                 |
 | `bootstrap`               | not stowed      | The installer.                                     |
+| `etc/`                    | not stowed      | Public system configuration installed by bootstrap. |
+| `tests/`                  | not stowed      | Automated tests for bootstrap and hooks.             |
 | `.pre-commit-config.yaml` | not stowed      | The secret scan that runs before each commit.      |
 | `macos/defaults`          | not stowed      | The `defaults write` calls.                        |
 | `macos/sharing`           | not stowed      | The Remote Login and AC sleep switches.            |

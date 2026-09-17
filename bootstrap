@@ -52,6 +52,8 @@ Steps:
             overlay package), and install the overlay's Claude Code
             managed-settings.json with sudo when it differs from the
             installed copy.
+  codex     Install public defaults and hooks in /etc/codex with sudo
+            only when an installed file is missing or its contents differ.
   services  Start the Homebrew services that expect the stowed config to be
             in place (colima, sketchybar).
   npm       Install the global npm tools, including the pinned claude-code
@@ -73,6 +75,7 @@ Examples:
   bootstrap --overlay personal      # full setup including the personal overlay
   bootstrap --overlay work stow     # re-link public and work config
   bootstrap macos                   # re-write macOS defaults only
+  bootstrap codex                   # install public Codex defaults only
 EOF
 }
 
@@ -168,8 +171,7 @@ prune_stale_links() {
     [[ $removed -eq 0 ]] || echo "Dropped $removed stale link(s) left behind by deleted files."
 }
 
-# Root owns the managed-settings path, so writing it needs sudo, and sudo asks
-# for a password - the one interactive stop in an otherwise unattended run. The
+# Root owns the managed-settings path, so writing it needs sudo. The
 # installed file is world-readable under a world-executable directory, so this
 # check runs unprivileged and the write only happens when something differs.
 # Content, mode, and owner all have to match; every other case, including an
@@ -247,6 +249,34 @@ step_stow() {
         brew services restart sketchybar ||
             echo "sketchybar restart failed, continuing without it." >&2
     fi
+}
+
+step_codex() {
+    local source_dir="$SCRIPT_DIR/etc/codex"
+    local dir="/etc/codex"
+    local file
+    local -a files=(hooks/block-force-push.sh hooks/format-edits.py config.toml)
+    local -a changed=()
+
+    for file in "${files[@]}"; do
+        if [[ ! -r $source_dir/$file ]]; then
+            echo "Cannot read public Codex file: $source_dir/$file" >&2
+            return 1
+        fi
+        if ! cmp -s "$source_dir/$file" "$dir/$file"; then
+            changed+=("$file")
+        fi
+    done
+    if [[ ${#changed[@]} -eq 0 ]]; then
+        echo "Codex system configuration and hooks already match."
+        return
+    fi
+
+    echo "Installing Codex system configuration and hooks (sudo)..."
+    sudo install -d -m 755 "$dir" "$dir/hooks"
+    for file in "${changed[@]}"; do
+        sudo install -m 644 "$source_dir/$file" "$dir/$file"
+    done
 }
 
 step_services() {
@@ -332,7 +362,7 @@ step_sharing() {
 # Parse arguments into the set of steps to run. No step names -> run all.
 OVERLAY=""
 run_brew=false run_stow=false run_services=false run_npm=false run_gh=false
-run_macos=false run_sharing=false run_hooks=false
+run_macos=false run_sharing=false run_hooks=false run_codex=false
 any_step=false
 
 while [[ $# -gt 0 ]]; do
@@ -346,6 +376,7 @@ while [[ $# -gt 0 ]]; do
         brew)     run_brew=true;     any_step=true ;;
         hooks)    run_hooks=true;    any_step=true ;;
         stow)     run_stow=true;     any_step=true ;;
+        codex)    run_codex=true;    any_step=true ;;
         services) run_services=true; any_step=true ;;
         npm)      run_npm=true;      any_step=true ;;
         gh)       run_gh=true;       any_step=true ;;
@@ -369,7 +400,7 @@ fi
 
 if [[ $any_step == false ]]; then
     run_brew=true run_stow=true run_services=true run_npm=true run_gh=true
-    run_macos=true run_sharing=true run_hooks=true
+    run_macos=true run_sharing=true run_hooks=true run_codex=true
 fi
 
 # Run selected steps in dependency order: brew provides the tools the later
@@ -378,6 +409,7 @@ fi
 if $run_brew;     then step_brew;     fi
 if $run_hooks;    then step_hooks;    fi
 if $run_stow;     then step_stow;     fi
+if $run_codex;    then step_codex;    fi
 if $run_services; then step_services; fi
 if $run_npm;      then step_npm;      fi
 if $run_gh;       then step_gh;       fi

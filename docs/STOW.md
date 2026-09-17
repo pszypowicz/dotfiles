@@ -42,7 +42,15 @@ ln -s ../../Developer/github.com/pszypowicz/dotfiles/dot-config/claude/statuslin
 
 ## What stow skips
 
-`.stow-local-ignore` holds the ignore list. It covers the git metadata and the repository-root paths that belong to no package: `README.md`, `docs/`, `bootstrap`, `macos/`, and `.claude/`.
+`.stow-local-ignore` holds the ignore list. It covers Git metadata and these repository-root paths outside the packages.
+
+- `README.md`
+- `docs/`
+- `etc/`
+- `tests/`
+- `bootstrap`
+- `macos/`
+- `.claude/`
 
 ## Conflicts
 

@@ -1,0 +1,29 @@
+model = "gpt-6-astra"
+model_reasoning_effort = "high"
+
+[analytics]
+enabled = false
+
+[tui]
+vim_mode_default = true
+notifications = true
+notification_method = "bel"
+notification_condition = "unfocused"
+
+[[hooks.PreToolUse]]
+matcher = "^Bash$"
+
+[[hooks.PreToolUse.hooks]]
+type = "command"
+command = "bash /etc/codex/hooks/block-force-push.sh"
+timeout = 20
+statusMessage = "Checking for an open pull request..."
+
+[[hooks.PostToolUse]]
+matcher = "^apply_patch$"
+
+[[hooks.PostToolUse.hooks]]
+type = "command"
+command = "python3 /etc/codex/hooks/format-edits.py"
+timeout = 120
+statusMessage = "Formatting edited files..."
