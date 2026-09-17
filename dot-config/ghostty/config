@@ -24,6 +24,11 @@ keybind = super+shift+d=unbind
 # Command palette off
 keybind = super+shift+p=unbind
 
+# Fullscreen keeps the shared bindings only: Opt+F for the AeroSpace tiling
+# one and Ctrl+Cmd+F for the macOS-native one. Cmd+Enter is a Ghostty-only
+# default and is easy to hit by accident.
+keybind = super+enter=unbind
+
 # Switch tmux windows like Safari tabs (Cmd+Shift+[ and Cmd+Shift+])
 # by sending tmux prefix + p / n, the no-wrap window step bindings in
 # tmux.conf. The translated [ / ] variants carry the previous/next_tab
