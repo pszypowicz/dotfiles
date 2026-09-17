@@ -33,27 +33,18 @@ HISTSIZE=100000
 SAVEHIST=100000
 setopt EXTENDED_HISTORY SHARE_HISTORY HIST_IGNORE_ALL_DUPS HIST_IGNORE_SPACE HIST_REDUCE_BLANKS
 
-# Completion, with the dump file under XDG cache. A full compinit run scans
-# every completion directory for insecure permissions, so it runs at most
-# once a day, and the other startups load the dump as it is. A completion
-# file that a new tool installs shows up after the next full run, or at
-# once after deleting the dump.
+# Completion. Each start audits the completion directories for insecure
+# permissions and compares the file count in the first line of the dump, so
+# the completions of a newly installed tool work in the next shell. The -d
+# flag keeps the dump out of the home directory, where compinit writes it by
+# default.
 : "${HOMEBREW_PREFIX:=/opt/homebrew}"
 fpath=("$HOMEBREW_PREFIX/share/zsh/site-functions" $fpath)
 autoload -Uz compinit
 zcompdump="$XDG_CACHE_HOME/zsh/zcompdump"
 [[ -d ${zcompdump:h} ]] || mkdir -p "${zcompdump:h}"
-# Filename generation does not run inside [[ ]] without EXTENDED_GLOB, so
-# the age check goes through an array.
-zcompdump_fresh=( "$zcompdump"(N.mh-24) )
-if (( $#zcompdump_fresh )); then
-    compinit -C -d "$zcompdump"
-else
-    compinit -d "$zcompdump"
-    touch "$zcompdump"
-    zcompile "$zcompdump"
-fi
-unset zcompdump zcompdump_fresh
+compinit -d "$zcompdump"
+unset zcompdump
 
 # Vi keys at the prompt. KEYTIMEOUT=1 removes the delay after Esc.
 bindkey -v
