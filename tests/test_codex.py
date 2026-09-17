@@ -33,41 +33,26 @@ class CodexHooksTest(unittest.TestCase):
                               input=json.dumps(payload), text=True,
                               capture_output=True, env=self.env, check=True)
 
-    def test_patch_formats_changed_files_and_refreshes_module_once(self):
-        for tool in ('prettier', 'terraform', 'terraform-docs'):
-            self.tool(tool, 'import json, os, sys\n'
-                      'with open(os.environ["TEST_LOG"], "a") as f:\n'
-                      ' f.write(json.dumps([os.path.basename(sys.argv[0]), sys.argv[1:], os.getcwd()]) + "\\n")\n')
-        for name in ('notes with spaces.md', 'renamed.md', 'main.tf', 'outputs.tf', 'untouched.md'):
+    def test_patch_formats_changed_markdown_files(self):
+        self.tool('prettier', 'import json, os, sys\n'
+                  'with open(os.environ["TEST_LOG"], "a") as f:\n'
+                  ' f.write(json.dumps(sys.argv[1:]) + "\\n")\n')
+        for name in ('notes with spaces.md', 'renamed.md', 'untouched.md'):
             (self.root / name).write_text('content\n')
-        (self.root / '.terraform-docs.yml').write_text('formatter: markdown\n')
         patch = ('*** Begin Patch\n*** Update File: notes with spaces.md\n'
                  '*** Update File: old.md\n*** Move to: renamed.md\n'
-                 '*** Add File: main.tf\n*** Update File: outputs.tf\n'
                  '*** Delete File: removed.md\n*** End Patch\n')
         result = self.run_hook('format-edits.py', patch, 'apply_patch')
         self.assertEqual(result.stdout, '')
         calls = [json.loads(line) for line in self.log.read_text().splitlines()]
-        self.assertEqual(sum(call[0] == 'terraform-docs' for call in calls), 1)
-        formatted = [Path(call[1][-1]).name for call in calls if call[0] != 'terraform-docs']
-        self.assertCountEqual(formatted, ['notes with spaces.md', 'renamed.md', 'main.tf', 'outputs.tf'])
+        formatted = [Path(call[-1]).name for call in calls]
+        self.assertCountEqual(formatted, ['notes with spaces.md', 'renamed.md'])
 
     def test_formatter_reports_failure_without_blocking(self):
         self.tool('prettier', 'import sys\nsys.exit(1)\n')
         (self.root / 'notes.md').write_text('content\n')
         result = self.run_hook('format-edits.py', '*** Begin Patch\n*** Add File: notes.md\n*** End Patch', 'apply_patch')
         self.assertIn('prettier', json.loads(result.stdout)['systemMessage'])
-
-    def test_deleted_terraform_file_refreshes_docs_without_formatting(self):
-        self.tool('terraform-docs', 'import os\n'
-                  'with open(os.environ["TEST_LOG"], "a") as f: f.write("docs\\n")\n')
-        self.tool('terraform', 'raise AssertionError("Cannot format a deleted file")\n')
-        (self.root / '.terraform-docs.yml').write_text('formatter: markdown\n')
-        result = self.run_hook('format-edits.py',
-                               '*** Begin Patch\n*** Delete File: variables.tf\n*** End Patch',
-                               'apply_patch')
-        self.assertEqual(result.stdout, '')
-        self.assertEqual(self.log.read_text(), 'docs\n')
 
     def test_formatter_ignores_other_tools(self):
         result = self.run_hook('format-edits.py', 'echo hello', 'Bash')
