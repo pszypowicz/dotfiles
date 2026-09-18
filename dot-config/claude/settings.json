@@ -203,6 +203,8 @@
     }
   },
   "outputStyle": "simple-english:simple-english",
+  "syncClaudeAiSkills": false,
+  "syncClaudeAiPlugins": false,
   "sandbox": {
     "enabled": false,
     "failIfUnavailable": true,
