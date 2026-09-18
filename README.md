@@ -13,6 +13,7 @@ Personal macOS configuration, managed with GNU Stow. One `./bootstrap` run insta
 | Status bar        | SketchyBar                                                    |
 | Navigation        | fzf, fd, zoxide, ripgrep, lsd, bat                            |
 | Remote access     | Remote Login (sshd), mosh                                     |
+| Authentication    | Touch ID for sudo                                             |
 | Development       | Git, GitHub CLI, Vim, Claude Code, Node, Go, Rust, Homebrew   |
 
 The full package list is `dot-config/brewfile/Brewfile`.
@@ -45,17 +46,18 @@ Until then, the page shows a reminder instead of the summary.
 
 `./bootstrap` with no arguments runs every step. To repeat one part, pass its name. The steps always run in dependency order, whatever order you type them in.
 
-| Step       | What it does                                                                  |
-| ---------- | ----------------------------------------------------------------------------- |
-| `brew`     | Install Homebrew if it is absent, then install the Brewfile packages.         |
-| `hooks`    | Install this repo's pre-commit hook, which scans staged changes for secrets.  |
-| `stow`     | Symlink the configs into the home directory.                                  |
+| Step       | What it does                                                                         |
+| ---------- | ------------------------------------------------------------------------------------ |
+| `touchid`  | Install `/etc/pam.d/sudo_local` so that sudo accepts Touch ID.                       |
+| `brew`     | Install Homebrew if it is absent, then install the Brewfile packages.                |
+| `hooks`    | Install this repo's pre-commit hook, which scans staged changes for secrets.         |
+| `stow`     | Symlink the configs into the home directory.                                         |
 | `codex`    | Install public Codex defaults and hooks with sudo only for missing or changed files. |
-| `services` | Start the Homebrew services that need the stowed config (colima, sketchybar). |
-| `npm`      | Install the global npm tools, with the pinned claude-code version.            |
-| `gh`       | Install the gh extensions (gh-stack).                                         |
-| `macos`    | Write the macOS preference defaults.                                          |
-| `sharing`  | Turn on Remote Login and stop system sleep on AC power, for ssh and mosh.     |
+| `services` | Start the Homebrew services that need the stowed config (colima, sketchybar).        |
+| `npm`      | Install the global npm tools, with the pinned claude-code version.                   |
+| `gh`       | Install the gh extensions (gh-stack).                                                |
+| `macos`    | Write the macOS preference defaults.                                                 |
+| `sharing`  | Turn on Remote Login and stop system sleep on AC power, for ssh and mosh.            |
 
 ```bash
 ./bootstrap stow          # re-link the configs after an edit
@@ -65,6 +67,12 @@ Until then, the page shows a reminder instead of the summary.
 ```
 
 `./bootstrap --help` prints the same list.
+
+The `touchid` step installs `etc/pam.d/sudo_local` into `/etc/pam.d/sudo_local`, which adds `pam_tid.so` to the sudo authentication stack.
+Sudo then takes a fingerprint, and it falls back to the password after a failed or a canceled touch.
+The step compares the file before it calls sudo, so a run that finds the file current asks for no password.
+It runs before every other step, which turns their own password prompts into a touch.
+Apple Watch cannot answer a sudo prompt. macOS routes watch approval through `pam_localauthentication.so` with the `continuityunlock` argument, and that module needs an authentication context that sudo does not supply.
 
 The `codex` step installs the public configuration and hook scripts from `etc/codex/` into `/etc/codex/`.
 It compares each file before calling sudo and skips files whose contents match.
@@ -98,19 +106,19 @@ The brew, stow, and npm steps then cover the overlay too. `--overlay` combines w
 
 ## Layout
 
-| Path                      | Target          | Contents                                           |
-| ------------------------- | --------------- | -------------------------------------------------- |
-| `dot-zshenv`              | `~/.zshenv`     | Sets `ZDOTDIR` and hands off to `dot-config/zsh/`. |
-| `dot-config/`             | `~/.config/`    | Tool config, one directory per tool.               |
-| `dot-local/bin/`          | `~/.local/bin/` | Scripts on `PATH`.                                 |
-| `dot-ssh/`                | `~/.ssh/`       | SSH client config.                                 |
-| `bootstrap`               | not stowed      | The installer.                                     |
+| Path                      | Target          | Contents                                            |
+| ------------------------- | --------------- | --------------------------------------------------- |
+| `dot-zshenv`              | `~/.zshenv`     | Sets `ZDOTDIR` and hands off to `dot-config/zsh/`.  |
+| `dot-config/`             | `~/.config/`    | Tool config, one directory per tool.                |
+| `dot-local/bin/`          | `~/.local/bin/` | Scripts on `PATH`.                                  |
+| `dot-ssh/`                | `~/.ssh/`       | SSH client config.                                  |
+| `bootstrap`               | not stowed      | The installer.                                      |
 | `etc/`                    | not stowed      | Public system configuration installed by bootstrap. |
-| `tests/`                  | not stowed      | Automated tests for bootstrap and hooks.             |
-| `.pre-commit-config.yaml` | not stowed      | The secret scan that runs before each commit.      |
-| `macos/defaults`          | not stowed      | The `defaults write` calls.                        |
-| `macos/sharing`           | not stowed      | The Remote Login and AC sleep switches.            |
-| `docs/`                   | not stowed      | Cheat sheets.                                      |
+| `tests/`                  | not stowed      | Automated tests for bootstrap and hooks.            |
+| `.pre-commit-config.yaml` | not stowed      | The secret scan that runs before each commit.       |
+| `macos/defaults`          | not stowed      | The `defaults write` calls.                         |
+| `macos/sharing`           | not stowed      | The Remote Login and AC sleep switches.             |
+| `docs/`                   | not stowed      | Cheat sheets.                                       |
 
 `.stow-local-ignore` lists the paths that stow skips.
 

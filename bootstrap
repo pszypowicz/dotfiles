@@ -44,6 +44,9 @@ file (one per line, # comments allowed) are installed. Overlay parts that
 do not exist are skipped with a notice.
 
 Steps:
+  touchid   Install /etc/pam.d/sudo_local so sudo accepts Touch ID, with sudo
+            only when the installed copy is missing or differs. Runs first, so
+            every later password prompt in the same run takes a touch instead.
   brew      Install Homebrew if missing, then install packages from the
             Brewfile (plus the overlay Brewfile).
   hooks     Install this repo's pre-commit hook, which scans staged changes
@@ -76,7 +79,36 @@ Examples:
   bootstrap --overlay work stow     # re-link public and work config
   bootstrap macos                   # re-write macOS defaults only
   bootstrap codex                   # install public Codex defaults only
+  bootstrap touchid                 # turn on Touch ID for sudo only
 EOF
+}
+
+# /etc/pam.d/sudo_local is Apple's hook for a local addition to the sudo PAM
+# stack: /etc/pam.d/sudo includes it, and a macOS update rewrites
+# /etc/pam.d/sudo while leaving this file alone. Apple ships the path as
+# sudo_local.template, so a fresh machine has no sudo_local at all.
+#
+# Root owns the path, so the install needs sudo. The compare runs unprivileged
+# because the file is world-readable, and only a difference costs a password.
+# Mode 444 matches the other files in /etc/pam.d.
+#
+# This step deliberately runs before every other one: once the file is in
+# place, the sudo prompts in the later steps take a touch.
+step_touchid() {
+    local source_file="$SCRIPT_DIR/etc/pam.d/sudo_local"
+    local installed="/etc/pam.d/sudo_local"
+
+    if [[ ! -r $source_file ]]; then
+        echo "Cannot read the sudo PAM file: $source_file" >&2
+        return 1
+    fi
+    if cmp -s "$source_file" "$installed"; then
+        echo "Touch ID for sudo already configured."
+        return
+    fi
+
+    echo "Installing the sudo PAM configuration (sudo)..."
+    sudo install -m 444 "$source_file" "$installed"
 }
 
 step_brew() {
@@ -363,6 +395,7 @@ step_sharing() {
 OVERLAY=""
 run_brew=false run_stow=false run_services=false run_npm=false run_gh=false
 run_macos=false run_sharing=false run_hooks=false run_codex=false
+run_touchid=false
 any_step=false
 
 while [[ $# -gt 0 ]]; do
@@ -373,6 +406,7 @@ while [[ $# -gt 0 ]]; do
             OVERLAY="$2"
             shift
             ;;
+        touchid)  run_touchid=true;  any_step=true ;;
         brew)     run_brew=true;     any_step=true ;;
         hooks)    run_hooks=true;    any_step=true ;;
         stow)     run_stow=true;     any_step=true ;;
@@ -401,11 +435,14 @@ fi
 if [[ $any_step == false ]]; then
     run_brew=true run_stow=true run_services=true run_npm=true run_gh=true
     run_macos=true run_sharing=true run_hooks=true run_codex=true
+    run_touchid=true
 fi
 
-# Run selected steps in dependency order: brew provides the tools the later
-# steps rely on (stow, node/npm, gh), so it always goes first, and services
-# start only once stow has put their config in place.
+# Run selected steps in dependency order: touchid needs nothing and turns the
+# password prompts of the steps below it into a fingerprint, so it goes first;
+# brew provides the tools the later steps rely on (stow, node/npm, gh), so it
+# follows; and services start only once stow has put their config in place.
+if $run_touchid;  then step_touchid;  fi
 if $run_brew;     then step_brew;     fi
 if $run_hooks;    then step_hooks;    fi
 if $run_stow;     then step_stow;     fi

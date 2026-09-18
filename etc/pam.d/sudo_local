@@ -1,0 +1,17 @@
+# sudo_local: local PAM configuration for sudo.
+#
+# /etc/pam.d/sudo includes this file first, and a macOS update rewrites
+# /etc/pam.d/sudo but leaves this one in place. Apple ships the same path as
+# sudo_local.template with the line below commented out.
+#
+# pam_tid.so authenticates through Touch ID. sufficient ends the auth stack on
+# a successful touch, and a failure or a cancel falls through to
+# pam_opendirectory.so in /etc/pam.d/sudo, which asks for the password. A
+# machine without a Touch ID sensor therefore behaves as it did before.
+#
+# Touch ID is the biometric that this stack accepts. Apple Watch approval runs
+# through pam_localauthentication.so with the continuityunlock argument, which
+# macOS wires into /etc/pam.d/authorization_lacont for loginwindow. That module
+# evaluates an authentication context that its caller supplies, and sudo
+# supplies none, so the same line under sudo has nothing to act on.
+auth       sufficient     pam_tid.so
