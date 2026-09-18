@@ -45,3 +45,24 @@ defaults write NSGlobalDomain NSWindowShouldDragOnGesture -bool true
 The gesture moves a window and never resizes it. The modifier combination is fixed, and System Settings has no control for it.
 
 An app reads the preference at launch, so relaunch any app that already runs. Windows that AppKit does not draw can ignore the gesture. Some Electron apps and Ghostty with `window-decoration = false` are the examples to expect.
+
+## Safari
+
+`macos/defaults` binds `Shift+Cmd+R` to the Develop menu item **Reload Page From Origin**, which reloads the page and bypasses the cache. Chrome uses the same chord for a hard reload.
+
+| Shortcut      | What it does                                                          |
+| ------------- | --------------------------------------------------------------------- |
+| `Cmd+R`       | Reload the page. Safari default.                                      |
+| `Shift+Cmd+R` | **Reload Page From Origin.** Reload and bypass the cache.             |
+| `Cmd+Opt+R`   | Reload Page From Origin. Safari default for the same menu item.       |
+
+Safari ships `Shift+Cmd+R` on Show Reader. An App Shortcut wins over the application binding, so Show Reader keeps the menu item and loses the chord. Use the Reader button in the address bar instead.
+
+The binding is an App Shortcut. macOS matches the menu item by its title, so the string `Reload Page From Origin` must stay exact. The Develop menu itself comes from the same script.
+
+```bash
+defaults write com.apple.Safari IncludeDevelopMenu -bool true
+defaults write com.apple.Safari NSUserKeyEquivalents -dict-add "Reload Page From Origin" '@$r'
+```
+
+Relaunch Safari after a write. An application builds its menus at launch.

@@ -24,6 +24,10 @@ Touches:
   - Desktop: disable "click wallpaper to reveal desktop" outside Stage Manager
   - Finder: enable the Quit menu item (Cmd+Q), show all filename extensions
   - Cyclist: enable the AeroSpace integration
+  - Safari: show the developer features (Develop menu and Web Inspector), and
+    bind Shift+Cmd+R to the Develop menu's "Reload Page From Origin". The
+    chord is Chrome's hard reload, and it replaces Safari's Show Reader
+    binding. A running Safari picks both up after a relaunch
   - Text input: disable auto-capitalization, smart quotes/dashes,
     auto-period, spelling correction, smart-reply suggestions
   - Language & Region: preferred languages English (US) primary, then
@@ -110,6 +114,34 @@ defaults write NSGlobalDomain AppleShowAllExtensions -bool true
 # the full key table); writes apply to a running Cyclist immediately.
 # Only non-default values belong here.
 defaults write cz.szypowi.cyclist aerospaceIntegration -bool true
+
+# Safari: show the features for web developers - the Develop menu and the Web
+# Inspector, under Settings > Developer. IncludeDevelopMenu puts the menu in
+# the menu bar, and the two WebKit keys turn on the inspector behind it. The
+# GUI toggle writes all three, so all three are written here.
+#
+# Safari is sandboxed and its preferences sit in its container, which TCC
+# guards. The terminal that runs this needs Full Disk Access (System Settings
+# > Privacy & Security > Full Disk Access), or the writes are dropped without
+# an error. The other switch on that settings pane, "Allow remote automation
+# and external agents", stays out of this script and is set by hand.
+defaults write com.apple.Safari IncludeDevelopMenu -bool true
+defaults write com.apple.Safari WebKitDeveloperExtrasEnabledPreferenceKey -bool true
+defaults write com.apple.Safari WebKitPreferences.developerExtrasEnabled -bool true
+
+# Safari: bind Shift+Cmd+R to the Develop menu's "Reload Page From Origin",
+# which reloads the page and bypasses the cache - the same chord Chrome uses
+# for a hard reload. Safari ships that chord on Show Reader, and an App
+# Shortcut wins over the app's own binding, so Show Reader is left without one.
+#
+# This is the App Shortcuts mechanism from System Settings > Keyboard >
+# Keyboard Shortcuts, which matches a menu item by its exact title. The string
+# is Safari's own wording and must stay character for character, otherwise the
+# shortcut binds nothing and macOS reports no error. Key equivalent notation:
+# @ Command, $ Shift, ~ Option, ^ Control. -dict-add keeps any other App
+# Shortcut for Safari in place.
+# shellcheck disable=SC2016  # $ is the Shift modifier, not a shell expansion
+defaults write com.apple.Safari NSUserKeyEquivalents -dict-add "Reload Page From Origin" '@$r'
 
 # Text input: disable macOS auto-substitutions (capitalization, smart quotes/dashes,
 # auto-period, spelling correction, smart-reply suggestions).
