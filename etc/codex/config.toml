@@ -4,6 +4,15 @@ model_reasoning_effort = "high"
 [analytics]
 enabled = false
 
+[feedback]
+enabled = false
+
+[otel]
+exporter = "none"
+trace_exporter = "none"
+metrics_exporter = "none"
+log_user_prompt = false
+
 [tui]
 vim_mode_default = true
 notifications = true
