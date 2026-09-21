@@ -1,14 +1,12 @@
 #!/usr/bin/env bash
-# Poll the Anthropic OAuth usage endpoint and refresh the rate-limit cache
-# normally written by the Claude Code statusline, so the SketchyBar widget
-# stays current when no session runs on this machine. Rate limits are
-# account-level, so sessions on other machines show up here too. Also records
-# the OAuth token expiry in the state file for the widget's token row.
+# Poll the Anthropic OAuth usage endpoint and write the rate-limit cache that
+# the SketchyBar widget reads. This is the only writer of that cache. Rate
+# limits are account-level, so sessions on other machines show up here too, and
+# the widget keeps working when no session runs at all. Also records the OAuth
+# token expiry in the state file for the widget's token row.
 #
 # The endpoint's "limits" array carries per-model weekly caps (kind
-# weekly_scoped) that the statusline payload lacks. Those go to a separate
-# scoped-limits file, so the poll keeps running while a session is live and
-# the statusline owns the main cache.
+# weekly_scoped). Those go to a separate scoped-limits file.
 #
 # The endpoint is undocumented; two hard requirements: the OAuth access token
 # comes from the "Claude Code-credentials*" Keychain entries, and the
@@ -26,7 +24,6 @@ USAGE_URL="https://api.anthropic.com/api/oauth/usage"
 
 CHECK_INTERVAL=60      # seconds between credential checks (local, cheap)
 MIN_INTERVAL=300       # seconds between network polls
-FRESH_THRESHOLD=120    # the main cache stays session-owned while its statusline feeds it
 ERROR_BACKOFF=600      # network/server errors
 RATE_LIMIT_BACKOFF=900 # floor for 429s; Retry-After can raise it
 AUTH_BACKOFF=1800      # server rejected a locally-valid token; retry slowly
@@ -39,8 +36,7 @@ and ~/.cache/claude/scoped-limits.json.
 Usage: fetch-usage.sh [--force] [--help]
 
 Flags:
-  --force  Poll now: skip the ${CHECK_INTERVAL}s/${MIN_INTERVAL}s throttles and error backoff,
-           and overwrite the main cache even while a live session feeds it.
+  --force  Poll now: skip the ${CHECK_INTERVAL}s/${MIN_INTERVAL}s throttles and the error backoff.
   --help   Show this help.
 
 Example:
@@ -162,15 +158,7 @@ fi
 [[ "$STATUS" == token_expired || "$STATUS" == no_token ]] && STATUS=ok
 
 # ── Poll gates ──────────────────────────────────────────────────────
-# A fresh main cache means a live session's statusline is feeding it; the
-# poll still runs for the scoped limits but leaves the main cache alone.
-MAIN_FRESH=0
 if ((!FORCE)); then
-  if [[ -f "$CACHE_FILE" ]]; then
-    CACHE_TS=$(jq -r '.timestamp // 0' "$CACHE_FILE" 2>/dev/null)
-    CACHE_TS=${CACHE_TS%.*}
-    ((NOW - ${CACHE_TS:-0} < FRESH_THRESHOLD)) && MAIN_FRESH=1
-  fi
   if ((NOW < BACKOFF_UNTIL || NOW - LAST_POLL < MIN_INTERVAL)); then
     save_state
     exit 0
@@ -205,15 +193,19 @@ JQ_ISO2EPOCH='def iso2epoch: try (sub("\\.[0-9]+"; "") | sub("\\+00:00$"; "Z") |
 case "$HTTP_CODE" in
   200)
     if jq -e '(.five_hour.utilization != null) or (.seven_day.utilization != null)' "$BODY_FILE" >/dev/null 2>&1; then
-      if ((!MAIN_FRESH)); then
+      # Both windows or neither. A half-filled body would put a null window
+      # over a complete cache, and the widget has no number to print for one.
+      # The scoped file below still takes what the body holds.
+      if jq -e '(.five_hour.utilization != null) and (.seven_day.utilization != null)' \
+        "$BODY_FILE" >/dev/null 2>&1; then
         TMP=$(mktemp "$CACHE_DIR/.rate-limits.XXXXXX")
         jq -c "$JQ_ISO2EPOCH"'
           {
             timestamp: now,
-            source: "poll",
             five_hour: {used_percentage: .five_hour.utilization, resets_at: (.five_hour.resets_at | iso2epoch)},
             seven_day: {used_percentage: .seven_day.utilization, resets_at: (.seven_day.resets_at | iso2epoch)}
           }' "$BODY_FILE" >"$TMP" && mv "$TMP" "$CACHE_FILE"
+        rm -f "$TMP"
       fi
       # Per-model weekly caps; the scope names the model (or the surface
       # for surface-scoped entries).
@@ -227,6 +219,7 @@ case "$HTTP_CODE" in
             resets_at: (.resets_at | iso2epoch)
           }]
         }' "$BODY_FILE" >"$TMP" && mv "$TMP" "$SCOPED_FILE"
+      rm -f "$TMP"
       STATUS=ok
       BACKOFF_UNTIL=0
     else

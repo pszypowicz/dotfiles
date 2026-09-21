@@ -7,7 +7,7 @@ CACHE_FILE="$HOME/.cache/claude/rate-limits.json"
 STATE_FILE="$HOME/.cache/claude/usage-poll.json"
 SCOPED_FILE="$HOME/.cache/claude/scoped-limits.json"
 FETCHER="$HOME/.config/claude/fetch-usage.sh"
-FRESH_THRESHOLD=120 # statusline refreshes every 60s; older means no live session
+FRESH_THRESHOLD=600 # two missed polls; older means the numbers stopped arriving
 AGE_WARN=900        # background polls run every ~5 min; older means polling is failing
 
 # Close popup when the mouse leaves the bar.
@@ -176,7 +176,6 @@ fi
 CACHE=$(cat "$CACHE_FILE")
 CACHE_TS=$(echo "$CACHE" | jq -r '.timestamp // 0')
 AGE=$(( NOW - ${CACHE_TS%.*} ))
-SOURCE=$(echo "$CACHE" | jq -r '.source // "session"')
 
 FIVE_PCT=$(echo "$CACHE" | jq -r '.five_hour.used_percentage // empty')
 SEVEN_PCT=$(echo "$CACHE" | jq -r '.seven_day.used_percentage // empty')
@@ -188,11 +187,24 @@ SEVEN_RESETS=$(echo "$CACHE" | jq -r '.seven_day.resets_at // empty')
 FIVE_INT="${FIVE_PCT%.*}"
 SEVEN_INT="${SEVEN_PCT%.*}"
 
-FIVE_COLOR=$(color_for_pct "$FIVE_PCT")
-SEVEN_COLOR=$(color_for_pct "$SEVEN_PCT")
+# A window the cache does not carry prints as "--". An empty number pasted into
+# the label leaves a bare percent sign, which looks like a real measurement.
+FIVE_TEXT="--"
+FIVE_COLOR="$DIM_WHITE"
+if [[ -n "$FIVE_PCT" ]]; then
+  FIVE_TEXT="${FIVE_INT}%"
+  FIVE_COLOR=$(color_for_pct "$FIVE_PCT")
+fi
+
+SEVEN_TEXT="--"
+SEVEN_COLOR="$DIM_WHITE"
+if [[ -n "$SEVEN_PCT" ]]; then
+  SEVEN_TEXT="${SEVEN_INT}%"
+  SEVEN_COLOR=$(color_for_pct "$SEVEN_PCT")
+fi
 
 # Icon color = the more urgent of the two
-if (( FIVE_INT >= SEVEN_INT )); then
+if (( ${FIVE_INT:-0} >= ${SEVEN_INT:-0} )); then
   ICON_COLOR="$FIVE_COLOR"
 else
   ICON_COLOR="$SEVEN_COLOR"
@@ -203,7 +215,7 @@ fi
 # High 5h: "82% 1h23m" (countdown replaces 7d%)
 
 COUNTDOWN=""
-if (( FIVE_INT >= 80 )) && [[ -n "$FIVE_RESETS" ]]; then
+if (( ${FIVE_INT:-0} >= 80 )) && [[ -n "$FIVE_RESETS" ]]; then
   REMAINING=$(( ${FIVE_RESETS%.*} - NOW ))
   if (( REMAINING > 0 )); then
     HOURS=$(( REMAINING / 3600 ))
@@ -219,18 +231,20 @@ if (( FIVE_INT >= 80 )) && [[ -n "$FIVE_RESETS" ]]; then
 fi
 
 if [[ -n "$COUNTDOWN" ]]; then
-  LABEL="$CLOCK ${FIVE_INT}% ${COUNTDOWN}"
-  if (( SEVEN_INT >= 80 )); then
-    LABEL+=" $CALENDAR ${SEVEN_INT}%"
+  LABEL="$CLOCK $FIVE_TEXT ${COUNTDOWN}"
+  if (( ${SEVEN_INT:-0} >= 80 )); then
+    LABEL+=" $CALENDAR $SEVEN_TEXT"
   fi
 else
-  LABEL="$CLOCK ${FIVE_INT}% $CALENDAR ${SEVEN_INT}%"
+  LABEL="$CLOCK $FIVE_TEXT $CALENDAR $SEVEN_TEXT"
 fi
 
-FIVE_ROW=$(format_row "${FIVE_INT}% used" "${FIVE_RESETS%.*}")
-SEVEN_ROW=$(format_row "${SEVEN_INT}% used" "${SEVEN_RESETS%.*}")
+FIVE_ROW="no data"
+SEVEN_ROW="no data"
+[[ -n "$FIVE_PCT" ]] && FIVE_ROW=$(format_row "${FIVE_INT}% used" "${FIVE_RESETS%.*}")
+[[ -n "$SEVEN_PCT" ]] && SEVEN_ROW=$(format_row "${SEVEN_INT}% used" "${SEVEN_RESETS%.*}")
 
-AGE_LABEL="updated $(format_age "$AGE") ($SOURCE)"
+AGE_LABEL="updated $(format_age "$AGE")"
 AGE_COLOR="$DIM_WHITE"
 (( AGE > AGE_WARN )) && AGE_COLOR="$YELLOW"
 
