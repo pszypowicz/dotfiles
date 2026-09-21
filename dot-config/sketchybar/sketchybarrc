@@ -22,6 +22,9 @@ source "$AEROSPACE_STYLE"
 
 bar=(
   position=top
+  show_in_fullscreen=on
+  sticky=on
+  topmost=on
   height=30
   notch_display_height=34
   blur_radius=30
