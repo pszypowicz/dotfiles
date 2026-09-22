@@ -148,6 +148,16 @@ Clone under `~/Developer/`, mirroring the remote URL so host/owner/repo are visi
 - **Scratch** (no remote): `~/Developer/_scratch/<name>`.
 - **Forks** under my owner (`github.com/pszypowicz/<repo>`); upstream under its owner - both can coexist for compare/cherry-pick.
 
+## Git identity
+
+Commits carry my GitHub no-reply address, never a personal or employer mailbox. Git config decides this, so no commit needs an explicit identity.
+
+- **The default in every repo**: `pszypowicz@users.noreply.github.com`, set once in `~/.config/git/config`. It applies to public clones, forks, and scratch repos alike, so a new clone needs no identity step.
+- **The only override**: a work overlay swaps in an employer identity for its Azure DevOps paths. Nothing else overrides the default. A `user.email` in a repo's own `.git/config` is a misconfiguration - report it, don't add one.
+- **Never work around a missing identity** with `-c user.email=...`, `--author`, `GIT_AUTHOR_EMAIL`, or a `Co-authored-by` trailer. If git ever says `no email was given and auto-detection is disabled`, the config is broken. Stop and ask. A hostname-derived address leaks the machine, and an assistant account address is not mine.
+- **Both no-reply forms are mine**: the bare `pszypowicz@users.noreply.github.com` and the older `2733699+pszypowicz@users.noreply.github.com`. GitHub accepts both for this account. Older commits carry the numeric form - leave them, and never rewrite history to unify the two.
+- **Merges created in the GitHub web UI** are committed by `GitHub <noreply@github.com>` and authored by the bare form. That is normal and needs no correction.
+
 ## Private overlay
 
 Machine-specific rules live in a single private file stowed from whichever `dotfiles-private-*` overlay is active for this host.

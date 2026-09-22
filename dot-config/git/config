@@ -20,11 +20,16 @@
 [init]
 	defaultBranch = main
 
+# The GitHub no-reply address is the default for every repo, so nothing commits
+# under a personal or employer mailbox by accident. A work overlay overrides it
+# for its Azure DevOps paths. useConfigOnly is the backstop: if the line below
+# ever goes missing, git refuses to commit instead of inventing
+# <os-user>@<hostname> and leaking the machine name.
 [user]
 	name = Przemysław Szypowicz
+	email = pszypowicz@users.noreply.github.com
+	useConfigOnly = true
 
-[includeIf "gitdir:~/Developer/github.com/"]
-	path = ~/.config/git/github.config
 [include]
 	path = ~/.config/git/config.local
 [credential "https://dev.azure.com"]
