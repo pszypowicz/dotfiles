@@ -163,7 +163,6 @@
     "go-dev@claude-skills": false,
     "modern-swift@claude-skills": false,
     "swift-concurrency@claude-skills": false,
-    "worktrees@claude-skills": true,
     "cloudflare@cloudflare": true,
     "clangd-lsp@claude-plugins-official": true,
     "simple-english@simple-english": true,
