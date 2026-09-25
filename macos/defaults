@@ -32,8 +32,9 @@ Touches:
     auto-period, spelling correction, smart-reply suggestions
   - Language & Region: preferred languages English (US) primary, then
     Polish, then Arabic (system UI picks it up after logout)
-  - Keyboard: remap Caps Lock to Escape for all keyboards (the "All Keyboards"
-    Modifier Keys entry; takes effect after logout)
+  - Keyboard: remap Caps Lock to Escape on the built-in keyboard and the
+    Logitech USB receiver (one Modifier Keys entry per device; takes effect
+    after logout)
   - Mission Control: keep the overview enabled on its Ctrl+Up default,
     enable the Ctrl+Arrow space-switch hotkeys on their default chords, and
     bind Ctrl+1 through Ctrl+9 to "Switch to Desktop 1-9" (all take effect
@@ -160,16 +161,23 @@ defaults write NSGlobalDomain NSSmartReplyEnabled                  -bool false
 # (ar-PL) once Language & Region is opened, and both forms are equivalent.
 defaults write NSGlobalDomain AppleLanguages -array "en-US" "pl-PL" "ar"
 
-# Keyboard: remap Caps Lock to Escape for every keyboard. macOS stores the
-# "All Keyboards" entry from System Settings > Keyboard > Keyboard Shortcuts >
-# Modifier Keys under the wildcard device key 0-0-0 (vendor 0, product 0,
-# keyboard type 0) in the per-host global domain - so this is hardware-
-# independent and applies to built-in and external keyboards alike. HID usage
-# codes: 0x700000039 (Caps Lock) = 30064771129, 0x700000029 (Escape) =
-# 30064771113. Written as an XML plist value so the codes land as integers,
-# matching what the GUI panel produces. Takes effect after logout.
-defaults -currentHost write -g com.apple.keyboard.modifiermapping.0-0-0 \
-    '<array><dict><key>HIDKeyboardModifierMappingSrc</key><integer>30064771129</integer><key>HIDKeyboardModifierMappingDst</key><integer>30064771113</integer></dict></array>'
+# Keyboard: remap Caps Lock to Escape on each known keyboard. System Settings >
+# Keyboard > Keyboard Shortcuts > Modifier Keys stores one entry per device,
+# keyed <vendor>-<product>-<keyboard type> (decimal) in the per-host global
+# domain, and has no wildcard entry. 0-0-0 is the built-in keyboard on Apple
+# Silicon, which reports vendor and product 0. A new keyboard needs its own
+# entry - read its IDs with `hidutil list` or copy the key the GUI writes.
+# HID usage codes: 0x700000039 (Caps Lock) = 30064771129, 0x700000029
+# (Escape) = 30064771113. Written as an XML plist value so the codes land as
+# integers, matching what the GUI panel produces. Takes effect after logout.
+caps_lock_to_escape_keyboards=(
+    0-0-0          # Apple Internal Keyboard
+    1133-50475-0   # Logitech USB Receiver (0x046d:0xc52b)
+)
+for kbd in "${caps_lock_to_escape_keyboards[@]}"; do
+    defaults -currentHost write -g "com.apple.keyboard.modifiermapping.$kbd" \
+        '<array><dict><key>HIDKeyboardModifierMappingSrc</key><integer>30064771129</integer><key>HIDKeyboardModifierMappingDst</key><integer>30064771113</integer></dict></array>'
+done
 
 # Mission Control overview (ID 32) and the space-switch hotkeys (79-82) sit
 # on their macOS default chords, written with enabled = 1 rather than left
