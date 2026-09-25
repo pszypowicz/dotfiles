@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Claude Code statusLine command
-# Receives JSON on stdin and publishes the project folder, the active model and
-# the context window fill as tmux pane options for the window-name format.
+# Receives JSON on stdin and publishes the project folder, the active model, the
+# effort level and the context window fill as tmux pane options for the
+# window-name format.
 # No stdout - usage is shown via the SketchyBar widget only.
 #
 # The widget's rate limits do not come from here. The payload reports what one
@@ -11,9 +12,10 @@
 
 INPUT=$(cat)
 
-# Publish the project folder, the active model, and the context window fill as
-# pane-scoped user options. The automatic-rename-format in tmux.conf surfaces
-# them in the window name, which set-titles carries into the terminal title.
+# Publish the project folder, the active model, the context window fill, and the
+# effort level as pane-scoped user options. The automatic-rename-format in
+# tmux.conf surfaces them in the window name, which set-titles carries into the
+# terminal title.
 if [[ -n "$TMUX_PANE" ]]; then
   # Resuming a session from another directory leaves workspace.project_dir
   # pointing at the launch directory, and the pane working directory follows the
@@ -69,4 +71,13 @@ if [[ -n "$TMUX_PANE" ]]; then
         (if $fill == null then empty else ($fill | tostring) + "%" end) ]
     | join(":")')
   tmux set-option -p -t "$TMUX_PANE" @claude_context "$CONTEXT"
+
+  # The payload carries effort.level only for models that support effort.
+  # Abbreviate it as "E:L", "E:M", "E:H", "E:XH", or "E:MAX" to keep the window
+  # name short, and blank it for models without effort.
+  EFFORT=$(echo "$INPUT" | jq -r '
+    .effort.level // empty
+    | ({low: "L", medium: "M", high: "H", xhigh: "XH", max: "MAX"}[.] // ascii_upcase)
+    | "E:" + .')
+  tmux set-option -p -t "$TMUX_PANE" @claude_effort "$EFFORT"
 fi
