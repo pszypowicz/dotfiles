@@ -76,7 +76,6 @@ brew "felixkratz/formulae/sketchybar", trusted: true
 brew "pszypowicz/tap/tmux-gestures", trusted: true
 # cask "nikitabobko/tap/aerospace", trusted: true   # disabled while dogfooding the bsp fork build below
 cask "pszypowicz/tap/aerospace-bsp", trusted: true
-cask "anki"
 cask "pszypowicz/tap/bright-sync", trusted: true
 cask "codex"
 cask "copilot-cli"
