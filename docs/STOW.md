@@ -47,7 +47,6 @@ ln -s ../../Developer/github.com/pszypowicz/dotfiles/dot-config/claude/statuslin
 - `README.md`
 - `docs/`
 - `etc/`
-- `tests/`
 - `bootstrap`
 - `macos/`
 - `.claude/`

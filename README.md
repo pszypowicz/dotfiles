@@ -90,7 +90,6 @@ Missing tools and formatter failures produce a warning without blocking the sess
 Edits made through shell commands do not trigger this formatter.
 
 The hooks require Bash, Python 3, jq, and gh. Install Prettier, Terraform, and terraform-docs to enable the corresponding formatters.
-Run `python3 -B -m unittest discover -s tests -p 'test_codex.py'` to test the hooks and installer without modifying system files.
 
 ### Private overlays
 
@@ -114,7 +113,6 @@ The brew, stow, and npm steps then cover the overlay too. `--overlay` combines w
 | `dot-ssh/`                | `~/.ssh/`       | SSH client config.                                  |
 | `bootstrap`               | not stowed      | The installer.                                      |
 | `etc/`                    | not stowed      | Public system configuration installed by bootstrap. |
-| `tests/`                  | not stowed      | Automated tests for bootstrap and hooks.            |
 | `.pre-commit-config.yaml` | not stowed      | The secret scan that runs before each commit.       |
 | `macos/defaults`          | not stowed      | The `defaults write` calls.                         |
 | `macos/sharing`           | not stowed      | The Remote Login and AC sleep switches.             |
