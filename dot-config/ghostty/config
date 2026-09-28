@@ -15,6 +15,11 @@ confirm-close-surface = false
 # ever reads this config.
 auto-update = off
 
+# Remote hosts lack the xterm-ghostty terminfo entry, so tmux there fails
+# with "missing or unsuitable terminal". ssh-terminfo installs the entry on
+# first connect; ssh-env falls back to TERM=xterm-256color if that fails.
+shell-integration-features = ssh-terminfo,ssh-env
+
 # tmux handles multiplexing: unbind only the shortcuts that create a
 # Ghostty tab or split by accident. Everything else keeps its defaults.
 keybind = super+t=unbind
