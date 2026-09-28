@@ -12,4 +12,7 @@ Host *
   ServerAliveInterval 30
   ServerAliveCountMax 6
   TCPKeepAlive no
-  ForwardAgent yes
+  # A forwarded agent lets root on the remote host request signatures with
+  # every local key, so a host opts in with its own ForwardAgent in config.d.
+  # ssh keeps the first value it obtains, and the Include above comes first.
+  ForwardAgent no
