@@ -232,6 +232,11 @@
     "enabled": true
   },
   "effortLevel": "xhigh",
+  "modelSettings": {
+    "claude-opus-5-5": {
+      "effortLevel": "xhigh"
+    }
+  },
   "emojiCompletionEnabled": false,
   "tui": "fullscreen",
   "skipWorkflowUsageWarning": true,
@@ -241,10 +246,5 @@
     "jj": "<Esc>"
   },
   "preferredNotifChannel": "notifications_disabled",
-  "switchModelsOnFlag": false,
-  "modelSettings": {
-    "claude-opus-5-5": {
-      "effortLevel": "high"
-    }
-  }
+  "switchModelsOnFlag": false
 }
