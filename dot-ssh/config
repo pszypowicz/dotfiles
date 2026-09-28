@@ -5,9 +5,12 @@ Include /Users/pszypowicz/.config/colima/ssh_config
 Include ~/.ssh/config.d/*.conf
 
 Host *
-  # With a timeout set, ssh resolves the host name itself and connects by
-  # address. Without one, the macOS ssh build connects by name through a
-  # system path that can fail for LAN names with "Undefined error: 0".
+  # The macOS ssh build connects through Network.framework for a host name with
+  # no timeout, and Local Network privacy gates that path. A terminal
+  # multiplexer server that outlives its terminal app keeps no responsible app,
+  # so LAN names fail inside it with "Undefined error: 0". With a timeout set,
+  # ssh resolves the name itself and takes the classic socket path, which the
+  # privacy check does not gate.
   ConnectTimeout 10
   ServerAliveInterval 30
   ServerAliveCountMax 6
