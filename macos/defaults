@@ -24,10 +24,11 @@ Touches:
   - Desktop: disable "click wallpaper to reveal desktop" outside Stage Manager
   - Finder: enable the Quit menu item (Cmd+Q), show all filename extensions
   - Cyclist: enable the AeroSpace integration
-  - Safari: show the developer features (Develop menu and Web Inspector), and
-    bind Shift+Cmd+R to the Develop menu's "Reload Page From Origin". The
-    chord is Chrome's hard reload, and it replaces Safari's Show Reader
-    binding. A running Safari picks both up after a relaunch
+  - Safari: show the developer features (Develop menu and Web Inspector),
+    use the Compact tab layout, and bind Shift+Cmd+R to the Develop menu's
+    "Reload Page From Origin". The chord is Chrome's hard reload, and it
+    replaces Safari's Show Reader binding. A running Safari picks these up
+    after a relaunch
   - Text input: disable auto-capitalization, smart quotes/dashes,
     auto-period, spelling correction, smart-reply suggestions
   - Language & Region: preferred languages English (US) primary, then
@@ -143,6 +144,13 @@ defaults write com.apple.Safari WebKitPreferences.developerExtrasEnabled -bool t
 # Shortcut for Safari in place.
 # shellcheck disable=SC2016  # $ is the Shift modifier, not a shell expansion
 defaults write com.apple.Safari NSUserKeyEquivalents -dict-add "Reload Page From Origin" '@$r'
+
+# Safari: use the Compact tab layout from Settings > Tabs, which puts the tabs
+# and the address bar in one row. ShowStandaloneTabBar is the key behind that
+# setting: false = Compact, true = Separate. The key has no Apple
+# documentation, so a Safari update can rename it and the write then does
+# nothing. The Full Disk Access note above applies here too.
+defaults write com.apple.Safari ShowStandaloneTabBar -bool false
 
 # Text input: disable macOS auto-substitutions (capitalization, smart quotes/dashes,
 # auto-period, spelling correction, smart-reply suggestions).
