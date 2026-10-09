@@ -169,7 +169,8 @@
     "superpowers-extended-cc@superpowers-extended-cc-marketplace": true,
     "house-style@claude-skills": true,
     "codex@openai-codex": true,
-    "github@claude-skills": true
+    "github@claude-skills": true,
+    "i-have-adhd@i-have-adhd": true
   },
   "extraKnownMarketplaces": {
     "claude-skills": {
@@ -200,6 +201,12 @@
       "source": {
         "source": "github",
         "repo": "openai/codex-plugin-cc"
+      }
+    },
+    "i-have-adhd": {
+      "source": {
+        "source": "github",
+        "repo": "ayghri/i-have-adhd"
       }
     }
   },
