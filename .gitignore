@@ -10,6 +10,7 @@ dot-config/matplotlib
 # Claude Code - track only settings.json, ignore everything else
 dot-config/claude/*
 !dot-config/claude/CLAUDE.md
+!dot-config/claude/dot-i-have-adhd-always
 !dot-config/claude/fetch-usage.sh
 !dot-config/claude/keybindings.json
 !dot-config/claude/settings.json

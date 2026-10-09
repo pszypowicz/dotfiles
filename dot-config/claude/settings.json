@@ -210,7 +210,6 @@
       }
     }
   },
-  "outputStyle": "simple-english:simple-english",
   "sandbox": {
     "enabled": false,
     "failIfUnavailable": true,
