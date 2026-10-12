@@ -75,6 +75,7 @@
             "type": "command",
             "command": "~/.config/claude/hooks/block-force-push.sh",
             "timeout": 20,
+            "onFailure": "block",
             "statusMessage": "Checking for an open pull request..."
           }
         ]

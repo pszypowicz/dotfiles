@@ -31,9 +31,10 @@ deny() {
   exit 0
 }
 
-# `gh` has no request deadline of its own. A hung call must not become a silent
-# pass: a hook that exceeds its own timeout is skipped, and the push then runs
-# unchecked. Bound the call here instead.
+# `gh` has no request deadline of its own. A hook that exceeds its timeout
+# fails, and the hook entry's onFailure setting then decides whether the push
+# runs unchecked or is refused with a generic reason. Bound the call here so a
+# hung `gh` becomes a deny that names the cause, whatever that setting is.
 run_with_deadline() {
   local seconds="$1"
   shift
