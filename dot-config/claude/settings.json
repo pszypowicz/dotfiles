@@ -171,7 +171,8 @@
     "house-style@claude-skills": true,
     "codex@openai-codex": true,
     "github@claude-skills": true,
-    "i-have-adhd@i-have-adhd": true
+    "i-have-adhd@i-have-adhd": true,
+    "timestamps@claude-skills": true
   },
   "extraKnownMarketplaces": {
     "claude-skills": {
