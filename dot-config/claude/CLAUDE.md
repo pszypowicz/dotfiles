@@ -53,6 +53,7 @@ Applies to any prose drafted as something I wrote - blog posts, PR descriptions,
 - **Colons and semicolons** where a human would write "and", "but", "because", "although", "so".
 - **Punchy fragments** ("keep the signal, govern the response", "Nothing stale, nothing to swipe away") - write full sentences joined by ordinary conjunctions.
 - **Buzzwords**: "load-bearing", "smoking gun", "stated fairly", and similar reach-for-effect vocabulary.
+- **"Leg"** for one build, job, or step ("the arm64 leg builds under QEMU"). Name the build, job, or step. This one holds in code comments too.
 - **Clever section headers** - use plain descriptive ones ("What I measured", "Root cause").
 - Em dashes (already banned in Text and Encoding).
 
