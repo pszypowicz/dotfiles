@@ -14,8 +14,8 @@
 # denies it, because an unknown answer is not a safe answer. A repository with
 # no github.com remote is out of scope and passes through.
 #
-# Only `Bash` tool calls reach this hook. A push made by any other means is
-# not covered.
+# Bash tool calls and the shell commands that the Monitor tool starts reach
+# this hook. A push made by any other means is not covered.
 set -uo pipefail
 
 GH_DEADLINE_SECONDS=10
