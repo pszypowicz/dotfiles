@@ -1,10 +1,8 @@
-# The blank helper drops helpers inherited from system config (Homebrew git
-# ships osxkeychain); GCM is the only helper, and only HTTPS remotes (Azure
-# DevOps) reach it - GitHub goes over SSH via the Sequester agent.
+# The blank helper drops the helpers inherited from system config (Homebrew
+# git ships osxkeychain). GitHub goes over SSH through the Sequester agent, and
+# an overlay that needs HTTPS credentials registers its own helper.
 [credential]
-	azreposCredentialType = oauth
-	helper = 
-	helper = /usr/local/share/gcm-core/git-credential-manager
+	helper =
 [push]
 	default = current
 [pager]
@@ -32,5 +30,3 @@
 
 [include]
 	path = ~/.config/git/config.local
-[credential "https://dev.azure.com"]
-	useHttpPath = true
