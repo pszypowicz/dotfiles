@@ -3,7 +3,6 @@ tap "felixkratz/formulae"
 tap "pszypowicz/tap"
 tap "warrensbox/tap"
 brew "aspell"
-brew "azure-cli"
 brew "bash"
 brew "bat"
 brew "betterleaks"
@@ -42,7 +41,6 @@ brew "mermaid-cli"
 brew "mosh"
 brew "mosquitto"
 brew "node"
-brew "node@20"
 brew "openjdk"
 brew "openjdk@21"
 brew "pam-reattach"
@@ -76,12 +74,13 @@ brew "felixkratz/formulae/sketchybar", trusted: true
 brew "pszypowicz/tap/tmux-gestures", trusted: true
 # cask "nikitabobko/tap/aerospace", trusted: true   # disabled while dogfooding the bsp fork build below
 cask "pszypowicz/tap/aerospace-bsp", trusted: true
+cask "azure-cli"
 cask "pszypowicz/tap/bright-sync", trusted: true
 cask "codex"
 cask "copilot-cli"
 cask "pszypowicz/tap/cyclist", trusted: true
 cask "font-caskaydia-cove-nerd-font"
-cask "pszypowicz/tap/mic-guard", trusted: true
+cask "pszypowicz/tap/micguard", trusted: true
 cask "pszypowicz/tap/pager", trusted: true
 # cask "ghostty"   # disabled while dogfooding the ghostty-personal fork build below
 cask "pszypowicz/tap/ghostty-personal", trusted: true
