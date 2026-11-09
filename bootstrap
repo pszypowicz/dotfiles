@@ -24,6 +24,13 @@ STOW_DIR=$(dirname "$SCRIPT_DIR")
 export XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 export GOPATH="$XDG_DATA_HOME/go"
 
+# brew bundle records each `trusted: true` entry in Homebrew's trust list,
+# which lives under XDG_CONFIG_HOME when that is set and in ~/.homebrew
+# otherwise. The stowed shells set it, so a fresh machine's first run has to
+# set it too, or the list lands in ~/.homebrew and every later brew command
+# refuses the tap packages as untrusted.
+export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+
 usage() {
     cat <<'EOF'
 Usage: bootstrap [--overlay NAME] [STEP ...]
