@@ -17,7 +17,7 @@ Touches:
     swipe, Launchpad pinch, Show Desktop spread. Explicitly enable 3-finger
     vertical swipe (up opens Mission Control, down App Expose); 3-finger
     horizontal keeps its macOS default (switches Spaces)
-  - Menu bar: always autohide
+  - Menu bar: always autohide, show the menu bar background
   - Windows: Ctrl+Cmd+drag anywhere inside a window to move it
   - Dock: autohide, tile size 59
   - Hot corners: disable the bottom-right Quick Note corner
@@ -76,6 +76,13 @@ done
 
 # Menu bar: always autohide.
 defaults write NSGlobalDomain _HIHideMenuBar -bool true
+
+# Menu bar: turn on "Show menu bar background" from System Settings > Menu
+# Bar, which draws a blurred backing behind the menu bar instead of leaving it
+# transparent over the wallpaper. SLSMenuBarUseBlurredAppearance is the key
+# behind that toggle. It has no Apple documentation, so a macOS update can
+# rename it and the write then does nothing.
+defaults write NSGlobalDomain SLSMenuBarUseBlurredAppearance -bool true
 
 # Windows: hold Ctrl+Cmd and drag anywhere inside a window to move it, not
 # just the title bar (Linux-style Super+drag). Hidden AppKit preference with
