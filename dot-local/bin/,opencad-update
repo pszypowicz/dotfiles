@@ -2,12 +2,13 @@
 #
 # ,opencad-update - install or upgrade Open CAD Studio to its latest release.
 #
-# Open CAD Studio has no cask in a public tap, so a cask in the local Homebrew
-# tap installs it. This script points that cask at the newest GitHub release,
-# taking the sha256 digest GitHub publishes for the macOS arm64 dmg, then
-# installs or upgrades it. The app is ad-hoc signed and not notarized, so the
-# script clears the quarantine flag Homebrew sets, which would otherwise make
-# Gatekeeper refuse to open it.
+# Open CAD Studio has no cask in a public tap. This script keeps the cask
+# itself and writes it into a local Homebrew tap on every run, creating the
+# tap if needed, with the version and the sha256 digest GitHub publishes for
+# the newest release's macOS arm64 dmg. It then installs or upgrades the
+# cask. The app is ad-hoc signed and not notarized, so the script clears the
+# quarantine flag Homebrew sets, which would otherwise make Gatekeeper refuse
+# to open it.
 set -euo pipefail
 
 PROGRAM=$(basename "$0")
@@ -21,9 +22,10 @@ usage() {
     cat <<EOF
 $PROGRAM - install or upgrade Open CAD Studio to its latest release.
 
-Points the $TAP/$CASK cask at the latest release of
-$UPSTREAM, installs or upgrades it with Homebrew, and clears
-the Gatekeeper quarantine flag on $APP.
+Writes the $TAP/$CASK cask for the latest release of
+$UPSTREAM, creating and trusting it if needed, installs
+or upgrades the cask with Homebrew, and clears the Gatekeeper quarantine
+flag on $APP.
 
 Usage:
   $PROGRAM [--dry-run]
@@ -44,6 +46,35 @@ die() {
     exit "${2:-1}"
 }
 
+# The cask for one release. Its static parts follow the cask in the upstream
+# packaging/homebrew directory.
+render_cask() {
+    cat <<EOF
+# Written by $PROGRAM from the dotfiles repo. Edits here are overwritten on
+# its next run.
+cask "$CASK" do
+  version "$1"
+  sha256 "$2"
+
+  url "https://github.com/$UPSTREAM/releases/download/v#{version}/OpenCADStudio-v#{version}-$ASSET_SUFFIX"
+  name "Open CAD Studio"
+  desc "CAD application for 2D drafting and 3D modeling that reads/writes DWG and DXF"
+  homepage "https://github.com/$UPSTREAM"
+
+  depends_on arch: :arm64
+  depends_on :macos
+
+  app "OpenCADStudio.app"
+
+  zap trash: [
+    "~/Library/Application Support/OpenCADStudio",
+    "~/Library/Preferences/io.github.HakanSeven12.OpenCadStudio.plist",
+    "~/Library/Saved Application State/io.github.HakanSeven12.OpenCadStudio.savedState",
+  ]
+end
+EOF
+}
+
 dry_run=false
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -57,9 +88,6 @@ for tool in brew gh; do
     command -v "$tool" >/dev/null 2>&1 || die "$tool not found on PATH"
 done
 
-cask_file="$(brew --repo "$TAP")/Casks/$CASK.rb"
-[[ -f $cask_file ]] || die "no cask at $cask_file"
-
 # The release tag and the asset digest ("sha256:<hex>"), tab separated.
 release=$(gh api "repos/$UPSTREAM/releases/latest" \
     --jq "[.tag_name, (.assets[] | select(.name | endswith(\"$ASSET_SUFFIX\")) | .digest)] | @tsv") ||
@@ -72,20 +100,27 @@ sha=${digest#sha256:}
 [[ $version =~ ^[0-9][0-9A-Za-z.]*$ ]] || die "unexpected release tag: '$tag'"
 [[ $sha =~ ^[0-9a-f]{64}$ ]] || die "release $tag has no sha256 digest for a *$ASSET_SUFFIX asset"
 
-current=$(/usr/bin/sed -nE 's/^  version "(.*)"$/\1/p' "$cask_file")
+tap_dir=$(brew --repository "$TAP")
+cask_file="$tap_dir/Casks/$CASK.rb"
+current=$(sed -nE 's/^  version "(.*)"$/\1/p' "$cask_file" 2>/dev/null || true)
 echo "Latest release: $version (cask has ${current:-no version})"
 echo "sha256: $sha"
 if $dry_run; then
     exit 0
 fi
 
-/usr/bin/sed -i '' -E \
-    -e "s/^  version \".*\"$/  version \"$version\"/" \
-    -e "s/^  sha256 \".*\"$/  sha256 \"$sha\"/" \
-    "$cask_file"
-if ! grep -qx "  version \"$version\"" "$cask_file" || ! grep -qx "  sha256 \"$sha\"" "$cask_file"; then
-    die "could not set the version and sha256 lines in $cask_file"
+if [[ ! -d $tap_dir ]]; then
+    brew tap-new --no-git "$TAP"
 fi
+mkdir -p "$tap_dir/Casks"
+tmp=$(mktemp "$tap_dir/Casks/.$CASK.XXXXXX")
+trap 'rm -f "$tmp"' EXIT
+render_cask "$version" "$sha" >"$tmp"
+chmod 644 "$tmp"
+mv "$tmp" "$cask_file"
+
+# Homebrew loads casks from a non-official tap only once they are trusted.
+brew trust --cask "$TAP/$CASK" >/dev/null
 
 if brew list --cask "$CASK" >/dev/null 2>&1; then
     brew upgrade --cask "$TAP/$CASK"
