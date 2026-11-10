@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+#
+# ,opencad-update - install or upgrade Open CAD Studio to its latest release.
+#
+# Open CAD Studio has no cask in a public tap, so a cask in the local Homebrew
+# tap installs it. This script points that cask at the newest GitHub release,
+# taking the sha256 digest GitHub publishes for the macOS arm64 dmg, then
+# installs or upgrades it. The app is ad-hoc signed and not notarized, so the
+# script clears the quarantine flag Homebrew sets, which would otherwise make
+# Gatekeeper refuse to open it.
+set -euo pipefail
+
+PROGRAM=$(basename "$0")
+UPSTREAM=HakanSeven12/OpenCADStudio
+TAP=local/tap
+CASK=open-cad-studio
+ASSET_SUFFIX=macos-arm64.dmg
+APP=/Applications/OpenCADStudio.app
+
+usage() {
+    cat <<EOF
+$PROGRAM - install or upgrade Open CAD Studio to its latest release.
+
+Points the $TAP/$CASK cask at the latest release of
+$UPSTREAM, installs or upgrades it with Homebrew, and clears
+the Gatekeeper quarantine flag on $APP.
+
+Usage:
+  $PROGRAM [--dry-run]
+  $PROGRAM --help
+
+Options:
+  -n, --dry-run   Print the latest release and its checksum, change nothing.
+  -h, --help      Show this help.
+
+Examples:
+  $PROGRAM            # install or upgrade to the latest release
+  $PROGRAM --dry-run  # only show the latest release
+EOF
+}
+
+die() {
+    echo "$PROGRAM: $1" >&2
+    exit "${2:-1}"
+}
+
+dry_run=false
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -n | --dry-run) dry_run=true; shift ;;
+        -h | --help) usage; exit 0 ;;
+        *) usage >&2; die "unknown argument: $1" 2 ;;
+    esac
+done
+
+for tool in brew gh; do
+    command -v "$tool" >/dev/null 2>&1 || die "$tool not found on PATH"
+done
+
+cask_file="$(brew --repo "$TAP")/Casks/$CASK.rb"
+[[ -f $cask_file ]] || die "no cask at $cask_file"
+
+# The release tag and the asset digest ("sha256:<hex>"), tab separated.
+release=$(gh api "repos/$UPSTREAM/releases/latest" \
+    --jq "[.tag_name, (.assets[] | select(.name | endswith(\"$ASSET_SUFFIX\")) | .digest)] | @tsv") ||
+    die "could not read the latest release of $UPSTREAM"
+IFS=$'\t' read -r tag digest <<<"$release"
+version=${tag#v}
+sha=${digest#sha256:}
+
+# The cask is Ruby that brew evaluates, so only plain values go into it.
+[[ $version =~ ^[0-9][0-9A-Za-z.]*$ ]] || die "unexpected release tag: '$tag'"
+[[ $sha =~ ^[0-9a-f]{64}$ ]] || die "release $tag has no sha256 digest for a *$ASSET_SUFFIX asset"
+
+current=$(/usr/bin/sed -nE 's/^  version "(.*)"$/\1/p' "$cask_file")
+echo "Latest release: $version (cask has ${current:-no version})"
+echo "sha256: $sha"
+if $dry_run; then
+    exit 0
+fi
+
+/usr/bin/sed -i '' -E \
+    -e "s/^  version \".*\"$/  version \"$version\"/" \
+    -e "s/^  sha256 \".*\"$/  sha256 \"$sha\"/" \
+    "$cask_file"
+if ! grep -qx "  version \"$version\"" "$cask_file" || ! grep -qx "  sha256 \"$sha\"" "$cask_file"; then
+    die "could not set the version and sha256 lines in $cask_file"
+fi
+
+if brew list --cask "$CASK" >/dev/null 2>&1; then
+    brew upgrade --cask "$TAP/$CASK"
+else
+    brew install --cask "$TAP/$CASK"
+fi
+
+if [[ -d $APP ]]; then
+    xattr -dr com.apple.quarantine "$APP"
+fi
