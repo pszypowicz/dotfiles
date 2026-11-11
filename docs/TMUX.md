@@ -94,7 +94,8 @@ A second Ghostty window attaches to the most recently used session that no other
 
 ## Where this lives
 
-- `dot-config/zsh/dot-zshrc` - the attach logic at Ghostty start
+- `dot-config/zsh/dot-zshrc` - runs the attach helper at Ghostty start
+- `dot-local/bin/tmux-attach-next` - the attach logic, also run remotely by SSH clients
 - `dot-local/bin/tmux-sessionizer` - the fzf picker
 - `dot-local/bin/fzf-jump-targets` - the candidate list, shared with the `Alt+C` directory jump
 - `dot-config/tmux/tmux.conf` - the `prefix + f` binding, the titlebar format, and the status line

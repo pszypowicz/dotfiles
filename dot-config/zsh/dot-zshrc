@@ -1,22 +1,13 @@
 # Interactive shells only.
 
-# Ghostty windows are viewports onto tmux sessions: attach to the most
-# recently used session that no client is showing, and never mirror a
-# session already visible in another window. Other terminals, such as the
-# VS Code one, skip this.
-if [[ -z "$TMUX" && "$TERM_PROGRAM" == ghostty ]] && command -v tmux >/dev/null 2>&1; then
-    target=$(tmux list-sessions -f '#{==:#{session_attached},0}' \
-        -F '#{session_last_attached} #{session_name}' 2>/dev/null \
-        | sort -rn | awk 'NR == 1 { print $2 }')
-    if [[ -n "$target" ]]; then
-        exec tmux attach -t "=$target"
-    elif tmux has-session -t '=scratch' 2>/dev/null; then
-        exec tmux new-session -c "$HOME"
-    else
-        exec tmux new-session -s scratch -c "$HOME"
-    fi
+# Ghostty windows are viewports onto tmux sessions: tmux-attach-next picks
+# the most recently used session that no client is showing, so no session
+# appears in two windows. SSH clients run the same helper remotely. Other
+# terminals, such as the VS Code one, skip this.
+if [[ -z "$TMUX" && "$TERM_PROGRAM" == ghostty && -x $HOME/.local/bin/tmux-attach-next ]] &&
+    command -v tmux >/dev/null 2>&1; then
+    exec "$HOME/.local/bin/tmux-attach-next"
 fi
-unset target
 
 # What /etc/zshrc did, which NO_GLOBAL_RCS in .zshenv skips: combining
 # characters render in a UTF-8 locale, and the log builtin gets out of the

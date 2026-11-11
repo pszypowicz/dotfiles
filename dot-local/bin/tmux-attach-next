@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+#
+# tmux-attach-next - turn a new terminal window into a viewport onto a tmux
+# session: attach to the most recently used session that no client shows, so
+# no session appears in two windows. When every session is already on
+# screen, start scratch, or an unnamed session when scratch exists.
+#
+# .zshrc runs it for each Ghostty window, and an SSH client runs it on this
+# machine (ssh -t host 'exec zsh -lc tmux-attach-next'), so local and remote
+# windows share one rule.
+set -euo pipefail
+
+PROGRAM=$(basename "$0")
+DRY_RUN=false
+
+usage() {
+    cat <<EOF
+$PROGRAM - attach to the most recently used tmux session that no client shows.
+
+Attaches to the session with the latest last-attached time among those with
+no attached client. When every session is attached elsewhere, starts a
+session named scratch, or an unnamed one when scratch already exists. New
+sessions start in the home directory.
+
+Usage:
+  $PROGRAM [--dry-run]
+  $PROGRAM --help
+
+Options:
+  -n, --dry-run   Print the tmux command instead of running it.
+  -h, --help      Show this help.
+
+Examples:
+  $PROGRAM                                     # from a new terminal window
+  ssh -t <host> 'exec zsh -lc $PROGRAM'        # the same window over SSH
+EOF
+}
+
+die() {
+    echo "$PROGRAM: $1" >&2
+    exit "${2:-1}"
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -n | --dry-run) DRY_RUN=true; shift ;;
+        -h | --help) usage; exit 0 ;;
+        *) usage >&2; die "unknown argument: $1" 2 ;;
+    esac
+done
+
+[[ -z "${TMUX:-}" ]] || die "already inside tmux"
+command -v tmux >/dev/null 2>&1 || die "tmux not found on PATH"
+
+# The name is everything after the timestamp, so it may contain spaces.
+target=$(tmux list-sessions -f '#{==:#{session_attached},0}' \
+    -F '#{session_last_attached} #{session_name}' 2>/dev/null |
+    sort -rn | sed -n '1s/^[0-9]* //p') || target=""
+
+if [[ -n "$target" ]]; then
+    cmd=(tmux attach-session -t "=$target")
+elif tmux has-session -t '=scratch' 2>/dev/null; then
+    cmd=(tmux new-session -c "$HOME")
+else
+    cmd=(tmux new-session -s scratch -c "$HOME")
+fi
+
+if $DRY_RUN; then
+    printf '%q ' "${cmd[@]}"
+    echo
+    exit 0
+fi
+exec "${cmd[@]}"
