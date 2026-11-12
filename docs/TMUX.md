@@ -1,6 +1,6 @@
 # Tmux session flow
 
-A Ghostty window is a viewport onto a persistent named tmux session. Each new Ghostty window attaches to the most recently used session that no other window shows, so two windows never mirror each other. A closed window detaches its session. Nothing is lost across a Ghostty restart. Only a Mac reboot or an explicit kill ends a session.
+A Ghostty window is a viewport onto a persistent named tmux session. Each new Ghostty window attaches to the most recently used session that no other window shows, so two windows never mirror each other. When the session in a window ends, the window moves to the next session by the same rule, and it closes only when no such session is left. A closed window detaches its session. Nothing is lost across a Ghostty restart. Only a Mac reboot or an explicit kill ends a session.
 
 ## Mental model
 
@@ -64,6 +64,13 @@ If the session is absent, tmux creates it at the repository root. Either way `sw
 
 Every session stays alive and detached in the tmux server.
 
+### Finish a session
+
+1. Press `Ctrl-D` in the last pane of the session, or press `prefix + &` on its last window.
+2. The session ends. The window moves to the most recently active session that no other window shows.
+
+The `bg` stash session counts too, so the window can land there. When no such session is left, tmux detaches and Ghostty closes. To close Ghostty while other sessions wait, press `prefix + d`.
+
 ### Open an ad-hoc shell
 
 For work with no project context, such as a look at `/var/log`, pick one option.
@@ -98,4 +105,4 @@ A second Ghostty window attaches to the most recently used session that no other
 - `dot-local/bin/tmux-attach-next` - the attach logic, also run remotely by SSH clients
 - `dot-local/bin/tmux-sessionizer` - the fzf picker
 - `dot-local/bin/fzf-jump-targets` - the candidate list, shared with the `Alt+C` directory jump
-- `dot-config/tmux/tmux.conf` - the `prefix + f` binding, the titlebar format, and the status line
+- `dot-config/tmux/tmux.conf` - the `prefix + f` binding, the session-end rule, the titlebar format, and the status line
