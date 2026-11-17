@@ -3,9 +3,10 @@
 # Receives JSON on stdin and publishes the project folder, the active model, the
 # effort level and the context window fill as tmux pane options for the
 # window-name format.
-# No stdout - usage is shown via the SketchyBar widget only.
+# No stdout - usage is shown by the SketchyBar widget, and by the tmux status
+# line for a client that connected over ssh.
 #
-# The widget's rate limits do not come from here. The payload reports what one
+# Neither of those reads its rate limits from here. The payload reports what one
 # session last saw, which can lag behind the account or leave a window out
 # entirely, and every session would write the same file. fetch-usage.sh owns
 # that cache instead and reads the account numbers from the usage endpoint.

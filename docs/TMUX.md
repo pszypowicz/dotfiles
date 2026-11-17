@@ -99,10 +99,23 @@ Use `tmux kill-server` as a last resort. The command discards the state of every
 
 A second Ghostty window attaches to the most recently used session that no other window shows. It never mirrors the first window. If every session is already visible somewhere, Ghostty starts a fresh session at `~`. The result is two windows on two sessions, side by side.
 
+## Claude usage over SSH
+
+A window that connects over SSH, such as iTerm2 on another laptop, cannot see the SketchyBar widget on this Mac. Its status line shows the same Claude usage at the right. The clock icon marks the five-hour window, and the calendar icon marks the seven-day window. A Ghostty window on this Mac shows nothing there.
+
+- The colors follow the widget. A number turns yellow at 60%, orange at 80%, and red at 90%.
+- At 80% in the five-hour window, the time until its reset follows the number.
+- A dim number is more than 15 minutes old.
+- `--` means that there is no data, or that the token expired and no Claude Code session has refreshed it. Start a Claude Code session on this Mac to fix it. A session over SSH works too.
+- The icons are Nerd Font glyphs. The terminal on the other machine needs a Nerd Font to show them.
+
+`tmux-claude-usage` reads the cache that `fetch-usage.sh` writes. It also starts the fetcher at each status refresh, because SketchyBar may not refresh the cache while nobody is at the Mac. The fetcher calls the usage endpoint at most once every five minutes.
+
 ## Where this lives
 
 - `dot-config/zsh/dot-zshrc` - runs the attach helper at Ghostty start
 - `dot-local/bin/tmux-attach-next` - the attach logic, also run remotely by SSH clients
+- `dot-local/bin/tmux-claude-usage` - the Claude usage on the status line of SSH clients, read from the cache of `dot-config/claude/fetch-usage.sh`
 - `dot-local/bin/tmux-sessionizer` - the fzf picker
 - `dot-local/bin/fzf-jump-targets` - the candidate list, shared with the `Alt+C` directory jump
 - `dot-config/tmux/tmux.conf` - the `prefix + f` binding, the session-end rule, the titlebar format, and the status line

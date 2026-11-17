@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # Poll the Anthropic OAuth usage endpoint and write the rate-limit cache that
-# the SketchyBar widget reads. This is the only writer of that cache. Rate
-# limits are account-level, so sessions on other machines show up here too, and
-# the widget keeps working when no session runs at all. Also records the OAuth
-# token expiry in the state file for the widget's token row.
+# the SketchyBar widget and the tmux status line read. This is the only writer
+# of that cache. Rate limits are account-level, so sessions on other machines
+# show up here too, and the widget keeps working when no session runs at all.
+# Also records the OAuth token expiry in the state file for the widget's token
+# row.
 #
 # The endpoint's "limits" array carries per-model weekly caps (kind
 # weekly_scoped). Those go to a separate scoped-limits file.

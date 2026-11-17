@@ -1,0 +1,162 @@
+#!/usr/bin/env bash
+#
+# tmux-claude-usage - print the Claude rate-limit usage for the tmux status
+# line of a client that connected over ssh. A client at the Mac itself has the
+# SketchyBar widget for the same numbers, so the script prints nothing there.
+#
+# status-right in tmux.conf passes #{client_pid}. Each client expands its own
+# command line, so tmux keeps a separate job and output per client. The numbers
+# come from the cache that fetch-usage.sh writes. SketchyBar may not refresh
+# that cache while you are away from the Mac, so every run starts the fetcher
+# too. The fetcher throttles itself to one network call per five minutes.
+set -euo pipefail
+
+PROGRAM=$(basename "$0")
+CACHE_FILE="$HOME/.cache/claude/rate-limits.json"
+STATE_FILE="$HOME/.cache/claude/usage-poll.json"
+FETCHER="$HOME/.config/claude/fetch-usage.sh"
+
+STALE_AFTER=900     # seconds; older numbers print dimmed
+FRESH_THRESHOLD=600 # seconds; older numbers behind a dead token print as "--"
+COUNTDOWN_AT=80     # five-hour percentage that adds the time to the reset
+
+# The Nerd Font clock (U+F0150) and calendar (U+F00ED) glyphs of the SketchyBar
+# widget, written as UTF-8 bytes.
+CLOCK=$'\xf3\xb0\x85\x90'
+CALENDAR=$'\xf3\xb0\x83\xad'
+
+usage() {
+    cat <<EOF
+$PROGRAM - print Claude rate-limit usage for the tmux status line of an ssh client.
+
+Prints the five-hour and seven-day usage from the fetch-usage.sh cache as a
+tmux format string, colored by how much is used. Prints nothing when the
+client did not connect over ssh.
+
+Usage:
+  $PROGRAM --client-pid PID
+  $PROGRAM --help
+
+Options:
+  --client-pid PID  Process ID of the tmux client. Required.
+  -h, --help        Show this help.
+
+Examples:
+  $PROGRAM --client-pid 4242
+  set -g status-right '#($PROGRAM --client-pid #{client_pid})'
+EOF
+}
+
+die() {
+    echo "$PROGRAM: $1" >&2
+    exit "${2:-1}"
+}
+
+CLIENT_PID=""
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --client-pid)
+            [[ $# -ge 2 ]] || die "--client-pid needs a value" 2
+            CLIENT_PID=$2
+            shift 2
+            ;;
+        --client-pid=*) CLIENT_PID=${1#*=}; shift ;;
+        -h | --help) usage; exit 0 ;;
+        *) usage >&2; die "unknown argument: $1" 2 ;;
+    esac
+done
+
+[[ -n "$CLIENT_PID" ]] || die "--client-pid is required" 2
+[[ "$CLIENT_PID" =~ ^[0-9]+$ ]] || die "--client-pid must be a number: $CLIENT_PID" 2
+
+# True when an sshd process is the given process or one of its ancestors.
+# macOS names the per-connection process "sshd-session: user@tty", and Linux
+# shows sshd or sshd-session.
+from_ssh() {
+    ps -axo pid=,ppid=,comm= | awk -v pid="$1" '
+        {
+            ppid[$1] = $2
+            name = $0
+            sub(/^ *[0-9]+ +[0-9]+ +/, "", name)
+            comm[$1] = name
+        }
+        END {
+            for (p = pid; p > 1 && (p in ppid) && hops < 64; p = ppid[p]) {
+                if (comm[p] ~ /(^|\/)sshd/) exit 0
+                hops++
+            }
+            exit 1
+        }'
+}
+
+from_ssh "$CLIENT_PID" || exit 0
+
+if [[ -x "$FETCHER" ]]; then
+    "$FETCHER" </dev/null >/dev/null 2>&1 &
+fi
+
+NOW=$(date +%s)
+
+# Each field prints as an integer, or "-" when the cache lacks it.
+FIELDS=$(jq -r '[.timestamp, .five_hour.used_percentage, .five_hour.resets_at,
+                 .seven_day.used_percentage]
+                | map(if . == null then "-" else (floor | tostring) end)
+                | join(" ")' "$CACHE_FILE" 2>/dev/null) || FIELDS=""
+[[ -n "$FIELDS" ]] || FIELDS="- - - -"
+read -r CACHE_TS FIVE_PCT FIVE_RESETS SEVEN_PCT <<<"$FIELDS"
+
+TOKEN_EXP=$(jq -r '.token_expires_at // 0 | floor' "$STATE_FILE" 2>/dev/null) || TOKEN_EXP=0
+[[ "$TOKEN_EXP" =~ ^[0-9]+$ ]] || TOKEN_EXP=0
+
+AGE=$((STALE_AFTER + 1))
+[[ "$CACHE_TS" != "-" ]] && AGE=$((NOW - CACHE_TS))
+
+# The widget's rule: stale numbers stay on screen, and "--" is kept for a dead
+# token, which only a Claude Code session can refresh.
+if [[ "$FIVE_PCT" == "-" && "$SEVEN_PCT" == "-" ]] ||
+    { ((TOKEN_EXP > 0 && TOKEN_EXP < NOW)) && ((AGE > FRESH_THRESHOLD)); }; then
+    printf '#[default]#[dim]%s -- %s --#[default] \n' "$CLOCK" "$CALENDAR"
+    exit 0
+fi
+
+DIM=""
+((AGE > STALE_AFTER)) && DIM="#[dim]"
+
+countdown() { # <seconds> - prints the time left as 1h23m, 45m, or now
+    local secs=$1
+    if ((secs <= 0)); then
+        echo "now"
+    elif ((secs >= 3600)); then
+        echo "$((secs / 3600))h$((secs % 3600 / 60))m"
+    else
+        echo "$((secs / 60))m"
+    fi
+}
+
+# <icon> <percent or -> [suffix] - prints one segment, colored with the
+# widget's 60/80/90 thresholds. Indices 16-255 keep their xterm values under
+# both terminal themes.
+segment() {
+    local icon=$1 pct=$2 suffix=${3:-} color=""
+    if [[ "$pct" == "-" ]]; then
+        printf '#[default]#[dim]%s --' "$icon"
+        return
+    fi
+    if ((pct >= 90)); then
+        color="#[fg=colour160,bold]"
+    elif ((pct >= 80)); then
+        color="#[fg=colour166]"
+    elif ((pct >= 60)); then
+        color="#[fg=colour136]"
+    fi
+    printf '#[default]%s%s%s %s%%%s' "$color" "$DIM" "$icon" "$pct" "${suffix:+ $suffix}"
+}
+
+FIVE_SUFFIX=""
+if [[ "$FIVE_PCT" != "-" && "$FIVE_RESETS" != "-" ]] && ((FIVE_PCT >= COUNTDOWN_AT)); then
+    FIVE_SUFFIX=$(countdown $((FIVE_RESETS - NOW)))
+fi
+
+printf '%s %s#[default] \n' \
+    "$(segment "$CLOCK" "$FIVE_PCT" "$FIVE_SUFFIX")" \
+    "$(segment "$CALENDAR" "$SEVEN_PCT")"
