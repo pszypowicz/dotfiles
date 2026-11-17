@@ -215,12 +215,14 @@ prune_stale_links() {
 # check runs unprivileged and the write only happens when something differs.
 # Content, mode, and owner all have to match; every other case, including an
 # unreadable or absent file, falls through to the privileged install.
-# `install -m 644` under sudo yields root:wheel, hence 644 0 0.
+# The group is left out because a new file takes the group of its directory,
+# which is admin under /Library/Application Support, and mode 644 gives the
+# group no write access.
 managed_settings_current() {
     local src=$1 dst=$2
     [[ -f $dst ]] || return 1
     cmp -s "$src" "$dst" || return 1
-    [[ $(stat -f '%Lp %u %g' "$dst") == "644 0 0" ]]
+    [[ $(stat -f '%Lp %u' "$dst") == "644 0" ]]
 }
 
 step_stow() {
