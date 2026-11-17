@@ -7,6 +7,10 @@ dot-config/k9s
 dot-config/docker
 dot-config/matplotlib
 
+# gh writes its login state here, and the token too whenever the keychain is
+# unavailable, so the file stays local to each machine.
+dot-config/gh/hosts.yml
+
 # Claude Code - track only settings.json, ignore everything else
 dot-config/claude/*
 !dot-config/claude/CLAUDE.md
