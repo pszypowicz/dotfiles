@@ -8,10 +8,11 @@
 # The endpoint's "limits" array carries per-model weekly caps (kind
 # weekly_scoped). Those go to a separate scoped-limits file.
 #
-# The endpoint is undocumented; two hard requirements: the OAuth access token
-# comes from the "Claude Code-credentials*" Keychain entries, and the
+# The endpoint is undocumented and has two hard requirements. The OAuth access
+# token must be the one Claude Code stores (see Credentials below), and the
 # User-Agent must be claude-code/<version> or the request lands in an
-# aggressively rate-limited bucket (persistent 429s).
+# aggressively rate-limited bucket (persistent 429s). The script only reads the
+# token. Claude Code logs in and refreshes it.
 
 set -u
 
@@ -21,6 +22,9 @@ STATE_FILE="$CACHE_DIR/usage-poll.json"
 SCOPED_FILE="$CACHE_DIR/scoped-limits.json"
 LOCK_DIR="$CACHE_DIR/.usage-poll.lock"
 USAGE_URL="https://api.anthropic.com/api/oauth/usage"
+# SketchyBar runs this script with the launchd environment, which lacks the
+# CLAUDE_CONFIG_DIR export from .zshenv, so the default repeats that path.
+CREDENTIALS_FILE="${CLAUDE_CONFIG_DIR:-$HOME/.config/claude}/.credentials.json"
 
 CHECK_INTERVAL=60      # seconds between credential checks (local, cheap)
 MIN_INTERVAL=300       # seconds between network polls
@@ -108,18 +112,32 @@ fi
 # ── Credentials ─────────────────────────────────────────────────────
 # Claude Code stores its OAuth blob in Keychain generic passwords whose
 # service names start with "Claude Code-credentials" (suffixed variants
-# appear alongside the plain name). The cached service is tried first to
-# avoid a full keychain scan; expired entries still yield their expiry so
-# the widget can show when the token died.
+# appear alongside the plain name). A Claude Code that cannot reach the
+# login keychain, such as one in a tmux server started from an ssh login,
+# writes the same blob to .credentials.json in its config directory
+# instead. The file and the cached service are read first, and the full
+# keychain scan runs only when neither holds a usable token. Among the
+# entries read, the one that expires last wins. Expired entries still yield
+# their expiry so the widget can show when the token died.
+
+JQ_OAUTH_LINE='select(.claudeAiOauth.accessToken)
+  | "\(.claudeAiOauth.expiresAt // 0)\t\(.claudeAiOauth.accessToken)"'
 
 inspect() { # <service> - prints "<expiry-epoch-ms>\t<token>" if the entry holds an oauth blob
   local secret
   secret=$(security find-generic-password -s "$1" -w 2>/dev/null) || return 1
-  jq -r 'select(.claudeAiOauth.accessToken)
-         | "\(.claudeAiOauth.expiresAt // 0)\t\(.claudeAiOauth.accessToken)"' <<<"$secret" 2>/dev/null
+  jq -r "$JQ_OAUTH_LINE" <<<"$secret" 2>/dev/null
 }
 
-take_if_usable() { # <service> <inspect-line> - adopts the entry when its expiry beats the current best
+inspect_file() { # prints the same line as inspect for the credentials file
+  [[ -r "$CREDENTIALS_FILE" ]] || return 1
+  jq -r "$JQ_OAUTH_LINE" "$CREDENTIALS_FILE" 2>/dev/null
+}
+
+# <service> <inspect-line> - adopts the entry when its expiry beats the current
+# best. An empty service stands for the credentials file, so the state file
+# only ever caches a Keychain service name.
+take_if_usable() {
   local exp=${2%%$'\t'*}
   exp=$((${exp%.*} / 1000))
   ((exp > TOKEN_EXP)) || return 1
@@ -130,10 +148,14 @@ take_if_usable() { # <service> <inspect-line> - adopts the entry when its expiry
   fi
 }
 
-KEYCHAIN_HAS_ENTRY=0
+HAS_ENTRY=0
+if LINE=$(inspect_file) && [[ -n "$LINE" ]]; then
+  HAS_ENTRY=1
+  take_if_usable "" "$LINE"
+fi
 CACHED_SERVICE=$(state_get '.service')
 if [[ -n "$CACHED_SERVICE" ]] && LINE=$(inspect "$CACHED_SERVICE") && [[ -n "$LINE" ]]; then
-  KEYCHAIN_HAS_ENTRY=1
+  HAS_ENTRY=1
   take_if_usable "$CACHED_SERVICE" "$LINE"
 fi
 if [[ -z "$TOKEN" ]]; then
@@ -141,7 +163,7 @@ if [[ -z "$TOKEN" ]]; then
     [[ -z "$svc" ]] && continue
     LINE=$(inspect "$svc") || continue
     [[ -z "$LINE" ]] && continue
-    KEYCHAIN_HAS_ENTRY=1
+    HAS_ENTRY=1
     take_if_usable "$svc" "$LINE"
   done < <(security dump-keychain 2>/dev/null \
     | grep -oE '"svce"<blob>="Claude Code-credentials[^"]*"' \
@@ -149,7 +171,7 @@ if [[ -z "$TOKEN" ]]; then
 fi
 
 if [[ -z "$TOKEN" ]]; then
-  if ((KEYCHAIN_HAS_ENTRY)); then STATUS=token_expired; else STATUS=no_token; fi
+  if ((HAS_ENTRY)); then STATUS=token_expired; else STATUS=no_token; fi
   save_state
   exit 0
 fi
