@@ -59,7 +59,7 @@ Applies to any prose drafted as something I wrote - blog posts, PR descriptions,
 
 Before presenting a draft, audit it specifically for these patterns and rewrite any hits.
 
-## Comments, commit messages & docstrings
+## Comments, commit messages, review replies & docstrings
 
 Prose captures the _why_ and the non-obvious context. It never restates what the surrounding tooling already supplies, and it describes the current code, not how it got here.
 
@@ -68,6 +68,12 @@ Prose captures the _why_ and the non-obvious context. It never restates what the
   - No version numbers or tags in the body when a CHANGELOG entry is in the same commit.
   - No file lists or line counts.
   - No "bumped X to Y" when the manifest bump is in the same commit.
+- **Review replies** - the reviewer reads the diff after my reply, so the reply points at the change and leaves its content to the diff:
+  - When the change does what they asked, one line is enough and the thread gets resolved (Fixed in ADO). Say where the change landed ("linked in the new Rollout section") instead of repeating what it says.
+  - Spend more words only on what the diff can't show: why I didn't do it the way they asked, an alternative they'd likely suggest next and why I passed on it, a deferral and where it's tracked, or the answer to a direct question.
+  - No "Good point" or "Thanks" opener on every reply.
+  - Bad: "Good point. The script now reads the token from stdin, so it never touches disk and there's nothing to clean up. The README links the follow-up issue."
+  - Good: "Done. It reads the token from stdin instead of a `--token` flag, so it stays out of `ps` as well."
 - **Comments** - don't cite snapshot state tooling can regenerate:
   - No coverage percentages. They rot every test run, and the coverage tool is authoritative.
   - No cross-file line-number refs (`parse.go:125`) - name the function/symbol so grep survives moves.
