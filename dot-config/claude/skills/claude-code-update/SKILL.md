@@ -4,7 +4,8 @@ description: >-
   Check whether the Claude Code CLI is out of date, read the changelog between
   the last-analyzed version (the exact pin in the dotfiles bootstrap) and the
   latest through the lens of this user's dotfiles, and (on approval) apply
-  beneficial config changes, update the CLI, and bump the bootstrap pin. Use
+  beneficial config changes, update the CLI, bump the bootstrap pin, and
+  commit and push the result to main. Use
   when the user says "update Claude Code", "check for a new Claude Code version",
   "is there a newer claude-code", "what changed in Claude Code", "review the
   Claude Code changelog", "should I update claude", or mentions
@@ -22,8 +23,8 @@ allowed-tools:
 
 Turn "is there a new Claude Code, and does it change anything I care about?" into
 one pass: detect versions, diff the changelog, map each entry onto this user's
-dotfiles, summarize, apply approved config changes, then update the CLI and bump
-the bootstrap pin.
+dotfiles, summarize, apply approved config changes, update the CLI, bump the
+bootstrap pin, then offer to commit and push.
 
 The main repo's `bootstrap` pins the exact `@anthropic-ai/claude-code@X.Y.Z`
 version whose changelog was last analyzed against the dotfiles. The pin is
@@ -54,7 +55,14 @@ repo.
 
 ### 1. Detect and diff
 
-Run the bundled script (it resolves the bootstrap pin, installed, and latest
+First record which files are already modified in each repo, so step 8 can keep
+that work out of its commits:
+
+```bash
+git -C <repo> status --short
+```
+
+Then run the bundled script (it resolves the bootstrap pin, installed, and latest
 versions on its own):
 
 ```bash
@@ -182,14 +190,59 @@ a re-stow to create their symlinks:
 stow -d ~/Developer/github.com/pszypowicz -t ~ dotfiles --dotfiles --restow --no-folding
 ```
 
-Remind the user to commit the dotfiles changes when they're ready (normal
-branch-PR flow; this skill does not commit on its own). The bootstrap pin bump
-in particular only reaches other machines once pushed - until then their runs
-still diff from the old pin.
+### 8. Offer to commit and push
+
+These repos commit straight to `main`, and the pin bump only reaches other
+machines once it is pushed. So when this run changed any tracked file, offer to
+commit and push the changes to `main`.
+
+Plan the commits per repo:
+
+- Include only files this run edited. Leave out any file the step 1 snapshot
+  showed as modified, because it holds the user's own uncommitted work. Name it
+  in the offer so the user can commit it themselves.
+- Make one commit per approved config change, in the repo's style: a short
+  imperative subject and, when the reason isn't clear from the diff, a body
+  that names the changelog entry it adopts.
+- Put the pin bump last, in its own commit with the subject
+  `Pin claude-code <to>` and no body, like the earlier pin commits.
+- The house rules apply to every message, and a commit in the public repo never
+  mentions overlay content.
+
+Show the plan (repo, files, and the full message of each commit) and ask once. A
+yes covers committing and pushing everything in the plan. If the user declines,
+leave the changes uncommitted and remind them that other machines keep diffing
+from the old pin until the bump is pushed.
+
+On a yes, for each repo:
+
+1. Check that it is on `main` tracking `origin/main`. On any other branch,
+   commit nothing in that repo and ask.
+2. Make each planned commit with explicit paths, so anything the user already
+   staged stays out. A new file needs `git -C <repo> add <path>` first. Drop the
+   second `-m` when the commit has no body:
+
+   ```bash
+   git -C <repo> commit -m '<subject>' -m '<body>' -- <paths>
+   ```
+
+3. Bring in commits pushed from other machines, then push:
+
+   ```bash
+   git -C <repo> pull --rebase --autostash
+   git -C <repo> push origin main
+   ```
+
+   Never force-push and never pass `--no-verify`. If the rebase stops on a
+   conflict, or the push is rejected or prints a rule-bypass warning, stop and
+   report it. Don't retry with other flags.
+
+Finish by reporting the pushed commits per repo.
 
 ## Boundaries
 
-Read-only except for three things, each gated on explicit confirmation: the
-approved `settings.json`/dotfiles edits, the `npm install` update, and the
-`bootstrap` pin bump. Version checks, the changelog fetch, and all file reads
-never mutate anything.
+Read-only except for four things, each gated on explicit confirmation: the
+approved `settings.json`/dotfiles edits, the `npm install` update, the
+`bootstrap` pin bump, and committing and pushing those changes to `main`.
+Version checks, the changelog fetch, the step 1 `git status` snapshot, and all
+file reads never mutate anything.
