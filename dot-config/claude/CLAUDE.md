@@ -89,6 +89,15 @@ Prose captures the _why_ and the non-obvious context. It never restates what the
 
 Rule of thumb: if the comment would still be accurate a year from now with nobody updating it, it's durable. If it depends on current counts, coverage, layout, or session, it's a lie waiting to happen. If it only makes sense to someone who saw the previous version, delete it.
 
+## Links in replies
+
+Replies render `[text](url)` as a clickable link in the terminal. When a reply mentions a work item, issue, PR, pipeline or workflow run, commit, or anything else with a known web URL, write it as a link. This applies in lists and tables too.
+
+- **Keep the reference in the link text** (`#27`, `!567`, a run number, a short SHA) so I can still tell which item it is without hovering. A title can follow as plain text, for example `[#27](<url>) Fix the cache eviction`.
+- **GitHub**: `https://github.com/<owner>/<repo>/issues/<n>` redirects to the PR when `<n>` is a PR. `/pull/<n>`, `/commit/<sha>` and `/actions/runs/<id>` cover the rest. Take `<owner>/<repo>` from the remote.
+- **Azure DevOps**: the `ado` skill has the URL formats and the link text convention.
+- **Scope**: this is for replies in the terminal. It doesn't change repo artifacts, because commit messages don't render markdown and GitHub links `#N` in PR and issue bodies on its own.
+
 ## Respect repository and branch policy
 
 Applies to any repo with branch protection, required status checks/reviews, or protected tags (GitHub, ADO, GitLab, Bitbucket).
