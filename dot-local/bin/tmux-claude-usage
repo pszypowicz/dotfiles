@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 #
 # tmux-claude-usage - print the Claude rate-limit usage for the tmux status
-# line of a client that connected over ssh. A client at the Mac itself has the
-# SketchyBar widget for the same numbers, so the script prints nothing there.
+# line of a client that connected over ssh or mosh. A client at the Mac itself
+# has the SketchyBar widget for the same numbers, so the script prints nothing
+# there.
 #
 # status-right in tmux.conf passes #{client_pid}. Each client expands its own
 # command line, so tmux keeps a separate job and output per client. The numbers
@@ -15,6 +16,7 @@ PROGRAM=$(basename "$0")
 CACHE_FILE="$HOME/.cache/claude/rate-limits.json"
 STATE_FILE="$HOME/.cache/claude/usage-poll.json"
 FETCHER="$HOME/.config/claude/fetch-usage.sh"
+OVER_SSH="$HOME/.local/bin/over-ssh"
 
 STALE_AFTER=900     # seconds; older numbers print dimmed
 FRESH_THRESHOLD=600 # seconds; older numbers behind a dead token print as "--"
@@ -31,7 +33,7 @@ $PROGRAM - print Claude rate-limit usage for the tmux status line of an ssh clie
 
 Prints the five-hour and seven-day usage from the fetch-usage.sh cache as a
 tmux format string, colored by how much is used. Prints nothing when the
-client did not connect over ssh.
+client did not connect over ssh or mosh.
 
 Usage:
   $PROGRAM --client-pid PID
@@ -69,27 +71,7 @@ done
 [[ -n "$CLIENT_PID" ]] || die "--client-pid is required" 2
 [[ "$CLIENT_PID" =~ ^[0-9]+$ ]] || die "--client-pid must be a number: $CLIENT_PID" 2
 
-# True when an sshd process is the given process or one of its ancestors.
-# macOS names the per-connection process "sshd-session: user@tty", and Linux
-# shows sshd or sshd-session.
-from_ssh() {
-    ps -axo pid=,ppid=,comm= | awk -v pid="$1" '
-        {
-            ppid[$1] = $2
-            name = $0
-            sub(/^ *[0-9]+ +[0-9]+ +/, "", name)
-            comm[$1] = name
-        }
-        END {
-            for (p = pid; p > 1 && (p in ppid) && hops < 64; p = ppid[p]) {
-                if (comm[p] ~ /(^|\/)sshd/) exit 0
-                hops++
-            }
-            exit 1
-        }'
-}
-
-from_ssh "$CLIENT_PID" || exit 0
+"$OVER_SSH" --pid "$CLIENT_PID" || exit 0
 
 if [[ -x "$FETCHER" ]]; then
     "$FETCHER" </dev/null >/dev/null 2>&1 &

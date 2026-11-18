@@ -101,7 +101,7 @@ A second Ghostty window attaches to the most recently used session that no other
 
 ## Claude usage over SSH
 
-A window that connects over SSH, such as iTerm2 on another laptop, cannot see the SketchyBar widget on this Mac. Its status line shows the same Claude usage at the right. The clock icon marks the five-hour window, and the calendar icon marks the seven-day window. A Ghostty window on this Mac shows nothing there.
+A window that connects over SSH or mosh, such as iTerm2 on another laptop, cannot see the SketchyBar widget on this Mac. Its status line shows the same Claude usage at the right. The clock icon marks the five-hour window, and the calendar icon marks the seven-day window. A Ghostty window on this Mac shows nothing there.
 
 - The colors follow the widget. A number turns yellow at 60%, orange at 80%, and red at 90%.
 - At 80% in the five-hour window, the time until its reset follows the number.
@@ -111,11 +111,17 @@ A window that connects over SSH, such as iTerm2 on another laptop, cannot see th
 
 `tmux-claude-usage` reads the cache that `fetch-usage.sh` writes. It also starts the fetcher at each status refresh, because SketchyBar may not refresh the cache while nobody is at the Mac. The fetcher calls the usage endpoint at most once every five minutes.
 
+## Claude Code over SSH
+
+When you drive a Claude Code session over SSH or mosh, a hook tells Claude that you cannot see this Mac's screen. Claude then suggests a port forward for a local server, gives URLs and file paths instead of opening them, and puts text to copy in the reply instead of using `pbcopy`. The hook checks the tmux client that shows the pane, so the note follows you when you reattach a session from the other machine. When you come back to the Mac, the next prompt tells Claude that the note no longer applies.
+
 ## Where this lives
 
 - `dot-config/zsh/dot-zshrc` - runs the attach helper at Ghostty start
 - `dot-local/bin/tmux-attach-next` - the attach logic, also run remotely by SSH clients
 - `dot-local/bin/tmux-claude-usage` - the Claude usage on the status line of SSH clients, read from the cache of `dot-config/claude/fetch-usage.sh`
+- `dot-local/bin/over-ssh` - the SSH and mosh check that the status line and the Claude Code hook share
+- `dot-config/claude/hooks/ssh-context.sh` - the Claude Code hook that tells Claude about an SSH session
 - `dot-local/bin/tmux-sessionizer` - the fzf picker
 - `dot-local/bin/fzf-jump-targets` - the candidate list, shared with the `Alt+C` directory jump
 - `dot-config/tmux/tmux.conf` - the `prefix + f` binding, the session-end rule, the titlebar format, and the status line

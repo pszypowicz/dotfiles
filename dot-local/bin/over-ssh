@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+#
+# over-ssh - exit 0 when the user at this terminal connected over ssh or mosh.
+#
+# A process counts as remote when sshd or mosh-server is the process itself or
+# one of its ancestors. A tmux pane's ancestors end at the tmux server, which
+# says nothing about who is watching, so inside tmux the check runs on a tmux
+# client. A client that shows the pane's window wins over one that is only
+# attached to its session, and among equals the one with the latest input
+# wins, because that is the one the user typed into.
+set -euo pipefail
+
+PROGRAM=$(basename "$0")
+
+usage() {
+    cat <<EOF
+$PROGRAM - test whether the user reaches this terminal over ssh or mosh.
+
+Exits 0 when an sshd or mosh-server process is the checked process or one of
+its ancestors, and 1 when none is. Exits 3 when no tmux client is attached to
+a session that holds the pane. Prints nothing.
+
+Without --pid, checks the terminal that runs $PROGRAM. In a tmux pane that is
+the tmux client that shows the pane, or else a client attached to the pane's
+session. Outside tmux it is the process tree of $PROGRAM itself.
+
+Usage:
+  $PROGRAM [--pid PID]
+  $PROGRAM --help
+
+Options:
+  --pid PID   Check this process and its ancestors, for example the
+              #{client_pid} of a tmux client.
+  -h, --help  Show this help.
+
+Examples:
+  $PROGRAM && echo remote
+  $PROGRAM --pid 4242
+EOF
+}
+
+die() {
+    echo "$PROGRAM: $1" >&2
+    exit "${2:-1}"
+}
+
+PID=""
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --pid)
+            [[ $# -ge 2 ]] || die "--pid needs a value" 2
+            PID=$2
+            shift 2
+            ;;
+        --pid=*) PID=${1#*=}; shift ;;
+        -h | --help) usage; exit 0 ;;
+        *) usage >&2; die "unknown argument: $1" 2 ;;
+    esac
+done
+
+if [[ -n "$PID" ]]; then
+    [[ "$PID" =~ ^[0-9]+$ ]] || die "--pid must be a number: $PID" 2
+elif [[ -n "${TMUX:-}" && -n "${TMUX_PANE:-}" ]] &&
+    WINDOW=$(tmux display-message -p -t "$TMUX_PANE" '#{window_id}' 2>/dev/null) &&
+    [[ -n "$WINDOW" ]]; then
+    # Sessions that hold the pane's window. A client attached to one of them
+    # while it shows another window still belongs to the same user.
+    SESSIONS=$(tmux list-windows -a -F '#{window_id} #{session_id}' 2>/dev/null |
+        awk -v window="$WINDOW" '$1 == window { printf "%s ", $2 }')
+    PID=$(tmux list-clients -F '#{client_activity} #{client_pid} #{window_id} #{session_id}' 2>/dev/null |
+        awk -v window="$WINDOW" -v sessions="$SESSIONS" '
+            BEGIN { n = split(sessions, list, " "); for (i = 1; i <= n; i++) mine[list[i]] = 1 }
+            $3 == window { print 1, $1, $2; next }
+            $4 in mine { print 0, $1, $2 }' |
+        sort -k1,1nr -k2,2nr | awk 'NR == 1 { print $3 }')
+    [[ -n "$PID" ]] || exit 3
+else
+    PID=$$
+fi
+
+# macOS names the per-connection sshd process "sshd-session: user@tty", and
+# Linux shows sshd or sshd-session. mosh-server detaches from the sshd that
+# started it, so it needs its own match.
+ps -axo pid=,ppid=,comm= | awk -v pid="$PID" '
+    {
+        ppid[$1] = $2
+        name = $0
+        sub(/^ *[0-9]+ +[0-9]+ +/, "", name)
+        comm[$1] = name
+    }
+    END {
+        for (p = pid; p > 1 && (p in ppid) && hops < 64; p = ppid[p]) {
+            if (comm[p] ~ /(^|\/)(sshd|mosh-server)/) exit 0
+            hops++
+        }
+        exit 1
+    }'

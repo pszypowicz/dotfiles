@@ -98,10 +98,12 @@ repo and every overlay found in step 1. Under each repo's `dot-config/`:
 
 - `claude/settings.json` - the `env` block, `hooks`, `statusLine`,
   `enabledPlugins`, `extraKnownMarketplaces`, permissions/sandbox.
-- `claude/hooks/bell.sh`, `claude/hooks/agents-in-flight.sh`, and
-  `claude/statusline.sh` - these parse hook and status-line JSON payloads
-  (`agents-in-flight.sh` reads `background_tasks` from the Stop payload), so
-  payload-schema changes can break them.
+- `claude/hooks/bell.sh`, `claude/hooks/agents-in-flight.sh`,
+  `claude/hooks/ssh-context.sh`, and `claude/statusline.sh` - these parse hook
+  and status-line JSON payloads (`agents-in-flight.sh` reads `background_tasks`
+  from the Stop payload, and `ssh-context.sh` returns
+  `hookSpecificOutput.additionalContext` from SessionStart and
+  UserPromptSubmit), so payload-schema changes can break them.
 - `tmux/tmux.conf` - the `automatic-rename-format` block; it relies on the pane
   title Claude Code sets via OSC 2 and on `@claude_model` from the statusline.
 - the repo's `dot-local/bin/,cr` and `dot-local/bin/claude-session-preview` -
