@@ -215,7 +215,8 @@
     "codex@openai-codex": true,
     "github@claude-skills": true,
     "i-have-adhd@i-have-adhd": true,
-    "timestamps@claude-skills": true
+    "timestamps@claude-skills": true,
+    "sequester@sequester": true
   },
   "extraKnownMarketplaces": {
     "claude-skills": {
@@ -252,6 +253,12 @@
       "source": {
         "source": "github",
         "repo": "ayghri/i-have-adhd"
+      }
+    },
+    "sequester": {
+      "source": {
+        "source": "github",
+        "repo": "pszypowicz/sequester"
       }
     }
   },
