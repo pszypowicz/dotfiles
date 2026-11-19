@@ -28,5 +28,19 @@
 	email = pszypowicz@users.noreply.github.com
 	useConfigOnly = true
 
+# Secret scan for every repository on the machine. Hooks set in config run in
+# addition to a repository's own hooks directory, so `pre-commit install` and
+# similar tools keep working. Turn one off for a single repository with
+# `git config hook.secret-scan-staged.enabled false`.
+[hook "secret-scan-staged"]
+	event = pre-commit
+	command = ~/.config/git/hooks/secret-scan.sh --event pre-commit
+[hook "secret-scan-message"]
+	event = commit-msg
+	command = ~/.config/git/hooks/secret-scan.sh --event commit-msg
+[hook "secret-scan-push"]
+	event = pre-push
+	command = ~/.config/git/hooks/secret-scan.sh --event pre-push
+
 [include]
 	path = ~/.config/git/config.local

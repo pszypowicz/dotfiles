@@ -1,0 +1,1 @@
+../../../dot-config/claude/hooks/scan-outgoing-text.py

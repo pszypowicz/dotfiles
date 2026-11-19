@@ -50,7 +50,6 @@ Until then, the page shows a reminder instead of the summary.
 | ---------- | ------------------------------------------------------------------------------------ |
 | `touchid`  | Install `/etc/pam.d/sudo_local` so that sudo accepts Touch ID.                       |
 | `brew`     | Install Homebrew if it is absent, then install the Brewfile packages.                |
-| `hooks`    | Install this repo's pre-commit hook, which scans staged changes for secrets.         |
 | `stow`     | Symlink the configs into the home directory.                                         |
 | `codex`    | Install public Codex defaults and hooks with sudo only for missing or changed files. |
 | `services` | Start the Homebrew services that need the stowed config (colima, sketchybar).        |
@@ -82,6 +81,7 @@ The public defaults select high reasoning effort, enable Vim editing and termina
 The force-push hook refuses recognized shell commands that rewrite branches with open GitHub pull requests.
 It also refuses those commands when GitHub cannot return the pull request state.
 The guard inspects shell text and does not cover every way to invoke Git.
+The two secret guards described under [Secret scanning](#secret-scanning) run before each shell command as well.
 
 The formatting hook handles Markdown and Terraform files named in `apply_patch` calls, including multi-file patches, renames, and deletions.
 It runs Prettier for Markdown and `terraform fmt` for Terraform.
@@ -89,7 +89,7 @@ It runs `terraform-docs` once per affected module with a `.terraform-docs.yml` f
 Missing tools and formatter failures produce a warning without blocking the session.
 Edits made through shell commands do not trigger this formatter.
 
-The hooks require Bash, Python 3, jq, and gh. Install Prettier, Terraform, and terraform-docs to enable the corresponding formatters.
+The hooks require Bash, Python 3, jq, gh, and betterleaks. Install Prettier, Terraform, and terraform-docs to enable the corresponding formatters.
 
 ### Private overlays
 
@@ -103,20 +103,40 @@ To include an overlay, name it:
 
 The brew, stow, and npm steps then cover the overlay too. `--overlay` combines with step names, so `./bootstrap --overlay work stow` re-links the public and the work config together.
 
+## Secret scanning
+
+`dot-config/git/config` registers three betterleaks hooks that run in every repository on the machine.
+The pre-commit hook scans the staged changes, and the commit-msg hook scans the commit message.
+The pre-push hook scans the commits that the remote does not have yet, so it also catches commits made with `--no-verify`, cherry-pick, or rebase.
+Git runs these hooks before the hook in a repository's own hooks directory, which means `pre-commit install` and similar tools keep working.
+Hooks defined in config need Git 2.54 or later, and an older Git ignores them without a warning.
+When the `betterleaks` binary is missing, the hooks refuse the commit or push.
+
+To turn one scan off in a single repository, set its `enabled` key to false:
+
+```bash
+git config hook.secret-scan-staged.enabled false
+```
+
+Claude Code and Codex run two more guards before each shell command.
+`block-hook-bypass.py` refuses commands that skip the git hooks, such as `--no-verify` or a `git config` write to a `hook.*` key.
+`scan-outgoing-text.py` scans `gh` and `az` commands and the files they upload, before that text leaves the machine.
+In Claude Code it also scans the input of every MCP tool call.
+Both guards read the shell text, so a command run from a script or an alias gets past them.
+
 ## Layout
 
-| Path                      | Target          | Contents                                            |
-| ------------------------- | --------------- | --------------------------------------------------- |
-| `dot-zshenv`              | `~/.zshenv`     | Sets `ZDOTDIR` and hands off to `dot-config/zsh/`.  |
-| `dot-config/`             | `~/.config/`    | Tool config, one directory per tool.                |
-| `dot-local/bin/`          | `~/.local/bin/` | Scripts on `PATH`.                                  |
-| `dot-ssh/`                | `~/.ssh/`       | SSH client config.                                  |
-| `bootstrap`               | not stowed      | The installer.                                      |
-| `etc/`                    | not stowed      | Public system configuration installed by bootstrap. |
-| `.pre-commit-config.yaml` | not stowed      | The secret scan that runs before each commit.       |
-| `macos/defaults`          | not stowed      | The `defaults write` calls.                         |
-| `macos/sharing`           | not stowed      | The Remote Login and AC sleep switches.             |
-| `docs/`                   | not stowed      | Cheat sheets.                                       |
+| Path             | Target          | Contents                                            |
+| ---------------- | --------------- | --------------------------------------------------- |
+| `dot-zshenv`     | `~/.zshenv`     | Sets `ZDOTDIR` and hands off to `dot-config/zsh/`.  |
+| `dot-config/`    | `~/.config/`    | Tool config, one directory per tool.                |
+| `dot-local/bin/` | `~/.local/bin/` | Scripts on `PATH`.                                  |
+| `dot-ssh/`       | `~/.ssh/`       | SSH client config.                                  |
+| `bootstrap`      | not stowed      | The installer.                                      |
+| `etc/`           | not stowed      | Public system configuration installed by bootstrap. |
+| `macos/defaults` | not stowed      | The `defaults write` calls.                         |
+| `macos/sharing`  | not stowed      | The Remote Login and AC sleep switches.             |
+| `docs/`          | not stowed      | Cheat sheets.                                       |
 
 `.stow-local-ignore` lists the paths that stow skips.
 

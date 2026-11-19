@@ -1,0 +1,1 @@
+../../../dot-config/claude/hooks/block-hook-bypass.py

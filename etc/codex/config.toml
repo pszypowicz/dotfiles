@@ -28,6 +28,16 @@ command = "bash /etc/codex/hooks/block-force-push.sh"
 timeout = 20
 statusMessage = "Checking for an open pull request..."
 
+[[hooks.PreToolUse.hooks]]
+type = "command"
+command = "python3 /etc/codex/hooks/block-hook-bypass.py"
+timeout = 10
+
+[[hooks.PreToolUse.hooks]]
+type = "command"
+command = "python3 /etc/codex/hooks/scan-outgoing-text.py"
+timeout = 30
+
 [[hooks.PostToolUse]]
 matcher = "^apply_patch$"
 

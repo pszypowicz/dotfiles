@@ -76,6 +76,29 @@
             "timeout": 20,
             "onFailure": "block",
             "statusMessage": "Checking for an open pull request..."
+          },
+          {
+            "type": "command",
+            "command": "~/.config/claude/hooks/block-hook-bypass.py",
+            "timeout": 10,
+            "onFailure": "block"
+          },
+          {
+            "type": "command",
+            "command": "~/.config/claude/hooks/scan-outgoing-text.py",
+            "timeout": 30,
+            "onFailure": "block"
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.config/claude/hooks/scan-outgoing-text.py",
+            "timeout": 30,
+            "onFailure": "block"
           }
         ]
       }
