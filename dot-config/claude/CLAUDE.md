@@ -114,17 +114,9 @@ Applies to any repo with branch protection, required status checks/reviews, or p
 - **Never force-push a branch that an open PR against an upstream repo points at.** The branch sits on my fork and carries no protection, so the push succeeds and nothing warns you. The damage lands on the upstream PR. Review threads detach from their lines, "changes since your last review" stops working, and commits a reviewer already read can vanish. Add a new commit on top instead, even when the history gets ugly - the maintainer squashes on merge anyway. If the history genuinely has to be rewritten (a leaked secret, a botched rebase), stop and ask me first. Name the branch and the PR number. This covers `git push -f`, `--force-with-lease`, and amend-then-push. It holds until the PR is merged or closed. Before any force-push, check for an open PR on that branch: `gh pr list --head <branch> --state open`.
 - **Default at a policy gate**: open a draft PR (per PR defaults). Even on solo repos the policy exists for a reason (CI coverage, reviewable history, reversibility). Unless I explicitly waive it for the specific change, follow it.
 
-## SSH signing: attempt once, then wait for me
+## SSH and secrets go through Sequester
 
-SSH auth (git push/fetch/pull over SSH, and SSH to hosts) is signed by a Secure Enclave agent (Sequester) that pops an approval prompt I must confirm in person. When I'm at the machine, I approve it and the command just works. When I'm not, it hangs or fails.
-
-- **Attempt the SSH command yourself first, exactly once**, with a ~2 minute timeout - do not pre-emptively hand it to me. If I'm present, I'll approve the prompt and you carry on.
-- **One approval covers a window, not one command.** At the prompt I pick a caching duration. While it lasts, further SSH commands go through without a new prompt. So don't cram everything into one giant compound command to save approvals. After the first success, run SSH commands at natural granularity.
-- **If that one attempt fails or times out, treat it as "waiting for me", not an error to work around.** The tells are a hang until timeout, `agent refused operation`, `The agent has no identities`, `sign_and_send_pubkey: signing failed`, or `Permission denied (publickey)`.
-- **Do not** retry in a loop, try other keys, switch the remote to HTTPS, or reach for a token. The enclave key is deliberate. A bearer credential is not an acceptable substitute.
-- **Keep working** on everything that doesn't need the network - commit locally, write docs and tests, run checks - so the only thing left is the transfer.
-- **Then stop and tell me plainly** what is done locally, what is blocked, and the exact command for me to run, e.g. `! git push -u origin <branch>`. Say clearly the attempt did not go through. When I confirm, pick the work back up.
-- Anything downstream of the blocked step (opening the PR, tagging, releasing) waits too - don't half-do a release.
+My SSH keys and API tokens live in Sequester, and using them can need my approval in person. Load the `sequester:sequester` skill before running ssh or git over SSH, or anything that needs a token from a profile. Even before it loads, make one attempt with a timeout of about two minutes, never fall back to another key, HTTPS, or a token, and never print a secret.
 
 ## Scripts & pipeline steps
 
