@@ -216,7 +216,8 @@
     "github@claude-skills": true,
     "i-have-adhd@i-have-adhd": true,
     "timestamps@claude-skills": true,
-    "sequester@sequester": true
+    "sequester@sequester": true,
+    "unifi@claude-skills": true
   },
   "extraKnownMarketplaces": {
     "claude-skills": {
